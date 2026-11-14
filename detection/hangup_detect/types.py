@@ -41,6 +41,7 @@ class Evidence:
     span: tuple[int, int]
     source: str  # "rule" | "llm"
     t_s: float
+    detail: str | None = None  # impersonation only: "family" or "official"
 
     def as_dict(self) -> dict:
         return {"tactic": self.tactic.value, "quote": self.quote,

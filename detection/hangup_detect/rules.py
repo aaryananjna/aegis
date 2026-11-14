@@ -87,6 +87,10 @@ PATTERNS: dict[T, list[str]] = {
 
 COMPILED = {t: [re.compile(p, _I) for p in ps] for t, ps in PATTERNS.items()}
 
+# Which impersonation patterns claim to be family (the first two); the rest claim to be an
+# official or a company. Family callers get the code word card; others get "call back".
+_FAMILY_PATTERNS = 2
+
 _APOSTROPHES = str.maketrans({"\u2019": "'", "\u2018": "'", "\u02bc": "'"})
 
 # Skip a single match when "not/never/no" sits within two words before it.
@@ -110,7 +114,11 @@ def find_evidence(text: str, utterance_id: str, t_s: float) -> list[Evidence]:
         skip = _happy_secret if tactic is T.SECRECY else None
         hit = _first_match(norm, patterns, skip)
         if hit:
-            out.append(Evidence(tactic, text[hit[0]:hit[1]], utterance_id, hit, "rule", t_s))
+            start, end, idx = hit
+            detail = None
+            if tactic is T.IMPERSONATION:
+                detail = "family" if idx < _FAMILY_PATTERNS else "official"
+            out.append(Evidence(tactic, text[start:end], utterance_id, (start, end), "rule", t_s, detail))
     return out
 
 
@@ -118,13 +126,14 @@ def _happy_secret(text: str, m: re.Match) -> bool:
     return bool(_HAPPY_ANY.search(text) or _HAPPY_AFTER.search(text[m.end():]))
 
 
-def _first_match(text: str, patterns: list[re.Pattern], skip=None) -> tuple[int, int] | None:
+def _first_match(text: str, patterns: list[re.Pattern], skip=None) -> tuple[int, int, int] | None:
+    """Earliest unguarded match: (start, end, index of the pattern that matched)."""
     best = None
-    for p in patterns:
+    for idx, p in enumerate(patterns):
         for m in p.finditer(text):
             if _NEGATED.search(text[:m.start()]) or (skip and skip(text, m)):
                 continue
             if best is None or m.start() < best[0]:
-                best = (m.start(), m.end())
+                best = (m.start(), m.end(), idx)
             break
     return best
