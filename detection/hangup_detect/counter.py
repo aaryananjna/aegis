@@ -36,9 +36,8 @@ def summary(tactics: set[T]) -> str:
 
 
 class CounterMoves:
-    def __init__(self, cfg: Config, session_id: str):
+    def __init__(self, cfg: Config):
         self.cfg = cfg
-        self.session_id = session_id
         self.state = "none"
         self._codeword_at: float | None = None
 

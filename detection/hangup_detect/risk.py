@@ -36,22 +36,25 @@ class RiskModel:
     def add(self, e: Evidence) -> None:
         self.evidence.append(e)
 
-    def clear(self, keep_level: bool = False) -> None:
+    def clear(self) -> None:
+        """Drop all evidence. The level is left alone; only update_level changes it."""
         self.evidence.clear()
-        if not keep_level:
-            self.level = LOW
 
     # ---- pure reads -------------------------------------------------
-    def _live(self, now: float, source: str):
+    def live(self, now: float, source: str | None = None) -> list[Evidence]:
+        """Evidence inside the scoring horizon, optionally from one source."""
         return [e for e in self.evidence
-                if e.source == source and 0 <= now - e.t_s < self.cfg.horizon_s]
+                if (source is None or e.source == source) and 0 <= now - e.t_s < self.cfg.horizon_s]
+
+    def value(self, e: Evidence, now: float) -> float:
+        """Current weight of one piece of evidence: base weight x source factor x decay."""
+        factor = 1.0 if e.source == "rule" else self.cfg.llm_factor
+        return self.cfg.weights[e.tactic] * factor * 0.5 ** ((now - e.t_s) / self.cfg.half_life_s)
 
     def _ledger(self, now: float, source: str) -> dict[Tactic, float]:
-        factor = 1.0 if source == "rule" else self.cfg.llm_factor
         vals: dict[Tactic, list[float]] = {}
-        for e in self._live(now, source):
-            d = 0.5 ** ((now - e.t_s) / self.cfg.half_life_s)
-            vals.setdefault(e.tactic, []).append(self.cfg.weights[e.tactic] * factor * d)
+        for e in self.live(now, source):
+            vals.setdefault(e.tactic, []).append(self.value(e, now))
         out = {}
         for t, vs in vals.items():
             vs.sort(reverse=True)
@@ -83,20 +86,28 @@ class RiskModel:
             combos = {name: v * k for name, v in combos.items()}
         return rule, llm, combos
 
-    def score(self, now: float, include_llm: bool = True) -> float:
-        rule, llm, combos = self._parts(now, include_llm)
+    def _score_of(self, rule, llm, combos) -> float:
         x = self.cfg.prior + sum(rule.values()) + sum(llm.values()) + sum(combos.values())
         return 1 / (1 + math.exp(-x))
 
-    def contributions(self, now: float) -> dict:
-        rule, llm, combos = self._parts(now, True)
+    @staticmethod
+    def _named(rule, llm, combos) -> dict:
         r = lambda d: {k.value if isinstance(k, Tactic) else k: round(v, 6) for k, v in d.items()}
         return {"rule": r(rule), "llm": r(llm), "combos": r(combos)}
 
-    def has_live_rule(self, now: float) -> bool:
-        return bool(self._live(now, "rule"))
+    def score(self, now: float, include_llm: bool = True) -> float:
+        return self._score_of(*self._parts(now, include_llm))
+
+    def contributions(self, now: float) -> dict:
+        return self._named(*self._parts(now, True))
 
     # ---- the only mutator ---------------------------------------------
     def update_level(self, now: float) -> str:
-        self.level = next_level(self.level, self.score(now), self.has_live_rule(now), self.cfg)
-        return self.level
+        return self.evaluate(now)[0]
+
+    def evaluate(self, now: float) -> tuple[str, float, dict]:
+        """Update the level and return (level, score, contributions) from one pass."""
+        rule, llm, combos = self._parts(now, True)
+        score = self._score_of(rule, llm, combos)
+        self.level = next_level(self.level, score, bool(rule), self.cfg)
+        return self.level, score, self._named(rule, llm, combos)

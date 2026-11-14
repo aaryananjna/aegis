@@ -13,24 +13,22 @@ from .config import Config
 from .counter import CounterMoves
 from .risk import RiskModel
 from .rules import find_evidence
-from .types import Evidence, Segment, Tactic
+from .types import Evidence, Segment, Tactic, speaker_id
 
 
 class Detector:
-    def __init__(self, config: Config, session_id: str, elder_speaker_raw: str | None = None,
-                 confirmed: bool = False):
+    def __init__(self, config: Config, session_id: str):
         self.cfg = config.validate()
         self.session_id = session_id
         self.risk = RiskModel(self.cfg)
-        self.counter = CounterMoves(self.cfg, session_id)
-        self.elder_raw = None if elder_speaker_raw is None else str(elder_speaker_raw)
-        self.confirmed = confirmed or elder_speaker_raw is not None
+        self.counter = CounterMoves(self.cfg)
+        self.elder_raw: str | None = None
+        self.confirmed = False  # set by set_elder; cards and alerts wait for it
         self.ended = False
         self._seq = 0
         self._now = 0.0
         self._last_rev: dict[str, int] = {}
         self._finals: OrderedDict[str, tuple[Segment, float]] = OrderedDict()
-        self._llm_evidence: list[Evidence] = []
         self._shown: dict[str, list[dict]] = {}  # utterance_id -> evidence C currently shows
         self._last_score: float | None = None
         self._last_level = "low"
@@ -41,54 +39,41 @@ class Detector:
         now = self._clock(now_s)
         uid = seg.utterance_id
         if uid in self._finals:
-            if seg.is_final:
-                return [self._status("duplicate final ignored")]
-            return []  # interim after its final
+            return [self._status("duplicate final ignored")] if seg.is_final else []
         last = self._last_rev.get(uid)
         if last is not None and (seg.revision < last or (seg.revision == last and not seg.is_final)):
             return []  # stale revision (a final may reuse the last interim's revision)
         self._last_rev[uid] = seg.revision
         if not seg.is_final:
-            return self._on_interim(seg, now)
+            # Highlight words while they're still being spoken. Never scores.
+            return self._set_highlights(seg, self._hits(seg, now), True, now)
 
         out: list[dict] = []
         self._finals[uid] = (seg, now)
         if len(self._finals) > self.cfg.max_finals:
             self._finals.popitem(last=False)
             out.append(self._status("oldest caption dropped from the rebuild store"))
-        new_tactics: set[Tactic] = set()
-        hits = []
-        if self._role(seg) != "elder":
-            hits = find_evidence(seg.text, uid, now)
-            for h in hits:
-                self.risk.add(h)
-            new_tactics = {h.tactic for h in hits}
-        out += self._set_highlights(uid, seg.revision, False, [h.as_dict() for h in hits], now)
+        hits = self._score_final(seg, now)
+        out += self._set_highlights(seg, hits, False, now)
+        new_tactics = {h.tactic for h in hits}
         self._timing.append({"utterance_id": uid, "end_s": seg.end_s, "arrival_s": now,
                              "tactics": sorted(t.value for t in new_tactics)})
-        out += self._evaluate(now, new_tactics)
-        return out
+        return out + self._evaluate(now, new_tactics)
 
     def tick(self, now_s: float) -> list[dict]:
         return self._evaluate(self._clock(now_s), set())
 
-    def set_elder(self, speaker_raw: str | None, now_s: float) -> list[dict]:
+    def set_elder(self, speaker_raw: str | int | None, now_s: float) -> list[dict]:
+        """Confirm who the grandparent is (None = no speaker labels) and rebuild the evidence."""
         now = self._clock(now_s)
-        self.elder_raw = None if speaker_raw is None else str(speaker_raw)
+        self.elder_raw = speaker_id(speaker_raw)
         self.confirmed = True
-        self.risk.clear(keep_level=True)  # same evidence must not move the meter
+        self.risk.clear()
         out: list[dict] = []
-        for uid, (seg, arrival) in self._finals.items():
-            hits = [] if self._role(seg) == "elder" else find_evidence(seg.text, uid, arrival)
-            for h in hits:
-                self.risk.add(h)
-            out += self._set_highlights(uid, seg.revision, False, [h.as_dict() for h in hits], now)
-        for e in self._llm_evidence:
-            if e.utterance_id in self._finals and self._role(self._finals[e.utterance_id][0]) != "elder":
-                self.risk.add(e)
+        for seg, arrival in self._finals.values():
+            out += self._set_highlights(seg, self._score_final(seg, arrival), False, now)
         self._last_score = None  # force a fresh risk event
-        out += self._evaluate(now, set())
-        return out
+        return out + self._evaluate(now, set())
 
     def end(self, now_s: float) -> list[dict]:
         out = self.tick(now_s)
@@ -103,13 +88,14 @@ class Detector:
                 "timing": [dict(r) for r in self._timing]}
 
     # ---- internals ------------------------------------------------------
-    def _on_interim(self, seg: Segment, now: float) -> list[dict]:
-        """Highlight words while they're still being spoken. Never scores."""
-        if self._role(seg) == "elder":
-            return []
-        hits = find_evidence(seg.text, seg.utterance_id, now)
-        return self._set_highlights(seg.utterance_id, seg.revision, True,
-                                    [h.as_dict() for h in hits], now)
+    def _hits(self, seg: Segment, t: float) -> list[Evidence]:
+        """Rule evidence for a caption, or nothing if the grandparent said it."""
+        return [] if self._role(seg) == "elder" else find_evidence(seg.text, seg.utterance_id, t)
+
+    def _score_final(self, seg: Segment, t: float) -> list[Evidence]:
+        hits = self._hits(seg, t)
+        self.risk.evidence.extend(hits)
+        return hits
 
     def _clock(self, now_s: float) -> float:
         if self.ended:
@@ -129,35 +115,27 @@ class Detector:
             return "elder" if seg.speaker_raw == self.elder_raw else "caller"
         return seg.speaker
 
-    def _set_highlights(self, uid, revision, provisional, evidence, now) -> list[dict]:
-        if not evidence and not self._shown.get(uid):
+    def _set_highlights(self, seg: Segment, hits: list[Evidence], provisional: bool, now: float) -> list[dict]:
+        uid = seg.utterance_id
+        if not hits and not self._shown.get(uid):
             return []
+        evidence = [h.as_dict() for h in hits]
         self._shown[uid] = evidence
-        return [ev.tactic_set(self.session_id, now, self._next(), uid, revision, provisional, evidence)]
+        return [ev.tactic_set(self.session_id, now, self._next(), uid, seg.revision, provisional, evidence)]
 
     def _ranked(self, now: float) -> tuple[list[str], set[Tactic]]:
-        live = [e for e in self.risk.evidence if 0 <= now - e.t_s < self.cfg.horizon_s]
-
-        def value(e):
-            f = 1.0 if e.source == "rule" else self.cfg.llm_factor
-            return self.cfg.weights[e.tactic] * f * 0.5 ** ((now - e.t_s) / self.cfg.half_life_s)
-
-        quotes: list[str] = []
-        for e in sorted(live, key=value, reverse=True):
-            if e.quote not in quotes:
-                quotes.append(e.quote)
-        return quotes, {e.tactic for e in live}
+        live = self.risk.live(now)
+        ranked = sorted(live, key=lambda e: self.risk.value(e, now), reverse=True)
+        return list(dict.fromkeys(e.quote for e in ranked)), {e.tactic for e in live}
 
     def _evaluate(self, now: float, new_tactics: set[Tactic]) -> list[dict]:
         out: list[dict] = []
-        level = self.risk.update_level(now)
-        score = self.risk.score(now)
+        level, score, contributions = self.risk.evaluate(now)
         if (self._last_score is None or abs(score - self._last_score) >= self.cfg.risk_emit_delta
                 or level != self._last_level):
-            out.append(ev.risk(self.session_id, now, self._next(), score, level,
-                               self.risk.contributions(now)))
+            out.append(ev.risk(self.session_id, now, self._next(), score, level, contributions))
             self._last_score, self._last_level = score, level
-        if self.confirmed:
+        if self.confirmed and self.counter.state != "hangup":  # hangup is the last card
             quotes, tactics = self._ranked(now)
             for act in self.counter.update(level, score, new_tactics, tactics, quotes, now):
                 if act[0] == "intervention":

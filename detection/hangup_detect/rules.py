@@ -87,6 +87,8 @@ PATTERNS: dict[T, list[str]] = {
 
 COMPILED = {t: [re.compile(p, _I) for p in ps] for t, ps in PATTERNS.items()}
 
+_APOSTROPHES = str.maketrans({"\u2019": "'", "\u2018": "'", "\u02bc": "'"})
+
 # Skip a single match when "not/never/no" sits within two words before it.
 _NEGATED = re.compile(r"\b(not|never|no)\s+(\w+\s+){0,2}$", _I)
 # Skip the whole utterance when it describes a scam rather than runs one.
@@ -100,7 +102,7 @@ _HAPPY_ANY = re.compile(r"\b(it'?s a surprise|surprise (party|dinner|visit|trip)
 
 def find_evidence(text: str, utterance_id: str, t_s: float) -> list[Evidence]:
     """Return at most one Evidence per tactic, using the first unguarded match."""
-    norm = text.replace("\u2019", "'").replace("\u2018", "'")  # same length, spans stay valid
+    norm = text.translate(_APOSTROPHES)  # one char for one char, so spans stay valid
     if _DESCRIBES_SCAM.search(norm):
         return []
     out: list[Evidence] = []

@@ -162,4 +162,6 @@ def test_clear_resets():
     m = model(ev(T.IMPERSONATION), ev(T.PAYMENT))
     m.update_level(0.0)
     m.clear()
-    assert m.score(0.0) == pytest.approx(sig(-3)) and m.level == "low"
+    assert m.score(0.0) == pytest.approx(sig(-3))
+    assert m.level == "high"  # clear() only drops evidence; update_level moves the level
+    assert m.update_level(0.0) == "low"

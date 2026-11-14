@@ -40,31 +40,19 @@ class Session:
         return self.loop.time() - self.start
 
     async def owner(self) -> None:
-        """The only task that touches the detector."""
+        """The only task that touches the detector. Messages were checked on arrival."""
         d = self.detector
         while True:
-            kind, msg = await self.queue.get()
-            try:
-                if kind == "caption":
-                    seg = make_segment(msg["utterance_id"], msg["revision"], "unknown", msg["text"],
-                                       msg["start_s"], msg["end_s"], msg["is_final"],
-                                       speaker_raw=msg.get("speaker_raw"))
-                    out = d.feed(seg, self.now())
-                elif kind == "set_elder":
-                    out = d.set_elder(msg.get("speaker_raw"), self.now())
-                elif kind == "tick":
-                    out = d.tick(self.now())
-                elif kind == "end":
-                    await self.broadcast(d.end(self.now()))
-                    return
-                else:
-                    log.warning("ignoring unknown message type %r", kind)
-                    continue
-            except (KeyError, TypeError, ValueError) as exc:
-                # One bad message must not stop detection for the rest of the call.
-                # Log the error type only, never caption text.
-                log.warning("bad %s message skipped: %s", kind, type(exc).__name__)
-                continue
+            kind, payload = await self.queue.get()
+            if kind == "caption":
+                out = d.feed(payload, self.now())
+            elif kind == "set_elder":
+                out = d.set_elder(payload, self.now())
+            elif kind == "tick":
+                out = d.tick(self.now())
+            else:  # "end"
+                await self.broadcast(d.end(self.now()))
+                return
             await self.broadcast(out)
 
     async def ticker(self) -> None:
@@ -81,6 +69,31 @@ class Session:
                 self.listeners.discard(ws)
 
 
+def parse_message(msg) -> tuple[str, object] | None:
+    """Turn one incoming JSON message into a queue item, or None if it's bad.
+
+    Bad input is caught here so one malformed caption can't stop detection,
+    and real errors inside the detector are never hidden.
+    """
+    if not isinstance(msg, dict):
+        return None
+    kind = msg.get("type")
+    try:
+        if kind == "caption":
+            return kind, make_segment(msg["utterance_id"], msg["revision"], "unknown", msg["text"],
+                                      msg["start_s"], msg["end_s"], msg["is_final"],
+                                      speaker_raw=msg.get("speaker_raw"))
+        if kind == "set_elder":
+            return kind, msg.get("speaker_raw")
+        if kind == "end":
+            return kind, None
+    except (KeyError, TypeError, ValueError) as exc:
+        log.warning("bad %s message skipped: %s", kind, type(exc).__name__)  # never log text
+        return None
+    log.warning("ignoring unknown message type %r", kind)
+    return None
+
+
 def get_session(session_id: str) -> Session:
     if session_id not in SESSIONS:
         SESSIONS[session_id] = Session(session_id)
@@ -93,8 +106,9 @@ async def captions(ws: WebSocket, session_id: str):
     s = get_session(session_id)
     try:
         while True:
-            msg = await ws.receive_json()
-            await s.queue.put((msg.get("type"), msg))  # "caption" | "set_elder" | "end"
+            item = parse_message(await ws.receive_json())
+            if item is not None:
+                await s.queue.put(item)
     except WebSocketDisconnect:
         pass
 

@@ -7,7 +7,7 @@ VA = {T.VERIFICATION_AVOIDANCE}
 
 
 def cm():
-    return CounterMoves(CFG, "s1")
+    return CounterMoves(CFG)
 
 
 def test_first_high_shows_codeword_and_alerts():

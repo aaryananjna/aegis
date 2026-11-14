@@ -16,6 +16,7 @@ Usage: python -m hangup_detect.replay file.call [--elder 0] [--json] [--realtime
 from __future__ import annotations
 
 import argparse
+import dataclasses
 import json
 import math
 import re
@@ -28,7 +29,7 @@ from .pipeline import Detector
 from .types import Segment, make_segment
 
 _LINE = re.compile(r"^\[(?P<s>[\d.]+)-(?P<e>[\d.]+)\]\s*(?P<who>caller|elder|spk\d+):\s*(?P<text>.*)$")
-_HEADER = re.compile(r"^#\s*(?P<k>[a-z_]+):\s*(?P<v>.*)$")
+_HEADER = re.compile(r"^#\s*(?P<k>[a-z_]+):\s*(?P<v>.*?)(?:\s+#.*)?$")  # trailing "# note" ignored
 LABELS = {"scam", "benign"}
 SOURCES = {"synthetic", "team-staged"}
 
@@ -43,6 +44,10 @@ class Call:
         v = self.headers.get("onset_s")
         return float(v) if v else None
 
+    @property
+    def elder(self) -> str | None:
+        return self.headers.get("elder")
+
 
 def parse_call(text: str) -> Call:
     headers: dict[str, str] = {}
@@ -54,7 +59,7 @@ def parse_call(text: str) -> Call:
         if line.startswith("#"):
             m = _HEADER.match(line)
             if m:
-                headers[m["k"]] = re.sub(r"\s+#.*$", "", m["v"]).strip()
+                headers[m["k"]] = m["v"].strip()
             continue
         m = _LINE.match(line)
         if not m:
@@ -80,7 +85,7 @@ def replay(call: Call, elder: str | None = None, confirm: bool = True, caption_d
            on_event=None, feed_ms: list[float] | None = None) -> list[dict]:
     """Feed finals at end_s + caption_delay_s, tick every 1.0 s, then end."""
     if elder is None:
-        elder = call.headers.get("elder")
+        elder = call.elder
     d = Detector(config or Config(), call.headers["id"])
     out: list[dict] = []
 
@@ -93,10 +98,11 @@ def replay(call: Call, elder: str | None = None, confirm: bool = True, caption_d
     if confirm:
         emit(d.set_elder(None if no_speakers else elder, 0.0))
     segs = [_strip_speaker(s) if no_speakers else s for s in call.lines]
-    timeline = sorted(((s.end_s + caption_delay_s, 0, i) for i, s in enumerate(segs)), key=lambda x: (x[0], x[2]))
-    last = timeline[-1][0] if timeline else 0.0
+    # (time, kind, index): captions (kind 0) before the tick (kind 1) at the same time
+    timeline = [(s.end_s + caption_delay_s, 0, i) for i, s in enumerate(segs)]
+    last = max((t for t, _, _ in timeline), default=0.0)
     timeline += [(float(t), 1, -1) for t in range(1, math.ceil(last) + 1)]
-    timeline.sort(key=lambda x: (x[0], x[1], x[2]))
+    timeline.sort()
     started = time.monotonic()
     for at, kind, i in timeline:
         if realtime:
@@ -114,7 +120,7 @@ def replay(call: Call, elder: str | None = None, confirm: bool = True, caption_d
 
 
 def _strip_speaker(s: Segment) -> Segment:
-    return make_segment(s.utterance_id, s.revision, "unknown", s.text, s.start_s, s.end_s, s.is_final)
+    return dataclasses.replace(s, speaker="unknown", speaker_raw=None)
 
 
 def describe(e: dict) -> str:

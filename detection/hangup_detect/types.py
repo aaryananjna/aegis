@@ -47,9 +47,14 @@ class Evidence:
                 "span": list(self.span), "source": self.source}
 
 
+def speaker_id(x) -> str | None:
+    """Deepgram sends speaker ids as numbers; the elder tap sends text. Compare as text."""
+    return None if x is None else str(x).strip()
+
+
 def make_segment(utterance_id: str, revision: int, speaker: str, text: str,
                  start_s: float, end_s: float, is_final: bool,
-                 speaker_raw: str | None = None) -> Segment:
+                 speaker_raw: str | int | None = None) -> Segment:
     """Build a Segment from untrusted input: clean speaker, cap text, check times."""
     for name, v in (("start_s", start_s), ("end_s", end_s)):
         if not math.isfinite(v) or v < 0:
@@ -63,5 +68,5 @@ def make_segment(utterance_id: str, revision: int, speaker: str, text: str,
         speaker=speaker if speaker in SPEAKERS else "unknown",
         text=text[:MAX_TEXT], start_s=float(start_s), end_s=float(end_s),
         is_final=bool(is_final), truncated=truncated,
-        speaker_raw=None if speaker_raw is None else str(speaker_raw),
+        speaker_raw=speaker_id(speaker_raw),
     )

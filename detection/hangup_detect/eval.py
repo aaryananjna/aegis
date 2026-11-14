@@ -62,7 +62,7 @@ def compute_metrics(results: list[dict]) -> dict:
 def run_calls(calls, no_speakers=False):
     results, feed_ms = [], []
     for call in calls:
-        evs = replay(call, elder=call.headers.get("elder"), no_speakers=no_speakers, feed_ms=feed_ms)
+        evs = replay(call, no_speakers=no_speakers, feed_ms=feed_ms)
         high = next((e["t"] for e in evs if e["type"] == "risk" and e["level"] == "high"), None)
         alert = next((e["t"] for e in evs if e["type"] == "alert"), None)
         results.append({"id": call.headers["id"], "label": call.headers["label"],
