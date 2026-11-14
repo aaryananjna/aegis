@@ -49,7 +49,7 @@ export function PairPage() {
           <span className="text-[56px] text-calm">
             <CheckIcon />
           </span>
-          <h1 className="text-[34px] leading-tight font-semibold text-paper">
+          <h1 className="title">
             This laptop is set up for {state.name}
           </h1>
           <p className="text-[20px] text-paper-dim">There's nothing else to do here.</p>
@@ -57,7 +57,7 @@ export function PairPage() {
       )}
       {state.kind === 'not-paired' && (
         <section className="flex flex-col gap-3">
-          <h1 className="text-[32px] leading-tight font-semibold text-paper">This laptop isn't set up yet</h1>
+          <h1 className="title">This laptop isn't set up yet</h1>
           <p className="text-[20px] text-paper-dim">
             Open the pairing link a family member sent you, on this laptop.
           </p>
@@ -65,7 +65,7 @@ export function PairPage() {
       )}
       {state.kind === 'error' && (
         <section className="flex flex-col gap-3">
-          <h1 className="text-[32px] leading-tight font-semibold text-paper">Couldn't set up this laptop</h1>
+          <h1 className="title">Couldn't set up this laptop</h1>
           <p role="alert" className="text-[20px] text-paper-dim">{state.message}</p>
         </section>
       )}

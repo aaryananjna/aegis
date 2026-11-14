@@ -31,7 +31,7 @@ export function AccountPage() {
 
   return (
     <Page>
-      <h1 className="text-[32px] leading-tight font-semibold text-paper">
+      <h1 className="title">
         {mode === 'login' ? 'Log in' : 'Create your account'}
       </h1>
       <p className="text-[18px] text-paper-dim">

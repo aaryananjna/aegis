@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { CaptionPane } from './CaptionPane'
 import { CardPane, type Reply } from './CardPane'
@@ -30,11 +30,12 @@ export function ElderScreen() {
   // and tapping the wrong "Voice 1" would mark the caller as Grandma (#40). ?voices=pick brings
   // back the voice picker for setups where labels are reliable.
   const pickVoices = search.get('voices') === 'pick'
+  const embedded = search.get('embed') === '1' // inside the landing page's demo
   // A new call (or sample) starts the screen fresh, including the voice choice.
-  return <ElderCall key={JSON.stringify(feed) + pickVoices} feed={feed} pickVoices={pickVoices} />
+  return <ElderCall key={JSON.stringify(feed) + pickVoices} feed={feed} pickVoices={pickVoices} embedded={embedded} />
 }
 
-function ElderCall({ feed, pickVoices }: { feed: Feed; pickVoices: boolean }) {
+function ElderCall({ feed, pickVoices, embedded }: { feed: Feed; pickVoices: boolean; embedded: boolean }) {
   const { events, connection, error, send } = useEvents(feed)
   const state = useMemo(() => events.reduce(reduceElder, initialElderState), [events])
   const [tapped, setTapped] = useState<{ speakerRaw: string | null } | null>(null)
@@ -122,6 +123,15 @@ function ElderCall({ feed, pickVoices }: { feed: Feed; pickVoices: boolean }) {
       >
         <StatusBand level={state.level} notes={notes} brand={
           <>
+            {feed.kind !== 'live' && !embedded && (
+              <Link
+                to="/"
+                className="min-h-[48px] content-center rounded-xl border-2 border-paper/30 px-5 text-[length:clamp(18px,1.4vw,22px)]
+                           font-semibold text-paper hover:border-paper/60 focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-paper"
+              >
+                <span aria-hidden>← </span>Home
+              </Link>
+            )}
             {!state.ended && <EndCall onEnd={endCall} hangupShowing={state.card?.kind === 'hangup'} />}
             <AegisWordmark size="nav" />
           </>

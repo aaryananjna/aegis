@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router'
-import { AegisWordmark } from '../brand/AegisWordmark'
-import { ThemeToggle } from '../brand/ThemeToggle'
+import { SiteNav } from '../brand/SiteNav'
 import { CheckIcon, KeyIcon, PhoneDownIcon, PhoneIcon, ShieldIcon } from '../elder/Icons'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { endSummary, initialFamilyState, reduceFamily, type FamilyAlert } from './state'
@@ -17,10 +16,11 @@ export function FamilyPage() {
   const sample = feed.kind === 'fixture'
   const name = search.get('name') || (sample ? SAMPLE.name : 'your family member')
   const phone = search.get('phone') || (sample ? SAMPLE.phone : null)
-  return <FamilyWatch key={JSON.stringify(feed)} feed={feed} name={name} phone={phone} />
+  const embedded = search.get('embed') === '1' // inside the landing page's demo: no nav
+  return <FamilyWatch key={JSON.stringify(feed)} feed={feed} name={name} phone={phone} embedded={embedded} />
 }
 
-function FamilyWatch({ feed, name, phone }: { feed: Feed; name: string; phone: string | null }) {
+function FamilyWatch({ feed, name, phone, embedded }: { feed: Feed; name: string; phone: string | null; embedded: boolean }) {
   const { events, receivedAt, connection, error } = useEvents(feed)
   const state = useMemo(
     () => events.reduce((s, e, i) => reduceFamily(s, e, receivedAt[i]), initialFamilyState),
@@ -42,11 +42,8 @@ function FamilyWatch({ feed, name, phone }: { feed: Feed; name: string; phone: s
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 px-5
                      pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <header className="flex flex-col gap-1">
-        <nav aria-label="Aegis" className="flex items-center justify-between gap-3">
-          <AegisWordmark size="nav" />
-          <ThemeToggle />
-        </nav>
-        <h1 className="title mt-2">Watching over {name}</h1>
+        {!embedded && <SiteNav section="Family" />}
+        <h1 className="title mt-3">Watching over {name}</h1>
         <p className="text-[17px] text-mist">
           <Connection feed={feed} connection={connection} />
         </p>
@@ -58,7 +55,7 @@ function FamilyWatch({ feed, name, phone }: { feed: Feed; name: string; phone: s
         ) : null}
         {state.endedAt !== null && (
           <div className="glass rounded-2xl p-5">
-            <h2 className="text-[24px] font-semibold text-paper">Call ended</h2>
+            <h2 className="subtitle">Call ended</h2>
             <p className="mt-1 text-[19px] text-paper-dim">{endSummary(state, name)}</p>
             <p className="mt-2 text-[16px] text-mist">{clock(state.endedAt)}</p>
           </div>
@@ -181,7 +178,7 @@ function AllQuiet({ name }: { name: string }) {
       <span className="text-[44px] text-calm-text">
         <CheckIcon />
       </span>
-      <h2 className="text-[26px] font-semibold text-paper">All quiet</h2>
+      <h2 className="subtitle text-[1.5rem]">All quiet</h2>
       <p className="text-[19px] text-paper-dim">
         If a call to {name} looks like a scam, you'll see it here with the caller's exact words.
         Keep this page open.

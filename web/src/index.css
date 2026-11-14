@@ -37,6 +37,8 @@
 
   /* Installed faces only, so nothing has to load from the internet on the demo hotspot. */
   --font-read: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+  /* Headings, the wordmark and the End call dialog. Body text and captions stay sans. */
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
 }
 
 /* ---- Dark (default) ---------------------------------------------------------------------- */
@@ -165,12 +167,22 @@ body {
   }
 }
 
-/* Page titles: one size everywhere except the elder screen. */
+/* Page titles: always smaller than the nav wordmark (2.5rem), so the brand leads. */
 @utility title {
-  font-size: clamp(2.75rem, 5vw, 4.5rem);
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.02;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--color-heading);
+}
+
+/* Section headings on landing, /family, /evidence. */
+@utility subtitle {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.25;
   color: var(--color-heading);
 }
 
@@ -193,6 +205,7 @@ body {
 .wm {
   display: inline-flex;
   align-items: baseline;
+  font-family: var(--font-display);
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1;
@@ -201,7 +214,7 @@ body {
   font-size: clamp(4.5rem, 13vw, 10rem);
 }
 .wm-nav {
-  font-size: 2rem;
+  font-size: 2.5rem;
 }
 .wm-card {
   font-size: 2.75rem;

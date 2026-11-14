@@ -1,15 +1,13 @@
 import { AegisWordmark } from './AegisWordmark'
-import { ThemeToggle } from './ThemeToggle'
+import { SiteNav } from './SiteNav'
 
 // TEMPORARY: compare the two wordmark splits at every size. Remove once one is chosen.
 export function WordmarkPage() {
   const sizes = ['hero', 'card', 'nav'] as const
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-10 px-[5vw] py-8">
-      <nav aria-label="Aegis" className="flex items-center justify-between">
-        <h1 className="text-[20px] font-semibold text-heading">Wordmark: choose a split</h1>
-        <ThemeToggle />
-      </nav>
+      <SiteNav section="Wordmark" />
+      <h1 className="title">Choose a split</h1>
       {(['g', 'word'] as const).map((split) => (
         <section key={split} aria-label={`split ${split}`} className="glass flex flex-col gap-6 rounded-2xl p-8">
           <h2 className="text-[17px] font-semibold text-mist">

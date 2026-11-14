@@ -47,11 +47,11 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
                    backdrop:bg-black/60"
       >
         <div className="flex flex-col gap-6 p-[clamp(1.5rem,3vw,2.5rem)]">
-          <h2 id="end-title" className="text-[length:clamp(30px,2.8vw,42px)] leading-tight font-semibold">
+          <h2 id="end-title" className="font-display text-[length:clamp(32px,3vw,46px)] leading-tight font-bold">
             Are you sure this call is over?
           </h2>
           {hangupShowing && (
-            <p className="text-[length:clamp(22px,1.8vw,28px)] text-paper-dim">Did you hang up on them? Good.</p>
+            <p className="font-display text-[length:clamp(24px,2vw,30px)] font-semibold text-paper-dim">Did you hang up on them? Good.</p>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
             <button
@@ -60,7 +60,7 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
               autoFocus
               onClick={close}
               className={`min-h-[80px] rounded-2xl border-4 border-calm bg-calm/15 px-4
-                          text-[length:clamp(24px,2.2vw,32px)] font-semibold text-paper ${focusRing}`}
+                          font-display text-[length:clamp(24px,2.2vw,32px)] font-bold text-paper ${focusRing}`}
             >
               No, keep listening
             </button>
@@ -72,7 +72,7 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
                 onEnd()
               }}
               className={`min-h-[80px] rounded-2xl border-4 border-paper/40 px-4
-                          text-[length:clamp(24px,2.2vw,32px)] font-semibold text-paper ${focusRing}`}
+                          font-display text-[length:clamp(24px,2.2vw,32px)] font-bold text-paper ${focusRing}`}
             >
               Yes, the call is over
             </button>
