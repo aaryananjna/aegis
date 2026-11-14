@@ -1,0 +1,22 @@
+# id: heldout-07-sweepstakes-fees
+
+# label: scam
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-sweepstakes-fees
+
+# onset_s: 12.1
+
+# elder: 0
+
+[0.0-1.2] spk0: Hello?
+[1.7-7.7] spk1: Good afternoon, Mrs. Kowalski! I am thrilled to tell you that your entry won our second-place prize!
+[8.2-11.6] spk0: Did I? I enter those magazine puzzles all the time!
+[12.1-19.3] spk1: You won twenty-five thousand dollars! Before our courier delivers the check, we just need the federal withholding fee.
+[19.8-23.8] spk0: Can't you just take the taxes right out of the prize money?
+[24.3-31.1] spk1: Federal sweepstakes law requires the winner to pay the eight hundred dollar insurance and tax stamp up front.
+[31.6-35.2] spk0: I suppose that makes sense if it's the government rule.
+[35.7-42.1] spk1: Exactly. Once you send a cashier's check to our claims agent in Delaware, we release the funds.

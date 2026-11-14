@@ -1,0 +1,22 @@
+# id: heldout-01-grandkid-bail
+
+# label: scam
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-grandkid-bail
+
+# onset_s: 9.2
+
+# elder: 0
+
+[0.0-1.2] spk0: Hello, who is this?
+[1.7-5.7] spk1: Grandma? It's me. My voice sounds weird because I broke my nose.
+[6.2-8.7] spk0: Leo? Oh my goodness, what happened to your nose?
+[9.2-15.6] spk1: I was in a minor scuffle and the police are holding me at the station right now.
+[16.1-19.3] spk0: Holding you? Have you called your mother and father yet?
+[19.8-26.6] spk1: Please don't tell Mom, she'll kill me. Look, my public defender says I just need bail money today.
+[27.1-30.3] spk0: How much do they want, and where do I go?
+[30.8-38.0] spk1: It's two thousand dollars, and the court courier can pick up cash from your house in an hour.

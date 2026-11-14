@@ -1,0 +1,22 @@
+# id: heldout-06-power-disconnect
+
+# label: scam
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-power-disconnect
+
+# onset_s: 1.9
+
+# elder: 0
+
+[0.0-1.4] spk0: Hello, who's calling?
+[1.9-8.3] spk1: This is Valley Electric dispatch. Our technician is thirty minutes away from shutting off your power meter.
+[8.8-12.4] spk0: Shutting it off? My bill is on automatic payment every month!
+[12.9-19.3] spk1: Your bank rejected the last two payments when we upgraded our billing system, so your account is delinquent.
+[19.8-23.4] spk0: Well let me give you my credit card right now then.
+[23.9-30.7] spk1: Disconnection orders can't take cards over the phone. You have to buy a reload pack at the pharmacy.
+[31.2-34.0] spk0: The pharmacy down on Main Street?
+[34.5-40.9] spk1: Yes, go there now, buy a four hundred dollar Green Dot card, and read me the receipt number.

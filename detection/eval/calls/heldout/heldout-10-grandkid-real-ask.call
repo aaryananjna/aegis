@@ -1,0 +1,20 @@
+# id: heldout-10-grandkid-real-ask
+
+# label: benign
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-grandkid-real-ask
+
+# elder: 0
+
+[0.0-1.3] spk0: Hello, Grandpa speaking.
+[1.8-6.2] spk1: Hey Grandpa, it's Chloe! Sorry to call out of the blue, I'm between classes.
+[6.7-9.9] spk0: Chloe! How is the semester going up at State?
+[10.4-16.8] spk1: Really good, except my professor just added a required lab workbook that costs eighty-five dollars at the bookstore.
+[17.3-20.9] spk0: Oh dear, are you running a little short before payday?
+[21.4-27.8] spk1: Yeah, my dining hall shift check doesn't clear until Friday, and Mom said I could ask if you'd spot me.
+[28.3-32.3] spk0: Should I call your mom to see how to send it?
+[32.8-39.2] spk1: Sure, call Mom anytime, or you can just put a regular check in the mail and I'll pay you Sunday.

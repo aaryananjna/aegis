@@ -1,0 +1,20 @@
+# id: heldout-13-delivery-gate-code
+
+# label: benign
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-delivery-gate-code
+
+# elder: 0
+
+[0.0-1.2] spk0: Hello?
+[1.7-6.9] spk1: Hi, is this Mr. Novak? I'm the courier driver out at the front gate of your condo complex.
+[7.4-10.6] spk0: Yes, what are you delivering? I don't think I ordered anything.
+[11.1-17.1] spk1: The label says it's a gift basket from Harry and David, sent by a Sarah Novak in Seattle.
+[17.6-21.2] spk0: Oh, that's my daughter! Do you need to pay a fee?
+[21.7-27.7] spk1: No sir, it's all paid for. The callbox directory is just broken and I need the gate code.
+[28.2-31.8] spk0: I'm actually not allowed to give out the resident gate code.
+[32.3-37.9] spk1: No problem at all, I'll just leave it with the guard at the main clubhouse office then.

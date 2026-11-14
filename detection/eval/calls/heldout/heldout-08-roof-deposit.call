@@ -1,0 +1,22 @@
+# id: heldout-08-roof-deposit
+
+# label: scam
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-roof-deposit
+
+# onset_s: 9.7
+
+# elder: 0
+
+[0.0-1.3] spk0: Hello?
+[1.8-6.6] spk1: Hi Mr. Henderson, this is Craig. My crew is paving and doing roofs over at the Millers' house.
+[7.1-9.2] spk0: Oh, down at the end of the corner?
+[9.7-16.5] spk1: Yeah, and from up on the ladder I saw wind damage on your ridge vents that'll leak next rain.
+[17.0-20.6] spk0: Really? I can't climb up there anymore to look for myself.
+[21.1-27.9] spk1: Since we have leftover shingles on the truck today, I can patch it for half price right now.
+[28.4-31.6] spk0: Could you leave me a written estimate to look over?
+[32.1-39.3] spk1: The supplier needs four hundred cash for the sealant before noon, otherwise we have to pack up and leave.

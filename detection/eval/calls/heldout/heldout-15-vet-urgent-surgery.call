@@ -1,0 +1,20 @@
+# id: heldout-15-vet-urgent-surgery
+
+# label: benign
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-vet-urgent-surgery
+
+# elder: 0
+
+[0.0-1.1] spk0: Hello?
+[1.6-7.2] spk1: Mrs. Higgins, this is Dr. Ross at Creekside Vet Clinic. I'm calling quickly because Barnaby is under anesthesia.
+[7.7-10.5] spk0: Oh dear, is Barnaby okay? Did his teeth cleaning go wrong?
+[11.0-17.4] spk1: He's stable, but while cleaning we found a cracked molar with an abscess that really needs to come out now.
+[17.9-21.5] spk0: Well you have to pull it then! How much is that?
+[22.0-28.4] spk1: The extraction adds two hundred and ten dollars to the estimate, and I need your verbal permission while he's asleep.
+[28.9-32.1] spk0: Do you need my credit card number right this second?
+[32.6-38.6] spk1: No ma'am, we just settle the bill at the front desk when you pick him up at four.
