@@ -7,13 +7,14 @@
   --color-dusk-raised: #1d2b3c;
   --color-paper: #f4efe6;
   --color-paper-dim: #c3cad3;
-  --color-mist: #8c99a8;
+  --color-mist: #93a0ae; /* >= 4.8:1 on every surface and tint we use (a11y pass) */
   --color-glow: #f3c969;
   --color-glow-ink: #1b1406;
   --color-calm: #3e9e6a;
   --color-care: #e3a33b;
   --color-alarm: #d2483f;
   --color-alarm-deep: #8e1f19;
+  --color-alarm-text: #e8675d; /* "Warning" as text: 4.1:1 on the red tint; marks keep --color-alarm */
 
   /* Evidence page: where the risk comes from. Dark-mode categorical slots 1-3, validated on
      --color-dusk with the dataviz validator (worst adjacent CVD dE 9.4, contrast >= 3:1). */

@@ -55,6 +55,8 @@ export function VoicePicker({
               <button
                 type="button"
                 onClick={() => onPick(v.speakerRaw)}
+                aria-label={label(v, i)}
+                aria-describedby={`voice-line-${i}`}
                 className={`flex w-full flex-col items-start gap-1 rounded-2xl border-4 border-paper/25
                             bg-dusk-raised px-6 py-4 text-left hover:border-paper/60
                             motion-safe:transition-colors ${focusRing}`}
@@ -62,7 +64,7 @@ export function VoicePicker({
                 <span className="text-[length:clamp(24px,2vw,32px)] font-semibold text-paper">
                   {label(v, i)}
                 </span>
-                <span className="line-clamp-2 text-[length:clamp(20px,1.6vw,26px)] text-paper-dim">
+                <span id={`voice-line-${i}`} className="line-clamp-2 text-[length:clamp(20px,1.6vw,26px)] text-paper-dim">
                   “{v.lastText}”
                 </span>
               </button>

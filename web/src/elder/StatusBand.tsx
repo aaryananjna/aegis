@@ -5,7 +5,7 @@ import type { ElderState } from './state'
 export const LEVEL = {
   low: { word: 'Normal call', dot: 'bg-calm', text: 'text-calm' },
   elevated: { word: 'Be careful', dot: 'bg-care', text: 'text-care' },
-  high: { word: 'Warning', dot: 'bg-alarm', text: 'text-alarm' },
+  high: { word: 'Warning', dot: 'bg-alarm', text: 'text-alarm-text' },
 } as const
 
 export function StatusBand({

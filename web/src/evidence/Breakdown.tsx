@@ -18,7 +18,7 @@ export function BreakdownPanel({ point }: { point: RiskPoint }) {
     <section aria-labelledby="breakdown-h" className="flex flex-col gap-4">
       <div>
         <h2 id="breakdown-h" className="text-[20px] font-semibold text-paper">What added up</h2>
-        <p className="text-[15px] text-paper-dim">
+        <p aria-live="polite" className="text-[15px] text-paper-dim">
           At {point.t.toFixed(1)} s: {LEVEL_WORD[point.level]}, score {point.score.toFixed(2)}
         </p>
       </div>

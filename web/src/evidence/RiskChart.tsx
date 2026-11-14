@@ -60,7 +60,7 @@ export function RiskChart({
   return (
     <div
       ref={box}
-      className="relative outline-none focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-paper"
+      className="relative focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-paper"
       tabIndex={0}
       role="group"
       aria-label="Risk over the call. Left and right arrows step through changes; Escape shows the latest."
