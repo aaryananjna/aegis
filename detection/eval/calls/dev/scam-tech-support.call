@@ -1,0 +1,14 @@
+# id: scam-tech-support
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-tech-support
+# onset_s: 0.0
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-4.2] caller: Hi, this is Microsoft support. Your computer is sending us virus alerts.
+[4.8-6.6] elder: My computer? It seems fine.
+[7.2-11.7] caller: It's very urgent. Please go to your computer and press the Windows key.
+[12.3-13.8] elder: Okay, I'm there.
+[14.4-18.2] caller: Now download AnyDesk so I can fix it with remote access.
+[18.8-20.3] elder: Is that safe?
+[20.9-23.7] caller: Yes, just trust me, it's our standard process.

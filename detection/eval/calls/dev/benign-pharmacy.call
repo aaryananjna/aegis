@@ -1,0 +1,12 @@
+# id: benign-pharmacy
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-pharmacy
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-3.1] caller: Hello, this is Greenfield Pharmacy calling with a reminder.
+[3.7-5.2] elder: Yes, hello.
+[5.8-10.7] caller: Your prescription is ready, and your payment is due when you pick it up.
+[11.3-13.4] elder: Can I pay with my card?
+[14.0-18.5] caller: Yes, any card at the counter is fine. We're open until eight tonight.
+[19.1-20.9] elder: Thank you, I'll come tomorrow.

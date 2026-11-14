@@ -1,0 +1,14 @@
+# id: scam-romance-crypto
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-romance-crypto
+# onset_s: 6.0
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-2.8] caller: Hi beautiful, I missed you so much today.
+[3.4-5.2] elder: I missed you too, David.
+[5.8-10.3] caller: I found an amazing investment for us. Crypto, it doubles in a month.
+[10.9-13.0] elder: I don't know much about that.
+[13.6-19.5] caller: Just send what you can through Zelle it to my partner and I'll set it all up.
+[20.1-22.5] elder: My daughter says I should be careful.
+[23.1-25.9] caller: Let's keep this between us, she wouldn't understand.

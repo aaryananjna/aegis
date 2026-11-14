@@ -1,0 +1,11 @@
+# id: benign-friend-in-hurry
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-friend-in-hurry
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-4.2] caller: Hi June, it's Carol. I'm in a hurry so I'll be quick.
+[4.8-6.3] elder: Hi Carol, what's up?
+[6.9-10.4] caller: Book club moved to Thursday. Can you tell the others?
+[11.0-12.5] elder: Sure, I'll call Martha.
+[13.1-15.5] caller: Thanks, I have to run, talk soon.

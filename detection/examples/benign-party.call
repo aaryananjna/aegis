@@ -1,0 +1,13 @@
+# id: example-benign-party
+# label: benign
+# source: synthetic
+# set: example
+# group: real-grandson-party
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-1.0] spk0: Hello?
+[1.5-4.2] spk1: Hi Nana, it's me, Ryan! How was your week?
+[4.8-6.0] spk0: Ryan! It was lovely, thank you.
+[6.5-11.0] spk1: We're planning a surprise party for Mom on Saturday, so don't tell Mom, okay?
+[11.5-13.0] spk0: My lips are sealed. What time?
+[13.5-16.5] spk1: Around six. Can you bring your lemon cake? No rush, just let me know.
+[17.0-18.0] spk0: Of course I will.

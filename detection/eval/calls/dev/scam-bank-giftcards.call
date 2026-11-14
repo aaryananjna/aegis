@@ -1,0 +1,14 @@
+# id: scam-bank-giftcards
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-bank-giftcards
+# onset_s: 0.0
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-3.5] caller: This is your bank's fraud department. We've seen suspicious charges.
+[4.1-5.6] elder: Oh no, what charges?
+[6.2-10.4] caller: Someone is trying to empty your account. We need to act immediately.
+[11.0-12.5] elder: What should I do?
+[13.1-19.4] caller: Buy Target gift cards and read me the numbers on the back so we can secure the funds.
+[20.0-21.8] elder: Gift cards? That seems odd.
+[22.4-25.2] caller: It's how we trace the thief. Please hurry.
