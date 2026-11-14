@@ -13,9 +13,13 @@ dependencies = [
     "uvicorn[standard]>=0.29",
     "python-dotenv>=1.0",
     "asyncpg>=0.29",
+    "websockets>=13",
+    "certifi",
 ]
 
+# Laptop mic for live captions: pip install -e "server[mic]"
 [project.optional-dependencies]
+mic = ["sounddevice>=0.4"]
 dev = ["pytest", "httpx"]
 
 [tool.setuptools.packages.find]

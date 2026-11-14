@@ -28,3 +28,22 @@ cd server && pytest -q
 | `aegis_server/routes/auth.py` | `POST /auth/signup`, `/auth/login`, `/auth/logout` (TigerDB, step 5) |
 | `aegis_server/stt/deepgram.py` | Laptop mic → Deepgram → `caption` events (step 2) |
 | `aegis_server/db.py` | TigerDB connection (step 5) |
+
+## Live captions (Deepgram)
+
+```
+pip install -e "server[mic]"                       # sounddevice, for the laptop mic
+cd server
+python -m aegis_server.stt.deepgram --list-devices
+python -m aegis_server.stt.deepgram <session_id>   # mic -> Deepgram -> ws://localhost:8000/captions/<id>
+python -m aegis_server.stt.deepgram <session_id> --file call.wav --show   # a WAV, in real time
+```
+
+Works with this server or with `tools/dev_server` (same `/captions` route). Needs
+`DEEPGRAM_API_KEY` in `server/.env`. Options: `--device N`, `--server ws://host:port`,
+`--end` (end the call on exit), `--no-diarize`, `--show` (print final lines; off by default so
+caption text isn't logged). It prints how far captions trail speech when it stops.
+
+Deepgram Nova-3 with interim results, speaker labels and `mip_opt_out=true`. `stt/captions.py`
+turns each result into captions: one per speaker run, `utterance_id` `u<stretch>-<run>`,
+`revision` rising on each interim. Audio is never written to disk.
