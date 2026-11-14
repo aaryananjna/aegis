@@ -14,7 +14,7 @@ Last updated: 2026-11-13 by Aryan (goal, demo and status gaps; see the PR).
 | Prize | What proves it |
 |---|---|
 | Impactful AI | The live demo, plus held-out results on staged calls |
-| Accessibility | Huge live captions on every call, spoken cards, one calm card at a time |
+| Accessibility | Huge live captions on every call, one calm card at a time |
 | UI/UX | The `/elder` screen and the `/family` page |
 | AI Security | Reads the scam, not the voice, so a perfect voice clone doesn't beat it. The AI layer can only add risk, never remove it, so a caller saying "ignore your instructions" can't talk the score down |
 | Most Secure | No audio stored, no caption text logged, keys only on the server, per-call family link that expires |
