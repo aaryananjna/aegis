@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { AccountPage } from './accounts/AccountPage'
+import { WordmarkPage } from './brand/WordmarkPage'
 import { HomePage } from './accounts/HomePage'
 import { PairPage } from './accounts/PairPage'
 import { ElderScreen } from './elder/ElderScreen'
@@ -18,6 +19,7 @@ export function App() {
         <Route path="/account" element={<AccountPage />} />
         <Route path="/home" element={<HomePage />} />
         <Route path="/pair" element={<PairPage />} />
+        <Route path="/wordmark" element={<WordmarkPage />} /> {/* temporary: pick a split */}
       </Routes>
     </BrowserRouter>
   )

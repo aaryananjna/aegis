@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router'
-import { Wordmark } from '../brand/Wordmark'
+import { AegisWordmark } from '../brand/AegisWordmark'
+import { ThemeToggle } from '../brand/ThemeToggle'
 import { CheckIcon, KeyIcon, PhoneDownIcon, PhoneIcon, ShieldIcon } from '../elder/Icons'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { endSummary, initialFamilyState, reduceFamily, type FamilyAlert } from './state'
@@ -41,8 +42,11 @@ function FamilyWatch({ feed, name, phone }: { feed: Feed; name: string; phone: s
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 px-5
                      pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <header className="flex flex-col gap-1">
-        <Wordmark className="text-[24px]" />
-        <h1 className="title mt-2 text-paper">Watching over {name}</h1>
+        <nav aria-label="Aegis" className="flex items-center justify-between gap-3">
+          <AegisWordmark size="nav" />
+          <ThemeToggle />
+        </nav>
+        <h1 className="title mt-2">Watching over {name}</h1>
         <p className="text-[17px] text-mist">
           <Connection feed={feed} connection={connection} />
         </p>
@@ -84,14 +88,14 @@ const KIND = {
     told: (name: string) => `${name} was asked to check the family code word.`,
     box: 'bg-[color-mix(in_oklab,var(--color-care)_18%,var(--color-dusk))] border-care',
     icon: <KeyIcon />,
-    iconColor: 'text-care',
+    iconColor: 'text-care-text',
   },
   verify: {
     title: 'Possible scam call',
     told: (name: string) => `${name} was told not to pay or share any numbers.`,
     box: 'bg-[color-mix(in_oklab,var(--color-care)_18%,var(--color-dusk))] border-care',
     icon: <ShieldIcon />,
-    iconColor: 'text-care',
+    iconColor: 'text-care-text',
   },
   hangup: {
     title: 'Likely scam call',
@@ -119,7 +123,11 @@ function AlertCard({
   const passed = alert.kind === 'codeword' && codewordOk
   const Heading = big ? 'h2' : 'h3' // cards under "Earlier" sit one level below it
   return (
-    <article className={`flex flex-col gap-3 rounded-2xl border-2 ${big ? 'p-5' : 'p-4 opacity-90'} ${k.box}`}>
+    <article
+      className={`flex flex-col gap-3 rounded-2xl border-2 ${big ? 'p-5' : 'p-4 opacity-90'} ${k.box}`}
+      // The red card keeps white text in both themes (8.9:1 on red; 6.8:1 for the 85% lines).
+      style={alert.kind === 'hangup' ? ({ '--color-paper': '#ffffff', '--color-paper-dim': 'rgba(255,255,255,0.85)' } as CSSProperties) : undefined}
+    >
       <div className="flex items-start gap-3">
         <span className={`mt-1 shrink-0 ${big ? 'text-[34px]' : 'text-[26px]'} ${k.iconColor}`}>{k.icon}</span>
         <div className="flex flex-col gap-1">
@@ -133,7 +141,7 @@ function AlertCard({
       </div>
       {passed && (
         <p className="flex items-center gap-2 rounded-xl bg-calm/20 px-3 py-2 text-[20px] font-semibold text-paper">
-          <span className="text-calm">
+          <span className="text-calm-text">
             <CheckIcon />
           </span>
           They passed the code word
@@ -170,7 +178,7 @@ function AlertCard({
 function AllQuiet({ name }: { name: string }) {
   return (
     <div className="glass flex flex-col items-start gap-3 rounded-2xl p-6">
-      <span className="text-[44px] text-calm">
+      <span className="text-[44px] text-calm-text">
         <CheckIcon />
       </span>
       <h2 className="text-[26px] font-semibold text-paper">All quiet</h2>

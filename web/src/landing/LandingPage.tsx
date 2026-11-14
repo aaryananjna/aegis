@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
-import { Wordmark } from '../brand/Wordmark'
+import { AegisWordmark } from '../brand/AegisWordmark'
+import { ThemeToggle } from '../brand/ThemeToggle'
 
 const STEPS = [
   {
@@ -23,12 +24,17 @@ const linkClass =
 export function LandingPage() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-14 px-[5vw] py-10">
-      <header>
-        <Wordmark className="text-[28px]" />
-      </header>
+      <nav aria-label="Aegis" className="flex justify-end">
+        <ThemeToggle />
+      </nav>
 
       <section className="flex max-w-4xl flex-col gap-6">
-        <h1 className="title text-paper">Scam calls, caught by what they say.</h1>
+        <h1>
+          <AegisWordmark size="hero" />
+        </h1>
+        <p className="text-[length:clamp(1.75rem,3.2vw,2.75rem)] leading-tight font-extrabold tracking-[-0.03em] text-heading">
+          Scam calls, caught by what they say.
+        </p>
         <p className="max-w-2xl text-[21px] leading-relaxed text-paper-dim">
           Aegis sits beside a grandparent’s phone on speaker. It captions the call, spots the
           moves scammers make, tells Grandma one calm thing to do, and alerts the family.
@@ -46,13 +52,13 @@ export function LandingPage() {
       </section>
 
       <section aria-labelledby="how-h" className="flex flex-col gap-5">
-        <h2 id="how-h" className="text-[15px] font-semibold tracking-[0.12em] text-accent uppercase">
+        <h2 id="how-h" className="text-[15px] font-semibold tracking-[0.12em] text-heading uppercase">
           How it works
         </h2>
         <ul className="grid gap-5 md:grid-cols-3">
           {STEPS.map((s) => (
             <li key={s.title} className="glass flex flex-col gap-2 rounded-2xl p-6">
-              <h3 className="text-[21px] font-bold text-paper">{s.title}</h3>
+              <h3 className="text-[21px] font-bold text-heading">{s.title}</h3>
               <p className="text-[17px] leading-relaxed text-paper-dim">{s.body}</p>
             </li>
           ))}

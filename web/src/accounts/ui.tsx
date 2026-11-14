@@ -25,7 +25,7 @@ export function Field({
       <span className="text-[17px] font-semibold text-paper">{label}</span>
       <input
         {...input}
-        className={`min-h-[52px] rounded-xl border-2 border-white/20 bg-dusk-raised px-4 text-[19px]
+        className={`min-h-[52px] rounded-xl border-2 border-paper/20 bg-dusk-raised px-4 text-[19px]
                     text-paper placeholder:text-mist focus:border-paper/70 ${focusRing}`}
       />
       {hint && <span className="text-[15px] text-mist">{hint}</span>}
@@ -41,7 +41,7 @@ export function Button({
   const look =
     kind === 'primary'
       ? 'bg-paper text-dusk disabled:opacity-60'
-      : 'border-2 border-white/25 text-paper hover:border-white/50'
+      : 'border-2 border-paper/25 text-paper hover:border-paper/50'
   return (
     <button
       {...rest}

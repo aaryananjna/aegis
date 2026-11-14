@@ -3,9 +3,10 @@ import { useSearchParams } from 'react-router'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { CaptionPane } from './CaptionPane'
 import { CardPane, type Reply } from './CardPane'
+import { EndCall } from './EndCall'
 import { StartProtection } from './StartProtection'
 import { initialElderState, noVoiceLabels, reduceElder, type Voice } from './state'
-import { Wordmark } from '../brand/Wordmark'
+import { AegisWordmark } from '../brand/AegisWordmark'
 import { StatusBand } from './StatusBand'
 import { GuessedVoice, VoicePicker } from './VoicePicker'
 
@@ -38,6 +39,11 @@ function ElderCall({ feed, pickVoices }: { feed: Feed; pickVoices: boolean }) {
   const state = useMemo(() => events.reduce(reduceElder, initialElderState), [events])
   const [tapped, setTapped] = useState<{ speakerRaw: string | null } | null>(null)
   const [reply, setReply] = useState<Reply>('none')
+  const [endNote, setEndNote] = useState<string | null>(null)
+  const endCall = () => {
+    if (feed.kind !== 'live') return setEndNote('Sample call: nothing to end')
+    setEndNote(send({ type: 'end' }) ? 'Ending the call…' : 'Not ended: no connection. Try again in a moment.')
+  }
 
   // Who the grandparent is. Settled by a tap here, by elder_set "tap" (a tap that reached the
   // detector), or by elder_set null (labels off: everyone is scored, #40). A server guess for a
@@ -96,6 +102,7 @@ function ElderCall({ feed, pickVoices }: { feed: Feed; pickVoices: boolean }) {
   if (connection === 'reconnecting') notes.push('Reconnecting…')
   if (picked?.speakerRaw === null) notes.push('Listening to everyone on the call')
   if (state.ended) notes.push('Call ended')
+  else if (endNote) notes.push(endNote)
   if (state.warning) notes.push(state.warning)
   if (reply === 'sample') notes.push('Sample call: your answer was not sent')
   if (reply === 'not-sent') notes.push('Answer not sent: no connection. Tap again in a moment.')
@@ -113,7 +120,12 @@ function ElderCall({ feed, pickVoices }: { feed: Feed; pickVoices: boolean }) {
         className={`flex min-h-0 flex-col motion-safe:transition-colors motion-safe:duration-[1500ms]
                     ${TINT[state.level ?? 'none']}`}
       >
-        <StatusBand level={state.level} notes={notes} brand={<Wordmark className="text-[length:clamp(22px,1.8vw,30px)]" />}>
+        <StatusBand level={state.level} notes={notes} brand={
+          <>
+            {!state.ended && <EndCall onEnd={endCall} hangupShowing={state.card?.kind === 'hangup'} />}
+            <AegisWordmark size="nav" />
+          </>
+        }>
           {!picked && state.card && (guess !== null ? (
             <VoicePicker voices={state.voices.filter((v) => v.speakerRaw !== guess)}
                          label={(v) => voiceLabel(v, state.voices.indexOf(v))}

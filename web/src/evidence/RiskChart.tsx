@@ -74,11 +74,11 @@ export function RiskChart({
         ].map(({ v, word }) => (
           <g key={v}>
             <line x1={M.l} x2={W - M.r} y1={y(v)} y2={y(v)} stroke="currentColor"
-                  className="text-white/15" strokeDasharray="4 4" />
+                  className="text-paper/15" strokeDasharray="4 4" />
             <text x={W - M.r + 8} y={y(v) + 4} className="fill-mist text-[13px]">{word} ({v})</text>
           </g>
         ))}
-        <line x1={M.l} x2={W - M.r} y1={y(0)} y2={y(0)} className="stroke-white/25" />
+        <line x1={M.l} x2={W - M.r} y1={y(0)} y2={y(0)} className="stroke-paper/25" />
         {[0, 0.5, 1].map((v) => (
           <text key={v} x={M.l - 10} y={y(v) + 4} textAnchor="end" className="fill-mist text-[13px]">{v}</text>
         ))}
@@ -90,7 +90,7 @@ export function RiskChart({
         {state.cards.map((c) => (
           <g key={`${c.kind}-${c.t}`}>
             <line x1={x(c.t)} x2={x(c.t)} y1={M.t - 6} y2={y(0)} strokeWidth={2}
-                  className={c.kind === 'hangup' ? 'stroke-alarm' : 'stroke-care'} />
+                  className={c.kind === 'hangup' ? 'stroke-alarm-text' : 'stroke-care-text'} />
             <text x={x(c.t) + (c.kind === 'hangup' ? 6 : -6)} y={M.t - 12}
                   textAnchor={c.kind === 'hangup' ? 'start' : 'end'}
                   className="fill-paper text-[13px] font-semibold">{CARD_LABEL[c.kind]}</text>
@@ -103,7 +103,7 @@ export function RiskChart({
           const p = riskAt(state, m.t)
           return p ? (
             <circle key={`${m.utteranceId}-${m.t}`} cx={x(m.t)} cy={y(p.score)} r={5}
-                    className="fill-glow stroke-dusk" strokeWidth={2} />
+                    className="fill-mark stroke-dusk" strokeWidth={2} />
           ) : null
         })}
 
@@ -118,7 +118,7 @@ export function RiskChart({
 
       {focus !== null && atFocus && (
         <div
-          className="pointer-events-none absolute top-2 max-w-72 rounded-lg border border-white/15 bg-dusk-raised
+          className="pointer-events-none absolute top-2 max-w-72 rounded-lg border border-paper/15 bg-dusk-raised
                      px-3 py-2 text-[14px] text-paper shadow-lg"
           style={x(focus) > W / 2 ? { right: W - x(focus) + 12 } : { left: x(focus) + 12 }}
         >

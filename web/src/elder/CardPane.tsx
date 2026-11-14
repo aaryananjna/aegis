@@ -39,8 +39,8 @@ export function CardPane({
 }
 
 const CARD_LOOK = {
-  codeword: { icon: <KeyIcon />, box: 'bg-dusk-raised text-paper', iconColor: 'text-care' },
-  verify: { icon: <ShieldIcon />, box: 'bg-dusk-raised text-paper', iconColor: 'text-care' },
+  codeword: { icon: <KeyIcon />, box: 'bg-dusk-raised text-paper', iconColor: 'text-care-text' },
+  verify: { icon: <ShieldIcon />, box: 'bg-dusk-raised text-paper', iconColor: 'text-care-text' },
   hangup: { icon: <PhoneDownIcon />, box: 'bg-alarm-deep text-white', iconColor: 'text-white' },
 } as const
 

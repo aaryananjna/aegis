@@ -114,6 +114,7 @@ export type AegisEvent =
 export type OutboundMessage =
   | { type: 'set_elder'; session_id?: string; speaker_raw: string | null }
   | { type: 'codeword_result'; session_id?: string; ok: boolean }
+  | { type: 'end'; session_id?: string } // elder only (#42): ends the call for everyone
 
 // C4: the only events the family page receives (plus codeword_ok, per detection/INTEGRATION.md).
 export const FAMILY_TYPES: ReadonlySet<AegisEvent['type']> = new Set([

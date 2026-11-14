@@ -102,7 +102,7 @@ function ElderCard({ elder, onError }: { elder: ElderRef; onError: (e: unknown) 
     <article className="flex flex-col gap-3 rounded-2xl bg-dusk-raised p-5">
       <div className="flex items-baseline justify-between gap-3">
         <h3 className="text-[24px] font-semibold text-paper">{elder.display_name}</h3>
-        <span className="shrink-0 whitespace-nowrap rounded-full border border-white/25 px-3 py-0.5 text-[15px] text-paper-dim">
+        <span className="shrink-0 whitespace-nowrap rounded-full border border-paper/25 px-3 py-0.5 text-[15px] text-paper-dim">
           {owner ? 'You added them' : 'You can view'}
         </span>
       </div>
