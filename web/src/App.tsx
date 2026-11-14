@@ -1,4 +1,7 @@
 import { BrowserRouter, Link, Route, Routes } from 'react-router'
+import { AccountPage } from './accounts/AccountPage'
+import { HomePage } from './accounts/HomePage'
+import { PairPage } from './accounts/PairPage'
 import { ElderScreen } from './elder/ElderScreen'
 import { EvidencePage } from './evidence/EvidencePage'
 import { FamilyPage } from './family/FamilyPage'
@@ -13,6 +16,7 @@ function Home() {
         <li><Link to="/elder?fixture=demo-bank">/elder</Link> (fake bank sample)</li>
         <li><Link to="/family?fixture=scam-grandson">/family</Link> (scam sample)</li>
         <li><Link to="/evidence?fixture=scam-grandson">/evidence</Link> (scam sample)</li>
+        <li><Link to="/account">/account</Link> (family log in / sign up)</li>
       </ul>
     </main>
   )
@@ -26,6 +30,9 @@ export function App() {
         <Route path="/elder" element={<ElderScreen />} />
         <Route path="/family" element={<FamilyPage />} />
         <Route path="/evidence" element={<EvidencePage />} />
+        <Route path="/account" element={<AccountPage />} />
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/pair" element={<PairPage />} />
       </Routes>
     </BrowserRouter>
   )
