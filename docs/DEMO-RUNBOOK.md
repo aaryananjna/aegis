@@ -3,9 +3,9 @@
 How to start everything for the demo, with exact commands, and what to do when something
 breaks. The call script itself is in `detection/demo/README.md`.
 
-**Status (14 Nov, early morning):** the screens and `tools/dev_server` are in open PRs (#17–#29,
-#21). Until they merge, run from branch `c/a11y` (the top of the web stack) with `tools/` from
-`c/dev-server`. Steps marked ⚠ haven't been tried end to end yet.
+**Status (14 Nov, 4 pm):** everything is on `main`: the screens, `tools/dev_server` and A's real
+server (#38). Voice guessing and labels-off are in #39. Steps marked ⚠ haven't been tried end to
+end yet.
 
 Everything runs on the presenter's laptop. The family phone reaches it through a Cloudflare
 quick tunnel over a phone hotspot (campus Wi-Fi often blocks device-to-device traffic).
@@ -30,7 +30,7 @@ environment. With no key it runs rules only, and `/evidence` says so.
 
 ## 1. Start (three terminals)
 
-**Terminal 1, server.** Use A's server if it's ready; otherwise the fallback:
+**Terminal 1, server.** Use A's server; the fallback has the same routes:
 
 ```
 # A's server (preferred, has the laptop mic and Deepgram):
@@ -67,22 +67,30 @@ socket through Vite's proxy, and the family token protects it. `/sessions`, `/ty
 
 ## 2. Start a call
 
+For the demo, A's server runs the laptop mic **with speaker labels off** (#39/#40): one mic
+hears both voices, and Deepgram's labels drift between them. Every line is scored from the start,
+so nobody needs to tap. Keep Grandma's lines free of scam words ("Hello?", "Who is this?",
+"Oh no", "Okay").
+
 ```
 curl -s -X POST localhost:8000/sessions -H 'content-type: application/json' \
-     -d '{"name":"Rose","phone":"+15550100"}' \
+     -d '{"name":"Rose","phone":"+15550100","mic":true,"labels":false}' \
 | python3 -c "import json,sys,os; d=json.load(sys.stdin); t=os.environ['TUNNEL']; print('session:', d['session_id']); print('elder:  ', d['elder_url']); print('family: ', d['family_url'].replace('http://localhost:5173', t))"
 ```
 
-(Tested against `tools/dev_server`. A's `POST /sessions` returns the same shape.)
+(Tested against `tools/dev_server` and A's server. Drop `"mic":true,"labels":false` for a
+typed-only call.)
 
 - Open **elder** on the laptop, full screen (Ctrl+Cmd+F in Chrome).
 - Send **family** to the phone (AirDrop or a message to yourself) and open it **before** the
   call. It should say "Watching over Rose · Connected".
 - Optional: open `http://localhost:5173/evidence?session=<id>&token=<elder token>` on a second
   laptop window for judges.
-- When the call connects, tap the judge's voice on "Tap the voice that is you." If the screen
-  says "This call doesn't show who is talking", tap **Start protection** (it also starts by
-  itself after 10 s).
+- **Labels off (the demo):** the elder screen shows "Aegis is listening." and "listening to
+  everyone" at once. Nothing to tap.
+- **Labels on:** the server guesses Grandma from her first "Hello?" and the screen says "We think
+  this voice is you ✓". If it's wrong, tap the right voice under "Not you? Tap your voice". With
+  no guess, tap the voice on "Tap the voice that is you".
 
 End the call: `curl -s -X POST localhost:8000/sessions/<session>/end`. Both screens show
 "Call ended".
@@ -91,7 +99,7 @@ End the call: `curl -s -X POST localhost:8000/sessions/<session>/end`. Both scre
 
 | Problem | Do this |
 |---|---|
-| Hall too loud, captions wrong | **Typed fallback** (fallback server): `python tools/dev_server/typed_cli.py <session>`, then type `c: …` for the caller and `e: …` for the grandparent. Lines show a "typed" badge on the screen. Say so if asked. ⚠ A's `server/` has no `/typed` yet (#19). |
+| Hall too loud, captions wrong | **Typed fallback** (works with A's server and the fallback, both have `POST /typed`): `python tools/dev_server/typed_cli.py <session>`, then type `c: …` for the caller and `e: …` for the grandparent. Lines show a "typed" badge on the screen. Say so if asked. |
 | A's server not ready or crashes | Switch terminal 1 to the fallback server, start a new call (section 2), and use the typed fallback. |
 | Tunnel fails or the phone can't connect | Try a new tunnel. If that fails, open the family link on a second laptop: `http://localhost:5173/family?session=…&token=…`. |
 | Everything live fails | **Sample calls**, labelled "Sample call" on screen. Say plainly it's a recorded sample, never live: `http://localhost:5173/elder?fixture=demo-bank`, `…/elder?fixture=scam-grandson`, `…/family?fixture=scam-grandson`, `…/evidence?fixture=demo-bank`. Add `&speed=2` to go faster. |

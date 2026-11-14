@@ -107,3 +107,21 @@ test('no-labels fixture: captions carry no speaker and the scam still reaches ha
   assert.equal(noVoiceLabels(s), true)
   assert.equal(s.card?.kind, 'hangup')
 })
+
+test('elder_set: the latest one wins, by server or by tap', () => {
+  const es = (speaker_raw: string | null, by: 'server' | 'tap') =>
+    ({ ...base, type: 'elder_set', speaker_raw, by }) as AegisEvent
+  assert.equal(run([]).elderSet, null)
+  assert.deepEqual(run([es('0', 'server')]).elderSet, { speakerRaw: '0', by: 'server' })
+  assert.deepEqual(run([es('0', 'server'), es('1', 'tap')]).elderSet, { speakerRaw: '1', by: 'tap' })
+  assert.deepEqual(run([es(null, 'server')]).elderSet, { speakerRaw: null, by: 'server' })
+})
+
+test('autovoice and labels-off fixtures carry elder_set and still reach hangup', () => {
+  const auto = run(fixture('scam-autovoice'))
+  assert.deepEqual(auto.elderSet, { speakerRaw: '0', by: 'server' })
+  assert.equal(auto.card?.kind, 'hangup')
+  const off = run(fixture('scam-labelsoff'))
+  assert.deepEqual(off.elderSet, { speakerRaw: null, by: 'server' })
+  assert.equal(off.card?.kind, 'hangup')
+})

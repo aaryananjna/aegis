@@ -86,6 +86,15 @@ export interface StatusEvent extends Base {
   warning: string | null
 }
 
+// Who the server is scoring as the grandparent (A, #39/#40). Elder screens only, no seq.
+// by "server": the server guessed it (first "Hello?"), or speaker_raw null in labels-off mode.
+// by "tap": the grandparent's own tap reached the detector.
+export interface ElderSetEvent extends Base {
+  type: 'elder_set'
+  speaker_raw: string | null
+  by: 'server' | 'tap'
+}
+
 export interface CallEndedEvent extends Base {
   type: 'call_ended'
 }
@@ -97,6 +106,7 @@ export type AegisEvent =
   | InterventionEvent
   | AlertEvent
   | CodewordOkEvent
+  | ElderSetEvent
   | StatusEvent
   | CallEndedEvent
 
