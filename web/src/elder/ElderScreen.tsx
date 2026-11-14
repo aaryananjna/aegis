@@ -6,7 +6,7 @@ import { CardPane, type Reply } from './CardPane'
 import { StartProtection } from './StartProtection'
 import { initialElderState, noVoiceLabels, reduceElder, type Voice } from './state'
 import { StatusBand } from './StatusBand'
-import { VoicePicker } from './VoicePicker'
+import { GuessedVoice, VoicePicker } from './VoicePicker'
 
 // The room's light: the lower part of the screen takes on the status color.
 const TINT = {
@@ -31,21 +31,30 @@ export function ElderScreen() {
 function ElderCall({ feed }: { feed: Feed }) {
   const { events, connection, error, send } = useEvents(feed)
   const state = useMemo(() => events.reduce(reduceElder, initialElderState), [events])
-  const [picked, setPicked] = useState<{ speakerRaw: string | null } | null>(null)
+  const [tapped, setTapped] = useState<{ speakerRaw: string | null } | null>(null)
   const [reply, setReply] = useState<Reply>('none')
+
+  // Who the grandparent is. Settled by a tap here, by elder_set "tap" (a tap that reached the
+  // detector), or by elder_set null (labels off: everyone is scored, #40). A server guess for a
+  // named voice ("Hello?" first) is used for labels but stays correctable with a tap.
+  const es = state.elderSet
+  const picked =
+    tapped ?? (es && (es.by === 'tap' || es.speakerRaw === null) ? { speakerRaw: es.speakerRaw } : null)
+  const guess = !picked && es?.by === 'server' ? es.speakerRaw : null
+  const elder = picked ?? (guess !== null ? { speakerRaw: guess } : null)
 
   const voiceNumber = (raw: string | null) => state.voices.findIndex((v) => v.speakerRaw === raw) + 1
   const speakerLabel = (raw: string | null): string | null => {
     if (raw === null) return null
-    if (!picked) return `Voice ${voiceNumber(raw)}`
-    if (picked.speakerRaw === null) return null // no voice labels: don't guess
-    return raw === picked.speakerRaw ? 'You' : 'Caller'
+    if (!elder) return `Voice ${voiceNumber(raw)}`
+    if (elder.speakerRaw === null) return null // no voice labels: don't guess
+    return raw === elder.speakerRaw ? 'You' : 'Caller'
   }
   const voiceLabel = (v: Voice, i: number) =>
     v.speakerRaw === null ? 'Everyone (no voice labels)' : `Voice ${i + 1}`
 
   const pickVoice = (speakerRaw: string | null) => {
-    setPicked({ speakerRaw })
+    setTapped({ speakerRaw })
     send({ type: 'set_elder', speaker_raw: speakerRaw }) // a sample call has nowhere to send it
   }
 
@@ -54,13 +63,13 @@ function ElderCall({ feed }: { feed: Feed }) {
   const unlabeled = noVoiceLabels(state)
   const heardSomething = state.order.length > 0
   useEffect(() => {
-    if (picked || !unlabeled || !heardSomething) return
+    if (picked || guess !== null || !unlabeled || !heardSomething) return
     const id = window.setTimeout(() => {
-      setPicked({ speakerRaw: null })
+      setTapped({ speakerRaw: null })
       send({ type: 'set_elder', speaker_raw: null })
     }, AUTO_START_MS)
     return () => window.clearTimeout(id)
-  }, [picked, unlabeled, heardSomething, send])
+  }, [picked, guess, unlabeled, heardSomething, send])
   const startProtection = () => pickVoice(null)
 
   const answerCodeword = (ok: boolean) => {
@@ -92,7 +101,11 @@ function ElderCall({ feed }: { feed: Feed }) {
                     ${TINT[state.level ?? 'none']}`}
       >
         <StatusBand level={state.level} notes={notes}>
-          {!picked && state.card && (unlabeled ? (
+          {!picked && state.card && (guess !== null ? (
+            <VoicePicker voices={state.voices.filter((v) => v.speakerRaw !== guess)}
+                         label={(v) => voiceLabel(v, state.voices.indexOf(v))}
+                         onPick={pickVoice} compact prompt="Not you? Tap your voice:" />
+          ) : unlabeled ? (
             <StartProtection onStart={startProtection} compact />
           ) : (
             <VoicePicker voices={state.voices} label={voiceLabel} onPick={pickVoice} compact />
@@ -105,6 +118,8 @@ function ElderCall({ feed }: { feed: Feed }) {
           empty={
             problem ? (
               <p className={idleText}>{problem}</p>
+            ) : !picked && guess !== null ? (
+              <GuessedVoice voices={state.voices} guess={guess} label={voiceLabel} onPick={pickVoice} />
             ) : !picked && unlabeled ? (
               <StartProtection onStart={startProtection} />
             ) : !picked ? (

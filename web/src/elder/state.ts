@@ -30,6 +30,7 @@ export interface ElderState {
   codewordOk: boolean
   warning: string | null
   stt: StatusEvent['stt'] | null // where captions come from, when the server says
+  elderSet: { speakerRaw: string | null; by: 'server' | 'tap' } | null // latest elder_set
   ended: boolean
 }
 
@@ -43,6 +44,7 @@ export const initialElderState: ElderState = {
   codewordOk: false,
   warning: null,
   stt: null,
+  elderSet: null,
   ended: false,
 }
 
@@ -93,6 +95,8 @@ export function reduceElder(s: ElderState, e: AegisEvent): ElderState {
       return { ...s, codewordOk: true }
     case 'status':
       return { ...s, warning: e.warning, stt: e.stt ?? s.stt }
+    case 'elder_set':
+      return { ...s, elderSet: { speakerRaw: e.speaker_raw, by: e.by } }
     case 'call_ended':
       return { ...s, ended: true }
     default:

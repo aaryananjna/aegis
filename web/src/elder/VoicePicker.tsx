@@ -1,3 +1,4 @@
+import { CheckIcon } from './Icons'
 import type { Voice } from './state'
 
 export const focusRing =
@@ -12,17 +13,19 @@ export function VoicePicker({
   label,
   onPick,
   compact = false,
+  prompt,
 }: {
   voices: Voice[]
   label: (v: Voice, i: number) => string
   onPick: (speakerRaw: string | null) => void
   compact?: boolean
+  prompt?: string
 }) {
   if (compact) {
     return (
       <section aria-labelledby="who-heading" className="flex flex-wrap items-center gap-3">
         <h2 id="who-heading" className="text-[length:clamp(20px,1.6vw,26px)] font-semibold text-paper">
-          Tap the voice that is you:
+          {prompt ?? 'Tap the voice that is you:'}
         </h2>
         {voices.map((v, i) => (
           <button
@@ -71,6 +74,45 @@ export function VoicePicker({
             </li>
           ))}
         </ul>
+      )}
+    </section>
+  )
+}
+
+/**
+ * The server guessed the grandparent's voice from her first "Hello?" (elder_set by "server",
+ * #40). Say so quietly, and keep the other voices tappable in case the guess is wrong.
+ */
+export function GuessedVoice({
+  voices,
+  guess,
+  label,
+  onPick,
+}: {
+  voices: Voice[]
+  guess: string
+  label: (v: Voice, i: number) => string
+  onPick: (speakerRaw: string | null) => void
+}) {
+  const i = voices.findIndex((v) => v.speakerRaw === guess)
+  const mine = voices[i]
+  const others = voices.filter((v) => v.speakerRaw !== guess)
+  return (
+    <section aria-labelledby="guess-heading" className="flex flex-col gap-4">
+      <h2 id="guess-heading" className="flex items-center gap-3 text-[length:clamp(26px,2.2vw,34px)] font-semibold text-paper">
+        <span className="text-calm">
+          <CheckIcon />
+        </span>
+        We think this voice is you
+      </h2>
+      {mine && (
+        <p className="rounded-2xl border-4 border-calm/60 bg-calm/10 px-6 py-3 text-[length:clamp(22px,1.8vw,28px)] text-paper-dim">
+          <span className="font-semibold text-paper">{label(mine, i)}</span> “{mine.lastText}”
+        </p>
+      )}
+      {others.length > 0 && (
+        <VoicePicker voices={others} label={(v) => label(v, voices.indexOf(v))} onPick={onPick}
+                     compact prompt="Not you? Tap your voice:" />
       )}
     </section>
   )
