@@ -26,7 +26,7 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(irs|internal revenue service|social security administration)\b",
         r"\b(calling from|this is) (medicare|social security)\b",
         r"\b(microsoft|apple|amazon|windows|geek squad|norton|mcafee) (support|security|technical|tech|fraud|billing)\b",
-        r"\b(your|the) bank'?s? (fraud|security) (department|team|division)\b",
+        r"\b((your|the) )?bank'?s? (fraud|security) (department|team|division)\b",
         r"\b(public defender|your (grandson'?s|lawyer|attorney))\b",
         # FTC: prize and lottery callers, fake FTC/FBI agents with badge numbers
         r"\byou('ve| have) (just )?won\b(?=.{0,40}\b(lottery|sweepstakes|prize|million|grant)\b)",
@@ -77,7 +77,7 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(go|going|sent|put you) (to|in) (jail|prison)\b",
         r"\b(i|i'?ve|he|she) (got|been|was) arrested\b",
         r"\b(legal action against you|sue you|deport(ed|ation)?)\b",
-        r"\b(shut (off|down)|disconnect) your (power|electricity|service|water|gas)\b",
+        r"(?#exact)\b(shut (off|down)|disconnect) your (power|electricity|service|water|gas)\b",  # "shut off water" is a plumber
         r"\b(suspend|freeze|close) your (account|benefits|social security|license)\b",
         # IRS page and FTC spotlight wording
         r"\bwarrant (will be|has been|is being) issued\b",
@@ -106,14 +106,73 @@ PATTERNS: dict[T, list[str]] = {
     T.DISTRESS: [
         r"\bi'?m (so )?(scared|terrified|in trouble|in big trouble|hurt|bleeding|crying)\b",
         r"\bi (got|was) in (an|a car) accident\b",
-        r"\b(please help( me)?|i need your help)\b",
+        r"(?#exact)\b(please help( me)?|i need your help)\b",  # "i need help" is everyday talk
         r"\b(i'?m|he'?s|she'?s) in the hospital\b",
         r"\bbroke my (nose|arm|leg|wrist)\b",
         r"\bpregnant woman\b",  # AARP grandparent scam
     ],
 }
 
-COMPILED = {t: [re.compile(p, _I) for p in ps] for t, ps in PATTERNS.items()}
+# Captions drop small words ("stay on line"). Each small word written in a pattern, alone or as
+# a group of only small words ("(your|the) "), becomes optional. Pronouns that carry meaning
+# (i, you, we, me, it, this) stay required. A small word only becomes optional after a real
+# word, so "from the police" can't shrink to just "police".
+_SMALL = "the|a|an|to|on|in|of|for|at|your|my|our|his|her|their|with|from"
+_SMALL_WORD = re.compile(rf"(?:(?<=\\b)|(?<=[ (|]))({_SMALL}) ")
+_SMALL_GROUP = re.compile(rf"\(((?:{_SMALL})(?:\|(?:{_SMALL}))*)\) ")
+
+
+def _required_path(prefix: str) -> str:
+    """Words a match must already have passed to reach the end of `prefix`.
+
+    Drops sibling alternatives ("a|b"), optional groups ("(...)?") and lookarounds.
+    """
+    stack: list[list[str]] = [[]]
+    i = 0
+    while i < len(prefix):
+        ch = prefix[i]
+        if ch == "\\":
+            if prefix[i + 1:i + 2] != "b":
+                stack[-1].append(prefix[i:i + 2])
+            i += 2
+            continue
+        if ch == "(":
+            if prefix[i + 1:i + 2] == "?" and prefix[i + 2:i + 3] in ("!", "=", "<"):
+                depth = 0  # skip the whole lookaround
+                while i < len(prefix):
+                    depth += {"(": 1, ")": -1}.get(prefix[i], 0) if prefix[i - 1:i] != "\\" else 0
+                    i += 1
+                    if depth == 0:
+                        break
+                continue
+            stack.append([])
+            i = prefix.index(":", i) + 1 if prefix[i + 1:i + 2] == "?" else i + 1
+            continue
+        if ch == "|":
+            stack[-1] = []
+        elif ch == ")":
+            inner = stack.pop()
+            if prefix[i + 1:i + 2] in ("?", "*"):
+                i += 1  # optional: a match can skip it
+            else:
+                stack[-1] += inner
+        else:
+            stack[-1].append(ch)
+        i += 1
+    return "".join(part for level in stack for part in level)
+
+
+def _loosen(pattern: str) -> str:
+    if pattern.startswith("(?#exact)"):  # opted out: the small word is what makes it a tactic
+        return pattern
+    def repl(m: re.Match, wrap: str) -> str:
+        before = _required_path(pattern[:m.start()])
+        return wrap.format(m.group(1)) if re.search(r"[a-z]", before) else m.group(0)
+    pattern = _SMALL_GROUP.sub(lambda m: repl(m, "(?:(?:{}) )?"), pattern)
+    return _SMALL_WORD.sub(lambda m: repl(m, "(?:{} )?"), pattern)
+
+
+COMPILED = {t: [re.compile(_loosen(p), _I) for p in ps] for t, ps in PATTERNS.items()}
 
 # Which impersonation patterns claim to be family (the first two); the rest claim to be an
 # official or a company. Family callers get the code word card; others get "call back".
