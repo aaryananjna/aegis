@@ -5,7 +5,7 @@
   runner stays `busy` until that thread returns, and the owner skips new requests meanwhile.
 - 1.5 s total budget. Late answers are simply never applied.
 - Keys are sent in headers only and never appear in errors or logs.
-Model names come from GROQ_MODEL / GEMINI_MODEL. The defaults are unchecked for Nov 2026.
+Model names come from GROQ_MODEL / GEMINI_MODEL. Groq default checked live 2026-11-14 (~340 ms); the Gemini default is unchecked.
 """
 from __future__ import annotations
 
@@ -19,8 +19,9 @@ from .llm import build_messages
 from .types import LLMRequest
 
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
+USER_AGENT = "aegis-detect/0.1"  # Groq's firewall blocks the default Python-urllib agent
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-DEFAULT_MODELS = {"groq": "llama-3.1-8b-instant", "gemini": "gemini-2.5-flash"}
+DEFAULT_MODELS = {"groq": "qwen/qwen3.8-27b", "gemini": "gemini-2.5-flash"}
 
 
 @dataclass(frozen=True)
@@ -80,7 +81,8 @@ def http_transport(env):
             body = {"model": model, "messages": messages, "temperature": 0,
                     "response_format": {"type": "json_object"}, "max_tokens": 400}
             req = urllib.request.Request(GROQ_URL, json.dumps(body).encode(), method="POST", headers={
-                "Authorization": f"Bearer {env['GROQ_API_KEY']}", "Content-Type": "application/json"})
+                "Authorization": f"Bearer {env['GROQ_API_KEY']}", "Content-Type": "application/json",
+                "User-Agent": USER_AGENT})
             with urllib.request.urlopen(req, timeout=timeout_s) as r:
                 return json.load(r)["choices"][0]["message"]["content"]
         body = {"systemInstruction": {"parts": [{"text": messages[0]["content"]}]},
@@ -88,7 +90,8 @@ def http_transport(env):
                 "generationConfig": {"responseMimeType": "application/json", "temperature": 0}}
         req = urllib.request.Request(GEMINI_URL.format(model=model), json.dumps(body).encode(),
                                      method="POST", headers={"x-goog-api-key": env["GEMINI_API_KEY"],
-                                                             "Content-Type": "application/json"})
+                                                             "Content-Type": "application/json",
+                                                             "User-Agent": USER_AGENT})
         with urllib.request.urlopen(req, timeout=timeout_s) as r:
             return json.load(r)["candidates"][0]["content"]["parts"][0]["text"]
     return call
