@@ -24,7 +24,7 @@ def parse_llm(raw: str, utterances: dict[str, str], t_s: float) -> list[Evidence
         return []
     try:
         obj = json.loads(raw)
-    except ValueError:
+    except (ValueError, RecursionError):  # deep nesting raises RecursionError on older Pythons
         return []
     items = obj.get("tactics") if isinstance(obj, dict) else None
     if not isinstance(items, list):

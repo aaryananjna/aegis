@@ -17,7 +17,12 @@ Rules: quote 2 to 30 words copied exactly from the line with that id. At most 8 
 If nothing is a scam tactic, reply {{"tactics": []}}."""
 
 
+# Caller text can't open or close tags or start a fake "[id]" line. Quotes that use these
+# characters won't match the real line afterwards, so the guard drops them. That's fine.
+_NEUTRAL = str.maketrans({"<": "‹", ">": "›", "[": "(", "]": ")", "\n": " ", "\r": " "})
+
+
 def build_messages(utterances: list[tuple[str, str]] | tuple) -> list[dict]:
-    lines = "\n".join(f"[{uid}] {text}" for uid, text in utterances)
+    lines = "\n".join(f"[{uid}] {text.translate(_NEUTRAL)}" for uid, text in utterances)
     user = f"<transcript>\n{lines}\n</transcript>"
     return [{"role": "system", "content": SYSTEM}, {"role": "user", "content": user}]
