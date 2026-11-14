@@ -40,6 +40,7 @@ class Detector:
         # AI layer state (S8a)
         self._mode = "rules_only"
         self._llm_seq = 0
+        self._llm_last_s: float | None = None
         self._llm_requests: OrderedDict[int, LLMRequest] = OrderedDict()
         self._llm_evidence: list[Evidence] = []
         self._llm_seen: set[tuple[Tactic, str]] = set()
@@ -103,6 +104,8 @@ class Detector:
         now = self._clock(now_s)
         if not (self.confirmed and self._llm_dirty):
             return None
+        if self._llm_last_s is not None and now - self._llm_last_s < self.cfg.llm_min_interval_s:
+            return None  # too soon; the next request still covers the last 60 s
         mixed = self.elder_raw is None
         if mixed:
             window = {uid for uid, (seg, arrival) in self._finals.items() if now - arrival < LLM_WINDOW_S}
@@ -115,6 +118,7 @@ class Detector:
         if not utts:
             return None
         self._llm_dirty = False
+        self._llm_last_s = now
         self._llm_seq += 1
         req = LLMRequest(self._llm_seq, utts, now, mixed)
         self._llm_requests[req.seq] = req
