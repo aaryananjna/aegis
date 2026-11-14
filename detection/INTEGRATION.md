@@ -77,9 +77,13 @@ the pattern:
 Rules the detector enforces for you:
 - Labels on: it only sends anything after the grandparent tap names a speaker, and then
   only the caller's last 60 s of text.
-- Labels off (`set_elder(None)`, one shared mic): nothing is sent until a rule flags a line.
-  Then the last 60 s of both voices goes unlabeled, with a prompt that has the AI work out
-  which lines are the caller's and flag only those (`Config(llm_mixed=False)` turns this off).
+- Labels off (`set_elder(None)`, one shared mic): from the first line, the last 60 s of both
+  voices goes unlabeled, with a prompt that has the AI work out which lines are the caller's and
+  flag only those. `Config(llm_mixed_always=False)` waits for a rule hit first;
+  `Config(llm_mixed=False)` turns it off.
+- AI alarm (`Config.ai_alarm_tactics`, default 2): when the AI quotes 2 or more different
+  tactics, they count at full weight and can raise the level and show a card without a rule hit.
+  Set it to 0 to require a rule hit for any card.
 - AI evidence must quote real words from the lines sent, can only add risk (capped), can't make the level
   HIGH alone and can't trigger a card by itself. Late or repeated answers are dropped.
 
@@ -89,4 +93,4 @@ Live check once a key exists: `python scripts/llm_smoke.py` (reads `detection/.e
 
 With rules only, no text leaves the server. With an AI key set, the caller's last 60 seconds
 of text goes to Groq (or Gemini as backup), and only after the grandparent tap. With labels
-off, both voices' last 60 seconds go, and only after a rule has flagged a line.
+off, both voices' last 60 seconds go, from the first line of the call.

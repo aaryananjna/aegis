@@ -300,11 +300,9 @@ start or the source changes:
 
 - The app never asks for or stores the family code word. Grandma knows it.
 - Only caller text from the last 60 s goes to Groq or Gemini, and only when the AI layer is on.
-  **Exception (C19, #49):** with speaker labels off, the detector can't tell the voices apart.
-  Then, only after a rule flags a line, the last 60 s of **both voices** go to Groq or Gemini.
-  The AI layer can only add risk, never remove it. `Config(llm_mixed=False)` turns this off.
-  **Exception, labels off** (`set_elder` with `speaker_raw: null`, one shared mic): once a rule
-  flags a line, the last 60 s of **both voices** goes, unlabeled, so the AI can work out which
-  lines are the caller's. Before any rule fires, nothing is sent. `Config(llm_mixed=False)` turns
-  this off.
+  **Exception (C19, #49):** with speaker labels off (`set_elder` with `speaker_raw: null`, one
+  shared mic), the detector can't tell the voices apart, so the last 60 s of **both voices** go
+  to Groq or Gemini, unlabeled, from the first line of the call, and the AI works out which lines
+  are the caller's. `Config(llm_mixed_always=False)` waits until a rule flags a line instead;
+  `Config(llm_mixed=False)` turns it off. The AI layer can only add risk, never remove it.
 - Demo and test calls use made-up names and no real account numbers.
