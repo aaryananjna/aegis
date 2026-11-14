@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+from pathlib import Path
 
 import asyncpg
 
@@ -20,6 +21,7 @@ from .security import hash_password, new_token, token_hash
 FAMILY = [("sam.rivera@example.com", "Sam Rivera", "owner"),
           ("jo.rivera@example.com", "Jo Rivera", "viewer")]
 ELDER = "Grandma Rose"
+DEVICE_FILE = Path(__file__).resolve().parent.parent / ".device_token"
 
 
 async def seed() -> str:
@@ -54,6 +56,8 @@ async def seed() -> str:
                                token_hash(token), elder_id)
     finally:
         await conn.close()
+    # start-call sends this so demo calls land in Grandma Rose's history (gitignored).
+    DEVICE_FILE.write_text(token)
     return f"{settings.web_base_url}/pair#{token}"
 
 

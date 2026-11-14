@@ -25,6 +25,7 @@ p.add_argument("--no-mic", action="store_true", help="don't start the laptop mic
 p.add_argument("--name", default="Rose", help="grandparent's name on the family page (made up)")
 p.add_argument("--phone", default=None, help="number for the family page's Call button (made up)")
 p.add_argument("--device", default="MacBook Air Microphone", help="mic name or number")
+p.add_argument("--no-history", action="store_true", help="don't save this call to TigerDB")
 a = p.parse_args()
 
 body = {"name": a.name, "mic": not a.no_mic, "labels": a.labels}
@@ -32,8 +33,14 @@ if a.phone:
     body["phone"] = a.phone
 if not a.no_mic and a.device:
     body["device"] = a.device
-req = urllib.request.Request(f"{SERVER}/sessions", json.dumps(body).encode(),
-                             {"Content-Type": "application/json"}, method="POST")
+headers = {"Content-Type": "application/json"}
+# The demo laptop's pairing token (written by `python -m aegis_server.seed`): the call is then
+# saved to that grandparent's history in TigerDB. --no-history skips it.
+DEVICE = Path(__file__).resolve().parent.parent / ".device_token"
+if DEVICE.exists() and not a.no_history:
+    headers["X-Device-Token"] = DEVICE.read_text().strip()
+req = urllib.request.Request(f"{SERVER}/sessions", json.dumps(body).encode(), headers,
+                             method="POST")
 try:
     with urllib.request.urlopen(req, timeout=10) as r:
         d = json.load(r)
@@ -45,6 +52,7 @@ except OSError:
 
 LAST.write_text(d["session_id"])
 mode = "no mic" if a.no_mic else ("live mic, labels on" if a.labels else "live mic, labels off")
+mode += ", saved to history" if d.get("recorded") else ", not saved to history"
 print(f"\nCall {d['session_id']} started ({mode})\n")
 print(f"  ELDER  (open on the laptop, full screen):\n  {d['elder_url']}\n")
 print(f"  FAMILY (send to the phone):\n  {d['family_url']}\n")
