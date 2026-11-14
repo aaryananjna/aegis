@@ -76,7 +76,8 @@ def test_ai_off_until_grandparent_is_tapped():
     assert d.llm_request(1.0) is None
 
 
-def test_ai_off_with_no_speaker_labels():
+def test_ai_off_with_no_speaker_labels_until_the_rules_fire():
+    # Labels off sends nothing until a rule flags a line (see test_referee.py).
     d = confirmed(elder=None)
     d.feed(seg("u1", UTTS[0][1], None, 0.0), 1.0)
     assert d.llm_request(1.0) is None
