@@ -103,7 +103,7 @@ the other two OK.
 
 | Part | Where it is |
 |---|---|
-| B | **On `main`:** rules for 8 scam tactics (with FTC, FBI, IRS, AARP and bank phrases), risk score, cards that match the scam (code word for family callers, "don't pay, call back" for banks, the IRS or companies), alerts, caption fixtures for C, replay, type mode, test harness and the demo script (`detection/demo/`). **Open PRs:** #9 code word answer plus `codeword_ok` for the family page, and #11 the AI layer (Groq, Gemini backup; add-only, off until the grandparent tap, waiting on a key) plus caption noise fixes. 278 tests on #11. Practice set (synthetic, 21 calls): 11/11 scams caught, 0/10 false alarms. |
+| B | **Done, all on `main`:** rules for 8 scam tactics (FTC, FBI, IRS, AARP and bank phrases), risk score, cards that match the scam (code word for family callers, "don't pay, call back" for banks, the IRS or companies), alerts, `codeword_ok`, caption fixtures, replay, type mode, test harness, demo script (`detection/demo/`) and the AI layer (Groq `qwen/qwen3.8-27b`, Gemini `gemini-3.5-flash-lite` as backup; add-only, off until the grandparent tap). Rules also survive captions that drop small words (#31) and don't flag "call the number on the back of your card" (#32). 312 tests. Practice set (synthetic, 21 calls): 11/11 scams caught, 0/10 false alarms. **Left:** held-out results once A and C record the calls, and a check on real Deepgram captions. |
 | A | Not started. Aryan |
 | C | Not started. Role unclaimed. C can start now from the sample event files in `detection/fixtures/` |
 
@@ -125,9 +125,11 @@ the other two OK.
 
 ### B: detection (Mihir)
 1. Done and merged: rules, risk score, cards, alerts, replay, type mode, test harness and
-   16 synthetic practice calls.
-2. Next: the AI layer (Groq, Gemini as backup), with a test proving the AI layer can never
-   lower the score. Then held-out results once A and C record the calls.
+   21 synthetic practice calls.
+2. Done and merged: the AI layer (Groq, Gemini as backup), with tests proving it can never
+   lower the score.
+3. Left: held-out results once A and C record the calls, and a check on real Deepgram
+   captions once A pushes them.
 
 ### C: screens and demo
 1. `/elder` screen: huge live captions, highlighted scam words, a risk meter and one card at a
