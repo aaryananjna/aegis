@@ -1,0 +1,14 @@
+# id: scam-refund-overpay
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-refund-overpay
+# onset_s: 0.0
+# note: Written by Claude for development, from FTC/FBI/AARP script beats (2026-11-13 research). Not a real or recorded call.
+[0.0-3.5] caller: Hi, I'm calling from tech support about your antivirus refund.
+[4.1-5.9] elder: I did cancel that, yes.
+[6.5-11.0] caller: We accidentally refunded you too much money, ten thousand instead of one hundred.
+[11.6-13.1] elder: Oh no, I'm sorry.
+[13.7-18.9] caller: Read me the verification code we just texted you so I can see your account.
+[19.5-21.6] elder: Okay, it says 4 8 2.
+[22.2-25.7] caller: Now send the difference back with a wire transfer today.

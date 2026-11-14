@@ -27,7 +27,7 @@ PHRASES = {
     T.PAYMENT: "asked for gift cards, crypto or a wire transfer",
     T.THREAT: "made threats",
     T.VERIFICATION_AVOIDANCE: "dodged questions",
-    T.REMOTE_ACCESS: "asked to control the computer",
+    T.REMOTE_ACCESS: "asked to control the computer or for a code",
     T.DISTRESS: "sounded panicked",
 }
 

@@ -1,0 +1,11 @@
+# id: benign-church-raffle
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-church-raffle
+# note: Written by Claude for development, from FTC/FBI/AARP script beats (2026-11-13 research). Not a real or recorded call.
+[0.0-3.1] caller: Margaret, it's Joan from church! You won the raffle!
+[3.7-5.5] elder: No! What did I win?
+[6.1-9.6] caller: The quilt! Can you pick it up Sunday after service?
+[10.2-11.7] elder: Of course, how exciting.
+[12.3-14.7] caller: No rush at all, see you Sunday.

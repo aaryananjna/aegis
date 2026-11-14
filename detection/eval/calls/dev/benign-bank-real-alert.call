@@ -1,0 +1,11 @@
+# id: benign-bank-real-alert
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-bank-real-alert
+# note: Written by Claude for development, from FTC/FBI/AARP script beats (2026-11-13 research). Not a real or recorded call.
+[0.0-4.9] caller: Hi, this is Emma from your credit union returning your call about your card.
+[5.5-7.6] elder: Yes, I thought I lost it.
+[8.2-12.7] caller: We locked it for you. Your money is safe and nothing was charged.
+[13.3-14.8] elder: Thank you so much.
+[15.4-22.4] caller: We'll never ask you to move money or read us a code. Come by any branch for a new card.
