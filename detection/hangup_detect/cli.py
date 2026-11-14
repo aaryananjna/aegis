@@ -30,7 +30,7 @@ def parse_typed(line: str) -> tuple[str, str] | None:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Hang Up type mode")
+    ap = argparse.ArgumentParser(description="Aegis type mode")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     show = (lambda e: print(json.dumps(e), flush=True)) if a.json else (lambda e: print(describe(e), flush=True))

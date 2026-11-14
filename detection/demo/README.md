@@ -1,6 +1,6 @@
 # Demo script (two calls, about 2 minutes)
 
-The thesis: Hang Up reads **what the caller says**, not whose voice it is. So we demo a normal
+The thesis: Aegis reads **what the caller says**, not whose voice it is. So we demo a normal
 scam call, the kind older adults get most (a fake bank), then a real family call that stays green.
 
 Both calls are tested through the detector: `python -m hangup_detect.replay demo/demo-scam.call`.
