@@ -5,7 +5,7 @@
   runner stays `busy` until that thread returns, and the owner skips new requests meanwhile.
 - 1.5 s total budget. Late answers are simply never applied.
 - Keys are sent in headers only and never appear in errors or logs.
-Model names come from GROQ_MODEL / GEMINI_MODEL. Groq default checked live 2026-11-14 (~340 ms); the Gemini default is unchecked.
+Model names come from GROQ_MODEL / GEMINI_MODEL. Both defaults checked live 2026-11-14: Groq ~340 ms, Gemini ~0.8 to 1.4 s.
 """
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ from .types import LLMRequest
 GROQ_URL = "https://api.groq.com/openai/v1/chat/completions"
 USER_AGENT = "aegis-detect/0.1"  # Groq's firewall blocks the default Python-urllib agent
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-DEFAULT_MODELS = {"groq": "qwen/qwen3.8-27b", "gemini": "gemini-2.5-flash"}
+DEFAULT_MODELS = {"groq": "qwen/qwen3.8-27b", "gemini": "gemini-3.5-flash-lite"}
 
 
 @dataclass(frozen=True)

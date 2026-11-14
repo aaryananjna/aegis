@@ -35,3 +35,7 @@ def test_gemini_call_sends_own_user_agent(monkeypatch):
 
 def test_groq_default_model_is_not_the_retired_one():
     assert DEFAULT_MODELS["groq"] != "llama-3.1-8b-instant"  # 404 model_not_found on 2026-11-14
+
+
+def test_gemini_default_model_is_not_the_retired_one():
+    assert DEFAULT_MODELS["gemini"] != "gemini-2.5-flash"  # 404 "no longer available to new users" 2026-11-14
