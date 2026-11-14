@@ -10,6 +10,9 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
+    // The family phone reaches this dev server through a Cloudflare quick tunnel
+    // (docs/DEMO-RUNBOOK.md). Vite refuses unknown Host headers unless they're listed.
+    allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/events': { target: server, ws: true },
     },
