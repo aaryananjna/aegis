@@ -1,8 +1,9 @@
 # Hang Up event contracts
 
-**Version 2.1.** v2 was written by B (Mihir). The v2.1 additions come from C (Aaryan) after
+**Version 2.2.** v2 was written by B (Mihir). The v2.1 additions come from C (Aaryan) after
 `docs/INTEGRATION_AUDIT.md`, plus the items A asked for in #1 and B in #25. **OK from A (#1).**
-Every v2.1 change is additive, so nothing that works today breaks.
+v2.2 writes down what we agreed in #40, #42 and #49. Every change is additive, so nothing that
+works today breaks.
 
 Everything between the three parts travels as JSON over A's WebSockets.
 
@@ -27,13 +28,22 @@ Everything between the three parts travels as JSON over A's WebSockets.
 | C14 | `/captions` accepts connections from the laptop itself only (localhost) | ADDITIVE |
 | C15 | The AI layer's answers come back through the same session queue (`llm` item, #16) | ADDITIVE |
 
+## What changed in v2.2
+
+| # | Change | Type |
+|---|---|---|
+| C16 | The server can send `set_elder` itself: from the grandparent's first "Hello?", or at once with labels off (#40) | ADDITIVE |
+| C17 | New server event `elder_set` to elder listeners: whose voice is the grandparent's, and who decided (#40) | ADDITIVE |
+| C18 | The elder screen may send `end` (its "End call" button, behind an "are you sure" box) (#42) | ADDITIVE |
+| C19 | With labels off, the AI layer may see both voices after a rule fires (#47, #49) | DATA HANDLING |
+
 ## Envelope
 
 Every event **the detector emits** (`tactic_set`, `risk`, `intervention`, `alert`, `codeword_ok`, `status`)
 has `type`, `session_id`, `t` (seconds since the session started, detector clock, never goes
 backwards) and `seq` (per session, starts at 1, always increasing).
 
-Events the **server** adds (`caption` to screens, `call_ended`, `status` with `stt`) have
+Events the **server** adds (`caption` to screens, `call_ended`, `status` with `stt`, `elder_set`) have
 `type`, `session_id` and `t`, but **no `seq`**: `seq` only orders the detector's events. Screens
 order by arrival.
 
@@ -47,7 +57,7 @@ Server base URL: `http://localhost:8000` on the laptop. The family phone uses th
 | Socket | Who connects | Server → client | Client → server |
 |---|---|---|---|
 | `WS /captions/{session_id}` | A's STT (inside the server), type mode, tests. **Laptop only** (C14) | nothing | `caption`, `set_elder`, `end` |
-| `WS /events/{session_id}?role=elder&token=…` | C's `/elder` and `/evidence` screens on the laptop | all events (C1) | `set_elder`, `codeword_result` (C12) |
+| `WS /events/{session_id}?role=elder&token=…` | C's `/elder` and `/evidence` screens on the laptop | all events (C1), including `elder_set` (C17) | `set_elder`, `codeword_result` (C12), `end` (C18) |
 | `WS /events/{session_id}?role=family&token=…` | C's `/family` page on the phone | `alert`, `intervention`, `codeword_ok`, `status`, `call_ended` only (C4) | nothing (inbound ignored) |
 
 - **`/captions` has no token**, so the server accepts it only from the laptop itself (localhost)
@@ -115,6 +125,24 @@ sends this on the elder `/events` socket:
 off until this is sent.** The meter works before it. Sending it again re-scores the call with
 the new choice.
 
+**The server can send it too (C16):**
+- **Labels off** (`POST /sessions` with `"mic": true, "labels": false`, the demo setup): the
+  server sends `set_elder(null)` as the call starts, so every line is scored and nobody taps.
+- **Labels on:** if the call's first live final line is a short greeting (5 words or fewer, in
+  the first 30 s, with a speaker label), the server sends `set_elder` for that voice. If the
+  first line is long, it doesn't guess. `AUTO_ELDER=0` turns the guess off.
+- A `set_elder` from a screen always wins, and after one the server never guesses. The elder
+  screen sends `set_elder(null)` when it connects (#48, #50), unless opened with `?voices=pick`.
+
+Every time the grandparent's voice is set, elder listeners get (C17, server event, no `seq`):
+
+```json
+{"type": "elder_set", "session_id": "s1", "t": 1.7, "speaker_raw": "0", "by": "server"}
+```
+
+`by` is `"server"` (the server decided) or `"tap"` (a screen or the laptop sent `set_elder`).
+Family listeners never get it.
+
 ## C → server → B: `codeword_result` (C12)
 
 After the `codeword` card, the grandparent taps whether the caller gave the right family code
@@ -147,7 +175,9 @@ word. The elder screen sends this on its `/events` socket:
 
 ## End of call (C5)
 
-Inbound on `/captions/{session_id}`, or the server's own call-end logic:
+Inbound on `/captions/{session_id}`, on the elder `/events` socket (C18, the screen's "End
+call" button after an "Are you sure this call is over?" box), from `POST /sessions/{id}/end`
+on the laptop, or after 2 hours. The family page can't end a call:
 
 ```json
 {"type": "end", "session_id": "s1"}
@@ -270,6 +300,9 @@ start or the source changes:
 
 - The app never asks for or stores the family code word. Grandma knows it.
 - Only caller text from the last 60 s goes to Groq or Gemini, and only when the AI layer is on.
+  **Exception (C19, #49):** with speaker labels off, the detector can't tell the voices apart.
+  Then, only after a rule flags a line, the last 60 s of **both voices** go to Groq or Gemini.
+  The AI layer can only add risk, never remove it. `Config(llm_mixed=False)` turns this off.
   **Exception, labels off** (`set_elder` with `speaker_raw: null`, one shared mic): once a rule
   flags a line, the last 60 s of **both voices** goes, unlabeled, so the AI can work out which
   lines are the caller's. Before any rule fires, nothing is sent. `Config(llm_mixed=False)` turns
