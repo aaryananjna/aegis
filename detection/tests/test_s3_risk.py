@@ -14,8 +14,11 @@ def ev(tactic, t=0.0, source="rule", uid="u"):
     return Evidence(tactic, "q", uid, (0, 1), source, t)
 
 
-def model(*evs):
-    m = RiskModel(CFG)
+OLD_CFG = Config(ai_alarm_tactics=0)  # AI can't alarm on its own (the pre-demo setting)
+
+
+def model(*evs, cfg=None):
+    m = RiskModel(cfg or CFG)
     for e in evs:
         m.add(e)
     return m
@@ -83,7 +86,7 @@ def test_llm_only_adds_above_rule():
 
 
 def test_llm_proportional_cap_example():
-    m = model(ev(T.PAYMENT, source="llm"), ev(T.SECRECY, source="llm"))
+    m = model(ev(T.PAYMENT, source="llm"), ev(T.SECRECY, source="llm"), cfg=OLD_CFG)
     c = m.contributions(0.0)["llm"]
     assert c["payment"] == pytest.approx(0.857142857, abs=1e-6)
     assert c["secrecy"] == pytest.approx(0.642857143, abs=1e-6)
@@ -92,7 +95,7 @@ def test_llm_proportional_cap_example():
 def test_llm_alone_cannot_reach_high():
     # every tactic twice from the LLM: the +1.5 cap also shrinks each tactic's
     # strength, so combos shrink too. Upper bound is sig(-3 + 1.5 + 2.0).
-    m = model(*[ev(t, source="llm", uid=f"{t.value}{k}") for t in T for k in range(2)])
+    m = model(*[ev(t, source="llm", uid=f"{t.value}{k}") for t in T for k in range(2)], cfg=OLD_CFG)
     assert m.score(0.0) < sig(0.5) < CFG.enter_high
     assert m.update_level(0.0) != "high"
 

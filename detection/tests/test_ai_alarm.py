@@ -29,8 +29,8 @@ TWO = [{"tactic": "impersonation", "utterance_id": "u1", "quote": "qualify for a
 ONE = TWO[:1]
 
 
-def test_default_ai_waits_for_a_rule_and_cannot_alarm():
-    d, req, evs = run(Config(), TWO)
+def test_old_settings_ai_waits_for_a_rule_and_cannot_alarm():
+    d, req, evs = run(Config(llm_mixed_always=False, ai_alarm_tactics=0), TWO)
     assert req is None  # no rule fired, so nothing was sent
     assert d.risk.level != "high"
 
@@ -53,5 +53,12 @@ def test_one_ai_tactic_is_not_enough():
 
 
 def test_switch_off_keeps_the_old_cap():
-    d, _, _ = run(Config(llm_mixed_always=True), TWO)
+    d, _, _ = run(Config(llm_mixed_always=True, ai_alarm_tactics=0), TWO)
     assert d.risk.level != "high"
+
+
+def test_demo_defaults_are_on():
+    cfg = Config()
+    assert cfg.llm_mixed_always and cfg.ai_alarm_tactics == 2
+    d, req, evs = run(cfg, TWO)
+    assert req is not None and d.risk.level == "high"
