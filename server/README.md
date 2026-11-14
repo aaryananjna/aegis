@@ -78,6 +78,20 @@ grandparent's laptop once (`POST /elders/{id}/devices` returns a `device_token` 
 
 ## Starting a call
 
+For the demo, two scripts (any `python3`; they talk to `localhost:8000`, or `AEGIS_SERVER`):
+
+```
+server/scripts/start-call             # live mic, speaker labels off; prints both links
+server/scripts/end-call               # ends the call start-call started
+```
+
+`start-call --labels` keeps speaker labels on, `--no-mic` takes captions from `/typed` or
+`/captions`, and `--name`, `--phone`, `--device` are passed through. The elder screen can also end
+the call by sending `{"type": "end"}` (its "End call" button, after an "are you sure" box). The
+family page can't.
+
+Or by hand:
+
 ```
 curl -s -X POST localhost:8000/sessions -H 'content-type: application/json' \
      -d '{"name":"Rose","phone":"+15550100","mic":true}'

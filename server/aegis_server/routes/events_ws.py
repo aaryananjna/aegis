@@ -3,7 +3,8 @@
 - A wrong or expired token, a token for the other role, or an unknown call all close with 4401
   (the same answer, so nothing leaks about which part was wrong).
 - On connect: replay that role's past events, then live events.
-- role=elder may send set_elder and codeword_result. role=family inbound is read (so a closed
+- role=elder may send set_elder, codeword_result and end (its "End call" button, after an
+  "are you sure" box on the screen). role=family inbound is read (so a closed
   phone is noticed) and ignored.
 - Inbound is limited: messages over 16 KB are dropped, and more than 20 messages in a second
   closes the socket (1008).

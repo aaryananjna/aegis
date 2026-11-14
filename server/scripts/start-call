@@ -1,0 +1,51 @@
+#!/usr/bin/env python3
+"""Start a demo call and print its two links. Remembers the call so `end-call` can end it.
+
+    server/scripts/start-call                 # live mic, speaker labels off (the demo setup)
+    server/scripts/start-call --labels        # live mic with speaker labels (voice guess / tap)
+    server/scripts/start-call --no-mic        # captions from /typed or /captions instead
+    server/scripts/start-call --name Rose --phone +15550100 --device "MacBook Air Microphone"
+
+Talks to the server on this laptop only. Standard library only, so any python3 works.
+"""
+import argparse
+import json
+import os
+import sys
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+SERVER = os.environ.get("AEGIS_SERVER", "http://localhost:8000")
+LAST = Path(__file__).resolve().parent.parent / ".last_call"  # gitignored; holds the id only
+
+p = argparse.ArgumentParser(description="Start a demo call")
+p.add_argument("--labels", action="store_true", help="keep Deepgram speaker labels on")
+p.add_argument("--no-mic", action="store_true", help="don't start the laptop mic")
+p.add_argument("--name", default="Rose", help="grandparent's name on the family page (made up)")
+p.add_argument("--phone", default=None, help="number for the family page's Call button (made up)")
+p.add_argument("--device", default="MacBook Air Microphone", help="mic name or number")
+a = p.parse_args()
+
+body = {"name": a.name, "mic": not a.no_mic, "labels": a.labels}
+if a.phone:
+    body["phone"] = a.phone
+if not a.no_mic and a.device:
+    body["device"] = a.device
+req = urllib.request.Request(f"{SERVER}/sessions", json.dumps(body).encode(),
+                             {"Content-Type": "application/json"}, method="POST")
+try:
+    with urllib.request.urlopen(req, timeout=10) as r:
+        d = json.load(r)
+except urllib.error.HTTPError as e:
+    sys.exit(f"server said {e.code}: {e.read().decode(errors='replace')}")
+except OSError:
+    sys.exit(f"no server at {SERVER}. Start it first: "
+             "cd server && .venv/bin/python -m uvicorn aegis_server.main:app --port 8000")
+
+LAST.write_text(d["session_id"])
+mode = "no mic" if a.no_mic else ("live mic, labels on" if a.labels else "live mic, labels off")
+print(f"\nCall {d['session_id']} started ({mode})\n")
+print(f"  ELDER  (open on the laptop, full screen):\n  {d['elder_url']}\n")
+print(f"  FAMILY (send to the phone):\n  {d['family_url']}\n")
+print("End it with:  server/scripts/end-call")
