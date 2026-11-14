@@ -104,7 +104,7 @@ the other two OK.
 | Part | Where it is |
 |---|---|
 | B | **Done, all on `main`:** rules for 8 scam tactics (FTC, FBI, IRS, AARP and bank phrases), risk score, cards that match the scam (code word for family callers, "don't pay, call back" for banks, the IRS or companies), alerts, `codeword_ok`, caption fixtures, replay, type mode, test harness, demo script (`detection/demo/`) and the AI layer (Groq `qwen/qwen3.8-27b`, Gemini `gemini-3.5-flash-lite` as backup; add-only, off until the grandparent tap). Rules also survive captions that drop small words (#31) and don't flag "call the number on the back of your card" (#32). 312 tests. Practice set (synthetic, 21 calls): 11/11 scams caught, 0/10 false alarms. **Left:** held-out results once A and C record the calls, and a check on real Deepgram captions. |
-| A | Not started. Aryan |
+| A | **Done, all on `main`:** server with live calls, the laptop mic through Deepgram, routing and replay, the AI layer on the queue, labels-off mode and the voice guess, `start-call`/`end-call` scripts, hardened endpoints, and family accounts with laptop pairing in TigerDB. **Left:** loud-room test, held-out calls with the team, tunnel test on a real phone. After the freeze: call history in TigerDB (#44). Aryan |
 | C | Not started. Role unclaimed. C can start now from the sample event files in `detection/fixtures/` |
 
 ## Tasks
