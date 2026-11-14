@@ -1,1 +1,41 @@
 @import "tailwindcss";
+
+/* Aegis tokens. The elder screen is read from about 2 m away in a lamp-lit room:
+   a dark, low-glare surface with warm white text, and status colors that light the room. */
+@theme {
+  --color-dusk: #14202e;
+  --color-dusk-raised: #1d2b3c;
+  --color-paper: #f4efe6;
+  --color-paper-dim: #c3cad3;
+  --color-mist: #8c99a8;
+  --color-glow: #f3c969;
+  --color-glow-ink: #1b1406;
+  --color-calm: #3e9e6a;
+  --color-care: #e3a33b;
+  --color-alarm: #d2483f;
+  --color-alarm-deep: #8e1f19;
+
+  /* Installed faces only, so nothing has to load from the internet on the demo hotspot. */
+  --font-read: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-dusk);
+  color: var(--color-paper);
+  font-family: var(--font-read);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0s !important;
+    animation-duration: 0s !important;
+  }
+}
