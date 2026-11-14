@@ -15,6 +15,12 @@
   --color-alarm: #d2483f;
   --color-alarm-deep: #8e1f19;
 
+  /* Evidence page: where the risk comes from. Dark-mode categorical slots 1-3, validated on
+     --color-dusk with the dataviz validator (worst adjacent CVD dE 9.4, contrast >= 3:1). */
+  --color-rule: #3987e5;
+  --color-ai: #d95926;
+  --color-combo: #199e70;
+
   /* Installed faces only, so nothing has to load from the internet on the demo hotspot. */
   --font-read: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
 }
