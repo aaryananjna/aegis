@@ -1,5 +1,5 @@
 // Everything the elder screen shows, folded from the event stream. Pure, so it's easy to test.
-import type { AegisEvent, CardKind, RiskEvent, TacticSetEvent } from '../events/types'
+import type { AegisEvent, CardKind, RiskEvent, StatusEvent, TacticSetEvent } from '../events/types'
 
 export interface Caption {
   utteranceId: string
@@ -29,6 +29,7 @@ export interface ElderState {
   card: { kind: CardKind; text: string } | null
   codewordOk: boolean
   warning: string | null
+  stt: StatusEvent['stt'] | null // where captions come from, when the server says
   ended: boolean
 }
 
@@ -41,6 +42,7 @@ export const initialElderState: ElderState = {
   card: null,
   codewordOk: false,
   warning: null,
+  stt: null,
   ended: false,
 }
 
@@ -90,12 +92,22 @@ export function reduceElder(s: ElderState, e: AegisEvent): ElderState {
     case 'codeword_ok':
       return { ...s, codewordOk: true }
     case 'status':
-      return { ...s, warning: e.warning }
+      return { ...s, warning: e.warning, stt: e.stt ?? s.stt }
     case 'call_ended':
       return { ...s, ended: true }
     default:
       return s
   }
+}
+
+/**
+ * True when the screen can't tell voices apart, so "tap the voice that is you" makes no sense:
+ * the captions come from a source without speaker labels (Whisper fallback, or none), or every
+ * caption so far arrived without a speaker label.
+ */
+export function noVoiceLabels(s: ElderState): boolean {
+  if (s.stt === 'whisper' || s.stt === 'none') return true
+  return s.order.length > 0 && s.order.every((uid) => s.captions[uid].speakerRaw === null)
 }
 
 export interface Piece {

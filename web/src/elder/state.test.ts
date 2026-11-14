@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import type { AegisEvent } from '../events/types.ts'
-import { highlightPieces, initialElderState, reduceElder } from './state.ts'
+import { highlightPieces, initialElderState, noVoiceLabels, reduceElder } from './state.ts'
 
 const base = { session_id: 's1', t: 1 }
 const cap = (uid: string, revision: number, text: string, is_final: boolean, speaker = '1') =>
@@ -85,4 +85,25 @@ test('bank fixture shows verify first, then hangup', () => {
   const first = events.findIndex((e) => e.type === 'intervention')
   assert.equal(run(events.slice(0, first + 1)).card?.kind, 'verify')
   assert.equal(run(events).card?.kind, 'hangup')
+})
+
+test('no voice labels: every caption unlabeled, or a source without labels', () => {
+  const status = (stt: string) =>
+    ({ ...base, type: 'status', stt, warning: null }) as AegisEvent
+  assert.equal(noVoiceLabels(initialElderState), false) // nothing heard yet: don't decide
+  assert.equal(noVoiceLabels(run([cap('u0', 0, 'Hello?', true, null as unknown as string)])), true)
+  assert.equal(noVoiceLabels(run([cap('u0', 0, 'Hello?', true, '0')])), false)
+  assert.equal(noVoiceLabels(run([status('whisper')])), true)
+  assert.equal(noVoiceLabels(run([status('none')])), true)
+  assert.equal(noVoiceLabels(run([status('deepgram'), cap('u0', 0, 'Hi', true, '1')])), false)
+  // A later status without stt (a detector warning) keeps what the server said.
+  const s = run([status('whisper'), { ...base, seq: 2, type: 'status', mode: 'rules_only',
+                                      warning: 'x' } as AegisEvent])
+  assert.equal(s.stt, 'whisper')
+})
+
+test('no-labels fixture: captions carry no speaker and the scam still reaches hangup', () => {
+  const s = run(fixture('scam-nolabels'))
+  assert.equal(noVoiceLabels(s), true)
+  assert.equal(s.card?.kind, 'hangup')
 })

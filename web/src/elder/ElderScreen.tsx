@@ -1,9 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { CaptionPane } from './CaptionPane'
 import { CardPane, type Reply } from './CardPane'
-import { initialElderState, reduceElder, type Voice } from './state'
+import { StartProtection } from './StartProtection'
+import { initialElderState, noVoiceLabels, reduceElder, type Voice } from './state'
 import { StatusBand } from './StatusBand'
 import { VoicePicker } from './VoicePicker'
 
@@ -16,6 +17,9 @@ const TINT = {
 } as const
 
 const idleText = 'text-[length:clamp(28px,2.4vw,36px)] text-mist'
+
+// With no speaker labels, protection starts by itself this long after the first caption.
+const AUTO_START_MS = 10_000
 
 export function ElderScreen() {
   const [search] = useSearchParams()
@@ -45,6 +49,20 @@ function ElderCall({ feed }: { feed: Feed }) {
     send({ type: 'set_elder', speaker_raw: speakerRaw }) // a sample call has nowhere to send it
   }
 
+  // No speaker labels: one "Start protection" button instead of the voice picker, and it
+  // starts by itself 10 s after the first caption so nobody has to remember to tap.
+  const unlabeled = noVoiceLabels(state)
+  const heardSomething = state.order.length > 0
+  useEffect(() => {
+    if (picked || !unlabeled || !heardSomething) return
+    const id = window.setTimeout(() => {
+      setPicked({ speakerRaw: null })
+      send({ type: 'set_elder', speaker_raw: null })
+    }, AUTO_START_MS)
+    return () => window.clearTimeout(id)
+  }, [picked, unlabeled, heardSomething, send])
+  const startProtection = () => pickVoice(null)
+
   const answerCodeword = (ok: boolean) => {
     if (feed.kind !== 'live') return setReply('sample')
     setReply(send({ type: 'codeword_result', ok }) ? (ok ? 'sent-yes' : 'sent-no') : 'not-sent')
@@ -54,6 +72,7 @@ function ElderCall({ feed }: { feed: Feed }) {
   if (feed.kind === 'fixture') notes.push('Sample call')
   if (connection === 'connecting') notes.push('Connecting…')
   if (connection === 'reconnecting') notes.push('Reconnecting…')
+  if (picked?.speakerRaw === null) notes.push("Can't tell voices apart: listening to everyone")
   if (state.ended) notes.push('Call ended')
   if (state.warning) notes.push(state.warning)
   if (reply === 'sample') notes.push('Sample call: your answer was not sent')
@@ -73,9 +92,11 @@ function ElderCall({ feed }: { feed: Feed }) {
                     ${TINT[state.level ?? 'none']}`}
       >
         <StatusBand level={state.level} notes={notes}>
-          {!picked && state.card && (
+          {!picked && state.card && (unlabeled ? (
+            <StartProtection onStart={startProtection} compact />
+          ) : (
             <VoicePicker voices={state.voices} label={voiceLabel} onPick={pickVoice} compact />
-          )}
+          ))}
         </StatusBand>
         <CardPane
           state={state}
@@ -84,6 +105,8 @@ function ElderCall({ feed }: { feed: Feed }) {
           empty={
             problem ? (
               <p className={idleText}>{problem}</p>
+            ) : !picked && unlabeled ? (
+              <StartProtection onStart={startProtection} />
             ) : !picked ? (
               <VoicePicker voices={state.voices} label={voiceLabel} onPick={pickVoice} />
             ) : (
