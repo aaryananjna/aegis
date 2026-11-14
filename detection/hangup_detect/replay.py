@@ -7,6 +7,7 @@ Format:
     # set: dev | heldout | example
     # group: script-family
     # onset_s: 3.0                (scam calls: when the first scam move happens)
+    # elder: 0                    (optional: raw id of the grandparent for spkN lines)
     [1.8-4.6] spk1: Nana, it's me.
 Speakers: caller, elder, or spkN (a raw diarized voice id N).
 
@@ -76,7 +77,7 @@ def parse_call(text: str) -> Call:
 
 def replay(call: Call, elder: str | None = None, confirm: bool = True, caption_delay_s: float = 0.5,
            no_speakers: bool = False, config: Config | None = None, realtime: bool = False,
-           on_event=None) -> list[dict]:
+           on_event=None, feed_ms: list[float] | None = None) -> list[dict]:
     """Feed finals at end_s + caption_delay_s, tick every 1.0 s, then end."""
     d = Detector(config or Config(), call.headers["id"])
     out: list[dict] = []
@@ -98,7 +99,14 @@ def replay(call: Call, elder: str | None = None, confirm: bool = True, caption_d
     for at, kind, i in timeline:
         if realtime:
             time.sleep(max(0.0, at - (time.monotonic() - started)))
-        emit(d.feed(segs[i], at) if kind == 0 else d.tick(at))
+        if kind == 0:
+            t0 = time.perf_counter()
+            evs = d.feed(segs[i], at)
+            if feed_ms is not None:
+                feed_ms.append((time.perf_counter() - t0) * 1000)
+            emit(evs)
+        else:
+            emit(d.tick(at))
     emit(d.end(last))
     return out
 

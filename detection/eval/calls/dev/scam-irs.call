@@ -1,0 +1,14 @@
+# id: scam-irs
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-irs
+# onset_s: 0.0
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-3.8] caller: This is Officer Grant calling from the IRS about unpaid taxes.
+[4.4-6.2] elder: I always pay my taxes.
+[6.8-12.0] caller: Our records show you owe four thousand dollars. There is a warrant for your arrest.
+[12.6-14.1] elder: That can't be right.
+[14.7-19.9] caller: To stop the arrest you must pay today with gift cards. Do not hang up.
+[20.5-22.3] elder: Can I call you back?
+[22.9-26.4] caller: You don't need to call anyone. Stay on the line.

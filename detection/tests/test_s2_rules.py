@@ -47,7 +47,9 @@ CASES = {
     T.THREAT: (
         ["There is a warrant for your arrest",
          "You will be arrested if you don't pay",
-         "We will shut off your power in one hour"],
+         "We will shut off your power in one hour",
+         "If you don't do it now, your benefits will be frozen",
+         "Everyone has to switch or lose coverage"],
         ["We watched a prison movie last night",
          "Your account balance looks fine",
          "The lawyer said the will is ready"],

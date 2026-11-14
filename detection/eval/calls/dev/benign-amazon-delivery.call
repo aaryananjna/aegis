@@ -1,0 +1,11 @@
+# id: benign-amazon-delivery
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-amazon-delivery
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-4.5] caller: Hi, I'm the driver with your Amazon delivery, I'm at the front gate.
+[5.1-6.6] elder: Oh, I'll come down.
+[7.2-11.0] caller: No hurry, I'll leave it by the door if that's easier.
+[11.6-13.1] elder: That's fine, thank you.
+[13.7-15.2] caller: Have a nice day.

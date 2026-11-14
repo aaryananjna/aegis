@@ -1,0 +1,12 @@
+# id: benign-bank-fraud-alert
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-bank-fraud-alert
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-4.5] caller: Hello, this is the fraud department at your bank with an automated alert.
+[5.1-6.6] elder: Oh, okay.
+[7.2-12.1] caller: We noticed a charge of fifty dollars at a grocery store. Was this you?
+[12.7-14.8] elder: Yes, that was me this morning.
+[15.4-20.6] caller: Thank you. No action is needed. We will never ask for your password or PIN.
+[21.2-22.7] elder: Good to know, thanks.

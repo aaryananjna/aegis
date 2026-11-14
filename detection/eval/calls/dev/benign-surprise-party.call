@@ -1,0 +1,12 @@
+# id: benign-surprise-party
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-surprise-party
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-1.5] elder: Hello?
+[2.1-6.3] caller: Hi Grandma, it's me, Priya! We're throwing a surprise party for Dad.
+[6.9-8.4] elder: How fun!
+[9.0-12.8] caller: Please don't tell Dad, it's a surprise. Can you come Saturday?
+[13.4-14.9] elder: Of course I can.
+[15.5-18.6] caller: Great, no rush on the cake, whatever you like.

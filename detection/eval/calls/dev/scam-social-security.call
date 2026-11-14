@@ -1,0 +1,14 @@
+# id: scam-social-security
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-social-security
+# onset_s: 0.0
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-2.8] caller: Hello, I'm calling from the Social Security Administration.
+[3.4-4.9] elder: Yes?
+[5.5-10.4] caller: Your social security number was used in a crime. We will suspend your benefits.
+[11.0-12.5] elder: Oh dear.
+[13.1-18.3] caller: To protect your money you need to move it to a safe account right now.
+[18.9-20.4] elder: Which account?
+[21.0-25.5] caller: I'll give you the details. Don't tell your bank, they may be involved.

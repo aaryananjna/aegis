@@ -1,0 +1,14 @@
+# id: scam-medicare
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-medicare
+# onset_s: 0.0
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-3.5] caller: Good morning, this is Medicare calling about your new card.
+[4.1-6.9] elder: I didn't know I needed a new one.
+[7.5-13.1] caller: Everyone has to switch this week or lose coverage. I just need to verify your number.
+[13.7-16.1] elder: Can't I do this at the office?
+[16.7-19.8] caller: There's no time for that, the deadline is today.
+[20.4-21.9] elder: Well, I'm not sure.
+[22.5-26.3] caller: If you don't do it now, your benefits will be frozen.

@@ -58,6 +58,8 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(legal action against you|sue you|deport(ed|ation)?)\b",
         r"\b(shut (off|down)|disconnect) your (power|electricity|service|water|gas)\b",
         r"\b(suspend|freeze|close) your (account|benefits|social security|license)\b",
+        r"\b(account|benefits|coverage|card) (will|is going to) be (frozen|suspended|cancell?ed|closed)\b",
+        r"\blose (your )?(coverage|benefits|account)\b",
     ],
     T.VERIFICATION_AVOIDANCE: [
         r"\bno time (for|to) (that|explain|questions)\b",

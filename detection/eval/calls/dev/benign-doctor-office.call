@@ -1,0 +1,12 @@
+# id: benign-doctor-office
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-doctor-office
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-3.8] caller: Hi, this is Dr. Lee's office calling to confirm your appointment.
+[4.4-6.5] elder: Oh good, is it still Tuesday?
+[7.1-10.2] caller: Yes, Tuesday at ten. Please arrive fifteen minutes early.
+[10.8-12.9] elder: Do I need to bring anything?
+[13.5-17.0] caller: Just your insurance card and a list of your medications.
+[17.6-19.1] elder: Wonderful, see you then.

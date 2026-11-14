@@ -1,0 +1,15 @@
+# id: scam-grandson-bail
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-grandson-bail
+# onset_s: 2.0
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-1.5] elder: Hello?
+[2.1-5.2] caller: Grandma? It's me, your grandson. I'm in big trouble.
+[5.8-7.6] elder: Oh my goodness, what happened?
+[8.2-13.4] caller: I hit a car and the police took me in. I need bail money tonight.
+[14.0-15.8] elder: How much do you need?
+[16.4-19.9] caller: Two thousand. And please don't tell Mom, she'll kill me.
+[20.5-22.3] elder: Should I call your father?
+[22.9-27.1] caller: No, there's no time. My lawyer will call you about the payment.

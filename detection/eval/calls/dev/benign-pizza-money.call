@@ -1,0 +1,11 @@
+# id: benign-pizza-money
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-pizza-money
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-1.5] elder: Hello?
+[2.1-6.6] caller: Hi Grandpa, it's me, Leo. Can I borrow twenty dollars for pizza tonight?
+[7.2-11.0] elder: Ha, sure, I'll give it to you when you come by.
+[11.6-15.1] caller: Thanks! Mom said it's okay. I'll stop by after practice.
+[15.7-17.2] elder: See you then, kiddo.

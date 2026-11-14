@@ -1,0 +1,12 @@
+# id: benign-real-grandson
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-real-grandson
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-1.5] elder: Hello?
+[2.1-5.2] caller: Hey Nana, it's me, Ryan. How are you feeling?
+[5.8-7.6] elder: Ryan! Much better, thank you.
+[8.2-11.7] caller: I wanted to ask what day Mom's birthday dinner is.
+[12.3-14.4] elder: It's next Sunday at our place.
+[15.0-17.1] caller: Perfect, I'll be there. Love you.
