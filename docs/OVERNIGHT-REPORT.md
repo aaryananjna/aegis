@@ -14,7 +14,7 @@ _Filled in as the night goes on._
 | 2 | Issue for Aryan: C1, C3–C6 | – | [#19](https://github.com/aaryananjna/aegis/issues/19), assigned `aryannrd` | done |
 | 3 | `tools/dev_server/` reference server + `POST /typed` | `c/dev-server` | [#21](https://github.com/aaryananjna/aegis/pull/21) | done, draft |
 | 4b | Elder "no speaker labels" mode | `c/elder-nolabels` | [#23](https://github.com/aaryananjna/aegis/pull/23) (stacked on #18) | done, draft |
-| 4 | `/family` phone page | | | |
+| 4 | `/family` phone page | `c/family` | [#24](https://github.com/aaryananjna/aegis/pull/24) (stacked on #23) | done, draft |
 | 5 | `/evidence` judge page | | | |
 | 6 | CI for `web/` | | | |
 | 7 | Accessibility pass | | | |
@@ -29,7 +29,8 @@ _Filled in as the night goes on._
   Flagged in #19.
 - `CONTRACTS.md` on `main` is still v2. v2.1 (on `docs/contract-v2.1`) hasn't been OK'd or
   merged, but A and B are both building to it.
-- PR #12 (TigerDB accounts) is still open.
+- PR #12 (TigerDB accounts) is still open, and **Aryan's newest PR, #22, is TigerDB schema work**,
+  while #19 (what the screens need from `server/` for the demo) is still open.
 
 ## Verified vs not verified
 
@@ -38,6 +39,8 @@ _Filled in as the night goes on._
 | #17 builds | `npm run build` after the fix |
 | #18 `/elder` works in fixture and live mode | see #18: build, 9 tests, headless Chrome screenshots, live run against a v2.1 test server |
 | #23 Start protection → `set_elder null` → real card | fixture screenshots (`nolabels-1-start`, `-2-auto-started`, `-3-codeword`); live with `tools/dev_server` (`live-nolabels-card`) |
+| #24 `/family` at 390×844: idle, amber, red, earlier, passed code word, call ended | fixture shots `family-1-idle`, `-2-codeword`, `-3-hangup-full`; live with a real family token, `family-live-ended` |
+| Vibration, wake lock, `tel:` on a real phone | **not verified**, needs a phone |
 | #21 dev server does C1, C3–C6, C12 and `/typed` | 10 pytest tests; real uvicorn run with `typed_cli.py` → typed captions → codeword card → alert → `call_ended` |
 
 ## Decisions I made without asking
@@ -50,6 +53,12 @@ _Filled in as the night goes on._
 - **The dev server's URLs add `name` and `phone` to the family link only**, as display fields for
   `/family` ("Watching over Rose", "Call Rose"). They're not in the contract; I proposed them to
   A in #19.
+
+- **`/family` takes `name` and `phone` from the link**, defaulting to "your family member" and no
+  call button when they're missing. Sample calls default to Rose and +1 555 0100 (a fictional
+  number).
+- **I added Vite `allowedHosts: ['.trycloudflare.com']`** in #24. The tunnel plan in TEAM-PLAN
+  needs it.
 
 ## Screenshots
 
