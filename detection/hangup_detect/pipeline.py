@@ -106,8 +106,8 @@ class Detector:
         mixed = self.elder_raw is None
         if mixed:
             window = {uid for uid, (seg, arrival) in self._finals.items() if now - arrival < LLM_WINDOW_S}
-            if not (self.cfg.llm_mixed and any(
-                    e.source == "rule" and e.utterance_id in window for e in self.risk.evidence)):
+            if not (self.cfg.llm_mixed and (self.cfg.llm_mixed_always or any(
+                    e.source == "rule" and e.utterance_id in window for e in self.risk.evidence))):
                 return None
         utts = tuple((uid, seg.text) for uid, (seg, arrival) in self._finals.items()
                      if now - arrival < LLM_WINDOW_S
