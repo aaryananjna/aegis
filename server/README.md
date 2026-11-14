@@ -78,6 +78,20 @@ grandparent's laptop once (`POST /elders/{id}/devices` returns a `device_token` 
 
 ## Starting a call
 
+For the demo, two scripts (any `python3`; they talk to `localhost:8000`, or `AEGIS_SERVER`):
+
+```
+server/scripts/start-call             # live mic, speaker labels off; prints both links
+server/scripts/end-call               # ends the call start-call started
+```
+
+`start-call --labels` keeps speaker labels on, `--no-mic` takes captions from `/typed` or
+`/captions`, and `--name`, `--phone`, `--device` are passed through. The elder screen can also end
+the call by sending `{"type": "end"}` (its "End call" button, after an "are you sure" box). The
+family page can't.
+
+Or by hand:
+
 ```
 curl -s -X POST localhost:8000/sessions -H 'content-type: application/json' \
      -d '{"name":"Rose","phone":"+15550100","mic":true}'
@@ -87,6 +101,21 @@ curl -s -X POST localhost:8000/sessions -H 'content-type: application/json' \
 (`"device": "3"` picks a mic). Without it, send captions over `WS /captions/<id>` or `POST /typed`.
 End with `POST /sessions/<id>/end`. Ending stops the mic, kills both tokens and drops the call's
 history from memory.
+
+## Who is the grandparent (no tap needed)
+
+She's answering an incoming call, so the first line is normally her "Hello?". If the call's
+first live line is a short greeting (5 words or fewer, in the first 30 s, with a speaker label),
+the server picks that voice itself (`set_elder`). If the first line is long, it doesn't guess and
+the screen asks for the tap. A tap always replaces the guess, and after a tap the server never
+guesses. Elder screens get `{"type": "elder_set", "speaker_raw", "by": "server" | "tap"}`.
+`AUTO_ELDER=0` turns the guess off. **Proposal:** waiting for B's and C's OK.
+
+**Labels off** (`"labels": false` on `POST /sessions`): Deepgram's live speaker labels drift on
+one laptop mic that hears both the phone speaker and the grandparent (a caller line can land
+under her label and be ignored). With labels off, every line is scored from the start, with no
+tap and no guess. Keep the grandparent's script lines free of scam words. The AI layer is off in
+this mode (the detector needs a named grandparent for it).
 
 ## Security
 

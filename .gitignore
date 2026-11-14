@@ -4,3 +4,4 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 server/.env
+server/.last_call

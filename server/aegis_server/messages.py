@@ -3,7 +3,7 @@
 Bad input is dropped here (and logged without text), so one malformed message can't stop
 detection. Inbound types per CONTRACTS v2.1:
   /captions: caption, set_elder, end
-  /events (role=elder): set_elder, codeword_result
+  /events (role=elder): set_elder, codeword_result, end (the screen's "End call" button)
   /events (role=family): nothing (ignored)
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ from hangup_detect import make_segment
 log = logging.getLogger("aegis.messages")
 
 CAPTIONS_INBOUND = frozenset({"caption", "set_elder", "end"})
-ELDER_INBOUND = frozenset({"set_elder", "codeword_result"})
+ELDER_INBOUND = frozenset({"set_elder", "codeword_result", "end"})  # end: "End call" button
 
 MAX_MESSAGE_BYTES = 16_384   # one caption is far smaller; anything bigger is refused
 MAX_ID_LEN = 64
