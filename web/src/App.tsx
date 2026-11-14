@@ -1,5 +1,6 @@
 import { BrowserRouter, Link, Route, Routes } from 'react-router'
 import { ElderScreen } from './elder/ElderScreen'
+import { FamilyPage } from './family/FamilyPage'
 import { EventLog } from './routes/EventLog'
 
 function Home() {
@@ -23,7 +24,7 @@ export function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/elder" element={<ElderScreen />} />
-        <Route path="/family" element={<EventLog title="Family" role="family" />} />
+        <Route path="/family" element={<FamilyPage />} />
         <Route path="/evidence" element={<EventLog title="Evidence" role="elder" />} />
       </Routes>
     </BrowserRouter>

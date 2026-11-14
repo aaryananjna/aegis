@@ -46,7 +46,11 @@ function liveUrl(feed: Extract<Feed, { kind: 'live' }>): string {
 const BAD_TOKEN = 4401
 
 export function useEvents(feed: Feed) {
-  const [events, setEvents] = useState<AegisEvent[]>([])
+  // Each event with the wall-clock time it arrived here (ms), for "8:42 PM" on the family page.
+  const [log, setLog] = useState<{ events: AegisEvent[]; receivedAt: number[] }>({
+    events: [],
+    receivedAt: [],
+  })
   const [connection, setConnection] = useState<Connection>('idle')
   const [error, setError] = useState<string | null>(null)
   const socket = useRef<WebSocket | null>(null)
@@ -54,7 +58,7 @@ export function useEvents(feed: Feed) {
 
   useEffect(() => {
     const f = JSON.parse(feedKey) as Feed
-    setEvents([])
+    setLog({ events: [], receivedAt: [] })
     setError(null)
     if (f.kind === 'none') {
       setConnection('idle')
@@ -69,7 +73,8 @@ export function useEvents(feed: Feed) {
       if (seen.has(key)) return
       seen.add(key)
       if (e.type === 'call_ended') ended = true
-      setEvents((prev) => [...prev, e])
+      const at = Date.now()
+      setLog((prev) => ({ events: [...prev.events, e], receivedAt: [...prev.receivedAt, at] }))
     }
 
     if (f.kind === 'fixture') {
@@ -155,5 +160,5 @@ export function useEvents(feed: Feed) {
     return true
   }, [])
 
-  return { events, connection, error, send }
+  return { events: log.events, receivedAt: log.receivedAt, connection, error, send }
 }
