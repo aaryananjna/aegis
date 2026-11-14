@@ -1,4 +1,5 @@
-// Event shapes from CONTRACTS.md v2.1 (branch docs/contract-v2.1).
+// Event shapes from CONTRACTS.md v2.1 (branch docs/contract-v2.1), plus what main's detector
+// emits since PR #8 (`verify` card) and PR #9 (`codeword_ok`).
 
 export type Role = 'elder' | 'family'
 
@@ -53,9 +54,12 @@ export interface RiskEvent extends Detector {
   }
 }
 
+// codeword: caller claims to be family. verify: a bank, the government, a company or no one.
+export type CardKind = 'codeword' | 'verify' | 'hangup'
+
 export interface InterventionEvent extends Detector {
   type: 'intervention'
-  kind: 'codeword' | 'hangup'
+  kind: CardKind
   text: string
   latched: boolean
 }
@@ -63,9 +67,15 @@ export interface InterventionEvent extends Detector {
 export interface AlertEvent extends Detector {
   type: 'alert'
   alert_id: string
-  kind: 'codeword' | 'hangup'
+  kind: CardKind
   evidence: string[]
   summary: string
+}
+
+// The caller gave the right family code word (sent after codeword_result ok:true).
+export interface CodewordOkEvent extends Detector {
+  type: 'codeword_ok'
+  resolves: string
 }
 
 export interface StatusEvent extends Base {
@@ -86,6 +96,7 @@ export type AegisEvent =
   | RiskEvent
   | InterventionEvent
   | AlertEvent
+  | CodewordOkEvent
   | StatusEvent
   | CallEndedEvent
 
@@ -94,10 +105,11 @@ export type OutboundMessage =
   | { type: 'set_elder'; session_id?: string; speaker_raw: string | null }
   | { type: 'codeword_result'; session_id?: string; ok: boolean }
 
-// C4: the only events the family page receives.
+// C4: the only events the family page receives (plus codeword_ok, per detection/INTEGRATION.md).
 export const FAMILY_TYPES: ReadonlySet<AegisEvent['type']> = new Set([
   'alert',
   'intervention',
+  'codeword_ok',
   'status',
   'call_ended',
 ])
