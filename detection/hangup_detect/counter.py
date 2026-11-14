@@ -1,7 +1,9 @@
 """Counter-moves: one calm card at a time for the elder, one alert per card.
 
 Cards are latched safety advice: none -> codeword -> hangup, never backwards
-within a call, one step per update.
+within a call, one step per update. A dodge after the codeword card escalates
+at once; a very high score alone waits codeword_min_s so Grandma gets a real
+chance to ask the code word first.
 """
 from __future__ import annotations
 
@@ -38,18 +40,23 @@ class CounterMoves:
         self.cfg = cfg
         self.session_id = session_id
         self.state = "none"
+        self._codeword_at: float | None = None
 
     def update(self, level: str, score: float, new_rule_tactics: set[T],
-               live_tactics: set[T], ranked_quotes: list[str]) -> list[tuple]:
+               live_tactics: set[T], ranked_quotes: list[str], now: float) -> list[tuple]:
         """Return actions: ("intervention", kind, text) and ("alert", kind, quotes, summary)."""
         nxt = None
         if self.state == "none" and level == "high":
             nxt = "codeword"
         elif self.state == "codeword" and (
-                T.VERIFICATION_AVOIDANCE in new_rule_tactics or score >= self.cfg.hangup_score):
+                T.VERIFICATION_AVOIDANCE in new_rule_tactics
+                or (score >= self.cfg.hangup_score
+                    and now - self._codeword_at >= self.cfg.codeword_min_s)):
             nxt = "hangup"
         if nxt is None:
             return []
         self.state = nxt
+        if nxt == "codeword":
+            self._codeword_at = now
         return [("intervention", nxt, CARD_TEXT[nxt]),
                 ("alert", nxt, ranked_quotes[:3], summary(live_tactics))]

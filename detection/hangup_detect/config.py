@@ -36,6 +36,7 @@ class Config:
     enter_elevated: float = 0.50
     exit_elevated: float = 0.35
     hangup_score: float = 0.95
+    codeword_min_s: float = 20.0
     risk_emit_delta: float = 0.01
     max_finals: int = 2000
 
