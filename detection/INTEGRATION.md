@@ -60,7 +60,28 @@ and `fixtures/events-benign-party.jsonl`. They include the `caption` events A wi
 (with `t`, no `seq`), in order, so the `/elder` screen can show live captions and line up the
 highlight spans with the caption text. Regenerate with `--json --captions`.
 
+## AI layer (optional, S8a)
+
+Set `GROQ_API_KEY` (and optionally `GEMINI_API_KEY` as backup) in the server's environment.
+With no key it stays rules only and nothing else changes. `examples/server_example.py` shows
+the pattern:
+
+1. After each queue item, if the runner isn't busy, call `d.llm_request(now)`.
+2. If it returns a request, run it in a task (`await runner.run(req)`, 1.5 s budget) and put
+   `("llm", (req.seq, result))` back on the same queue.
+3. The owner calls `d.llm_status(result.mode, now, result.error)` and, if there's an answer,
+   `d.apply_llm(seq, result.raw, now)`.
+
+Rules the detector enforces for you:
+- It only sends anything after the grandparent tap names a speaker. Before that, or with no
+  speaker labels, the AI stays off.
+- Only the caller's last 60 s of text is sent.
+- AI evidence must quote real caller words, can only add risk (capped), can't make the level
+  HIGH alone and can't trigger a card by itself. Late or repeated answers are dropped.
+
+Live check once a key exists: `python scripts/llm_smoke.py` (reads `detection/.env`).
+
 ## Data
 
-With the rules only (today) nothing leaves the server. When the AI layer is added later,
-only the caller's last 60 seconds of text goes to Groq or Gemini.
+With rules only, no text leaves the server. With an AI key set, the caller's last 60 seconds
+of text goes to Groq (or Gemini as backup), and only after the grandparent tap.

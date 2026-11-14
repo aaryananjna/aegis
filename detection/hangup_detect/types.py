@@ -71,3 +71,11 @@ def make_segment(utterance_id: str, revision: int, speaker: str, text: str,
         is_final=bool(is_final), truncated=truncated,
         speaker_raw=speaker_id(speaker_raw),
     )
+
+
+@dataclass(frozen=True)
+class LLMRequest:
+    """A snapshot of caller lines sent to the AI layer. Answers are checked against it."""
+    seq: int
+    utterances: tuple[tuple[str, str], ...]  # (utterance_id, text), caller lines only
+    created_s: float
