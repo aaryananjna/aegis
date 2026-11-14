@@ -137,7 +137,9 @@ class Detector:
             self._last_score, self._last_level = score, level
         if self.confirmed and self.counter.state != "hangup":  # hangup is the last card
             quotes, tactics = self._ranked(now)
-            for act in self.counter.update(level, score, new_tactics, tactics, quotes, now):
+            family = any(e.tactic is Tactic.IMPERSONATION and e.detail == "family"
+                         for e in self.risk.live(now))
+            for act in self.counter.update(level, score, new_tactics, tactics, quotes, now, family):
                 if act[0] == "intervention":
                     out.append(ev.intervention(self.session_id, now, self._next(), act[1], act[2]))
                 else:

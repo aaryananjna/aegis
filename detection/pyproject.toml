@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "hangup-detect"
 version = "0.1.0"
-description = "Scam tactic detection for Hang Up"
+description = "Scam tactic detection for Aegis"
 requires-python = ">=3.11"
 dependencies = []
 

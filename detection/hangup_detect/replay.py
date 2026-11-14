@@ -82,8 +82,12 @@ def parse_call(text: str) -> Call:
 
 def replay(call: Call, elder: str | None = None, confirm: bool = True, caption_delay_s: float = 0.5,
            no_speakers: bool = False, config: Config | None = None, realtime: bool = False,
-           on_event=None, feed_ms: list[float] | None = None) -> list[dict]:
-    """Feed finals at end_s + caption_delay_s, tick every 1.0 s, then end."""
+           on_event=None, feed_ms: list[float] | None = None, captions: bool = False) -> list[dict]:
+    """Feed finals at end_s + caption_delay_s, tick every 1.0 s, then end.
+
+    captions=True also emits the `caption` event A's server would forward for each line,
+    just before the detector's events for it, so C can build screens from fixtures.
+    """
     if elder is None:
         elder = call.elder
     d = Detector(config or Config(), call.headers["id"])
@@ -108,6 +112,8 @@ def replay(call: Call, elder: str | None = None, confirm: bool = True, caption_d
         if realtime:
             time.sleep(max(0.0, at - (time.monotonic() - started)))
         if kind == 0:
+            if captions:
+                emit([_caption(call.headers["id"], segs[i], at)])
             t0 = time.perf_counter()
             evs = d.feed(segs[i], at)
             if feed_ms is not None:
@@ -119,6 +125,13 @@ def replay(call: Call, elder: str | None = None, confirm: bool = True, caption_d
     return out
 
 
+def _caption(session_id: str, s: Segment, t: float) -> dict:
+    """The caption event as A sends it (CONTRACTS.md), plus t. No seq: that orders B's events only."""
+    return {"type": "caption", "session_id": session_id, "t": round(t, 3),
+            "utterance_id": s.utterance_id, "revision": s.revision, "speaker_raw": s.speaker_raw,
+            "text": s.text, "start_s": s.start_s, "end_s": s.end_s, "is_final": s.is_final}
+
+
 def _strip_speaker(s: Segment) -> Segment:
     return dataclasses.replace(s, speaker="unknown", speaker_raw=None)
 
@@ -126,6 +139,8 @@ def _strip_speaker(s: Segment) -> Segment:
 def describe(e: dict) -> str:
     """One readable line per event, for the terminal."""
     t = f"{e['t']:6.1f}s"
+    if e["type"] == "caption":
+        return f"{t}  caption  [{e['speaker_raw'] or '?'}] {e['text']}"
     if e["type"] == "tactic_set":
         tag = "~" if e["provisional"] else " "
         hits = ", ".join(f"{x['tactic']}: \"{x['quote']}\"" for x in e["evidence"]) or "(cleared)"
@@ -146,6 +161,7 @@ def main(argv=None) -> int:
     ap.add_argument("--json", action="store_true", help="print JSON lines")
     ap.add_argument("--realtime", action="store_true")
     ap.add_argument("--no-speakers", action="store_true", help="ignore speaker labels")
+    ap.add_argument("--captions", action="store_true", help="also print caption events, like A sends")
     a = ap.parse_args(argv)
     try:
         with open(a.file, encoding="utf-8") as f:
@@ -154,7 +170,8 @@ def main(argv=None) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     show = (lambda e: print(json.dumps(e))) if a.json else (lambda e: print(describe(e)))
-    replay(call, elder=a.elder, no_speakers=a.no_speakers, realtime=a.realtime, on_event=show)
+    replay(call, elder=a.elder, no_speakers=a.no_speakers, realtime=a.realtime, on_event=show,
+           captions=a.captions)
     return 0
 
 

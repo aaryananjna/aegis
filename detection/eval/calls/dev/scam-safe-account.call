@@ -1,0 +1,14 @@
+# id: scam-safe-account
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-safe-account
+# onset_s: 0.0
+# note: Written by Claude for development, from FTC/FBI/AARP script beats (2026-11-13 research). Not a real or recorded call.
+[0.0-5.6] caller: Hello, this is the fraud team at your bank. Someone is using your account right now.
+[6.2-8.3] elder: Oh my, what do I do?
+[8.9-14.5] caller: We need to move your money to a safe account to protect it while we investigate.
+[15.1-17.2] elder: Can I go to my branch?
+[17.8-24.1] caller: An employee at your branch was involved, so if the teller asks, tell them it's for home renovations.
+[24.7-26.5] elder: I don't know about this.
+[27.1-30.9] caller: Your money is at risk and you have to act immediately.

@@ -1,0 +1,12 @@
+# id: scam-prize-fee
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-prize-fee
+# onset_s: 0.0
+# note: Written by Claude for development, from FTC/FBI/AARP script beats (2026-11-13 research). Not a real or recorded call.
+[0.0-4.2] caller: Congratulations, you've won a federally supervised lottery, two point five million dollars.
+[4.8-6.3] elder: Really? I never entered.
+[6.9-13.5] caller: You were selected at random. You just need to pay the taxes and fees first to claim your prize.
+[14.1-15.6] elder: How do I pay?
+[16.2-22.1] caller: Go to the store and buy Apple gift cards, then read me the numbers off the back.

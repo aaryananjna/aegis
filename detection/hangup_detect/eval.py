@@ -111,7 +111,7 @@ def report(m: dict, no_speakers: bool) -> str:
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(description="Hang Up eval")
+    ap = argparse.ArgumentParser(description="Aegis eval")
     ap.add_argument("--set", choices=["dev", "heldout", "all"], default="dev")
     ap.add_argument("--no-speakers", action="store_true")
     a = ap.parse_args(argv)
