@@ -1,0 +1,8 @@
+{"type": "risk", "session_id": "example-benign-party", "t": 0.0, "seq": 1, "score": 0.0474, "level": "low", "contributions": {"rule": {}, "llm": {}, "combos": {}}}
+{"type": "caption", "session_id": "example-benign-party", "t": 1.5, "utterance_id": "u0", "revision": 0, "speaker_raw": "0", "text": "Hello?", "start_s": 0.0, "end_s": 1.0, "is_final": true}
+{"type": "caption", "session_id": "example-benign-party", "t": 4.7, "utterance_id": "u1", "revision": 0, "speaker_raw": "1", "text": "Hi Nana, it's me, Ryan! How was your week?", "start_s": 1.5, "end_s": 4.2, "is_final": true}
+{"type": "caption", "session_id": "example-benign-party", "t": 6.5, "utterance_id": "u2", "revision": 0, "speaker_raw": "0", "text": "Ryan! It was lovely, thank you.", "start_s": 4.8, "end_s": 6.0, "is_final": true}
+{"type": "caption", "session_id": "example-benign-party", "t": 11.5, "utterance_id": "u3", "revision": 0, "speaker_raw": "1", "text": "We're planning a surprise party for Mom on Saturday, so don't tell Mom, okay?", "start_s": 6.5, "end_s": 11.0, "is_final": true}
+{"type": "caption", "session_id": "example-benign-party", "t": 13.5, "utterance_id": "u4", "revision": 0, "speaker_raw": "0", "text": "My lips are sealed. What time?", "start_s": 11.5, "end_s": 13.0, "is_final": true}
+{"type": "caption", "session_id": "example-benign-party", "t": 17.0, "utterance_id": "u5", "revision": 0, "speaker_raw": "1", "text": "Around six. Can you bring your lemon cake? No rush, just let me know.", "start_s": 13.5, "end_s": 16.5, "is_final": true}
+{"type": "caption", "session_id": "example-benign-party", "t": 18.5, "utterance_id": "u6", "revision": 0, "speaker_raw": "0", "text": "Of course I will.", "start_s": 17.0, "end_s": 18.0, "is_final": true}
