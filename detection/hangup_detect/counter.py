@@ -52,14 +52,17 @@ class CounterMoves:
                         now: float) -> list[tuple]:
         """The elder screen reports the caller's answer to the code word card (C12).
 
-        Wrong: hang up at once. Right: the score-based hang up path turns off, but a dodge
-        still escalates. Ignored unless the code word card is showing.
+        Wrong: hang up at once. Right: one ("codeword_ok",) action so the family page can say
+        it was handled; the score-based hang up path turns off, but a dodge still escalates.
+        Ignored unless the code word card is showing.
         """
         if self.state != "codeword":
             return []
         if ok:
+            if self._codeword_ok:
+                return []  # already reported
             self._codeword_ok = True
-            return []
+            return [("codeword_ok",)]
         return self._move("hangup", ranked_quotes, live_tactics, now)
 
     def update(self, level: str, score: float, new_rule_tactics: set[T],

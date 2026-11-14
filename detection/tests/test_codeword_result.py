@@ -23,7 +23,7 @@ def test_wrong_answer_escalates_at_once():
 
 def test_right_answer_stops_score_escalation():
     c = at_codeword()
-    assert c.codeword_result(True, ["q"], set(), 1.0) == []
+    assert c.codeword_result(True, ["q"], set(), 1.0) == [("codeword_ok",)]
     # Score stays above 0.95 for a long time: no hang up card.
     assert c.update("high", 0.99, set(), set(), ["q"], 60.0, family=True) == []
     assert c.state == "codeword"
@@ -68,7 +68,8 @@ def test_detector_wrong_answer_emits_card_and_alert():
 
 def test_detector_right_answer_no_hangup_over_time():
     d = detector_at_codeword()
-    assert d.codeword_result(True, 5.0) == []
+    (ok,) = d.codeword_result(True, 5.0)
+    assert ok["type"] == "codeword_ok"
     for t in range(6, 120):
         assert [e for e in d.tick(float(t)) if e["type"] == "intervention"] == []
     assert d.state()["intervention"] == "codeword"
@@ -90,3 +91,24 @@ def test_codeword_result_rejects_anything_but_a_real_bool(bad):
     with pytest.raises(TypeError):
         d.codeword_result(bad, 5.0)
     assert d.state()["intervention"] == "codeword"  # nothing changed
+
+
+# Issue #10 follow-up (Aryan): tell the family page the code word was answered right.
+def test_codeword_ok_event_shape():
+    d = detector_at_codeword()
+    (e,) = d.codeword_result(True, 5.0)
+    assert set(e) == {"type", "session_id", "t", "seq", "resolves"}
+    assert e["resolves"] == "s1:codeword"  # the alert it answers
+
+
+def test_codeword_ok_only_once():
+    d = detector_at_codeword()
+    d.codeword_result(True, 5.0)
+    assert d.codeword_result(True, 6.0) == []
+
+
+def test_wrong_answer_after_right_still_hangs_up():
+    d = detector_at_codeword()
+    d.codeword_result(True, 5.0)
+    evs = d.codeword_result(False, 6.0)
+    assert [e["type"] for e in evs] == ["intervention", "alert"]

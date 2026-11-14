@@ -32,8 +32,10 @@ Every call returns a list of event dicts (`tactic_set`, `risk`, `intervention`, 
 2. **Tick every second.** Without ticks the meter can't calm down when the call goes quiet.
 3. **The code word answer (C12).** When the `codeword` card is up, the elder screen sends
    `{"type": "codeword_result", "ok": true|false}`. Pass `ok` to `codeword_result`. Wrong
-   answer: the hang up card and its alert come back at once. Right answer: no score-based
-   hang up, but a dodge still escalates. Any other time it returns a `status` warning.
+   answer: the hang up card and its alert come back at once. Right answer: one
+   `{"type": "codeword_ok", "resolves": "<session>:codeword", ...}` event (send it to the
+   family page too, so they see it was handled), then no score-based hang up, but a dodge
+   still escalates. Any other time it returns a `status` warning.
 4. **Cards and alerts wait for `set_elder`.** Until C's screen sends who the grandparent is,
    the meter moves but no card or family alert fires, so Grandma's own words can't set one
    off. Speaker labels come from Deepgram diarization (`speaker_raw`).
