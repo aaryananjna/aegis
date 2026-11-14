@@ -6,3 +6,4 @@ __pycache__/
 server/.env
 server/.last_call
 server/.device_token
+server/recordings/

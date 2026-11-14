@@ -43,6 +43,8 @@ class NewSession(BaseModel):
     # False: no speaker labels from Deepgram; every line is scored. For one laptop mic that
     # hears both the phone speaker and the grandparent, where labels drift between voices.
     labels: bool = True
+    # Staged test calls only: save the final lines as a local .call file for B's eval.
+    save_transcript: bool = False
 
 
 class Typed(BaseModel):
@@ -79,7 +81,7 @@ async def create_session(request: Request, response: Response,
         except Exception:
             elder_id = None  # the database is down: the call still runs, just unrecorded
     try:
-        s = store.create(elder_id)
+        s = store.create(elder_id, save_transcript=body.save_transcript)
     except TooManySessions:
         raise HTTPException(status_code=429, detail="too many calls at once; end one first")
     if body.mic:

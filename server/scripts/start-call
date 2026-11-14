@@ -26,9 +26,11 @@ p.add_argument("--name", default="Rose", help="grandparent's name on the family 
 p.add_argument("--phone", default=None, help="number for the family page's Call button (made up)")
 p.add_argument("--device", default="MacBook Air Microphone", help="mic name or number")
 p.add_argument("--no-history", action="store_true", help="don't save this call to TigerDB")
+p.add_argument("--transcript", action="store_true",
+               help="staged test call: save the lines to server/recordings/ as a .call file")
 a = p.parse_args()
 
-body = {"name": a.name, "mic": not a.no_mic, "labels": a.labels}
+body = {"name": a.name, "mic": not a.no_mic, "labels": a.labels, "save_transcript": a.transcript}
 if a.phone:
     body["phone"] = a.phone
 if not a.no_mic and a.device:
@@ -53,7 +55,13 @@ except OSError:
 LAST.write_text(d["session_id"])
 mode = "no mic" if a.no_mic else ("live mic, labels on" if a.labels else "live mic, labels off")
 mode += ", saved to history" if d.get("recorded") else ", not saved to history"
+if a.transcript:
+    mode += ", test transcript on"
 print(f"\nCall {d['session_id']} started ({mode})\n")
 print(f"  ELDER  (open on the laptop, full screen):\n  {d['elder_url']}\n")
 print(f"  FAMILY (send to the phone):\n  {d['family_url']}\n")
+if a.transcript:
+    print("Transcript goes to server/recordings/ when the call ends. Staged calls only.")
+    if not a.labels:
+        print("Tip: add --labels so lines come out as spk0/spk1 instead of unknown.")
 print("End it with:  server/scripts/end-call")
