@@ -101,12 +101,14 @@ export function useEvents(feed: Feed) {
     }
 
     let closedByUs = false
+    let mine: WebSocket | null = null // this effect's socket, never another effect's
     let retry = 0
     let retryTimer: number | undefined
 
     const connect = () => {
       setConnection(retry === 0 ? 'connecting' : 'reconnecting')
       const ws = new WebSocket(liveUrl(f))
+      mine = ws
       socket.current = ws
       ws.onopen = () => {
         retry = 0
@@ -120,7 +122,8 @@ export function useEvents(feed: Feed) {
         }
       }
       ws.onclose = (ev) => {
-        socket.current = null
+        // A late close from an older socket (React StrictMode, reconnects) must not drop the new one.
+        if (socket.current === ws) socket.current = null
         if (closedByUs) return
         if (ev.code === BAD_TOKEN) {
           setError('The server refused this link (bad or expired token).')
@@ -139,8 +142,8 @@ export function useEvents(feed: Feed) {
     return () => {
       closedByUs = true
       window.clearTimeout(retryTimer)
-      socket.current?.close()
-      socket.current = null
+      mine?.close()
+      if (socket.current === mine) socket.current = null
     }
   }, [feedKey])
 

@@ -42,7 +42,10 @@ Adds `web/` (role C). Nothing outside `web/` changes, apart from this PR text in
   - `/elder`: 13 detector events.
   - `/family`: only the 4 card and alert events.
   - No captions arrive, because the example server doesn't forward them yet (C1).
-- Not tested: `send()` in a browser, because no page used it yet in this PR.
+- **Fix included:** under React StrictMode (dev), the first socket's late `onclose` cleared the
+  shared socket ref after the second socket had connected, so `send()` silently failed. Now a
+  socket only clears the ref if it still owns it. `send()` itself is exercised by the
+  `/elder` screen in the stacked PR (`c/elder-screen`).
 
 ## Notes for reviewers
 
