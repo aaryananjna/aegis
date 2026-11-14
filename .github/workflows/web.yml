@@ -1,0 +1,33 @@
+name: web
+on:
+  pull_request:
+    paths: ["web/**", ".github/workflows/web.yml"]
+  push:
+    branches: [main]
+    paths: ["web/**", ".github/workflows/web.yml"]
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      # Until the web/ scaffold (#17) is on the branch being tested, there's nothing to build.
+      - id: web
+        working-directory: .
+        run: |
+          if [ -f web/package.json ]; then echo "present=true" >> "$GITHUB_OUTPUT"
+          else echo "::notice::web/ isn't on this branch yet; skipping"; fi
+      - if: steps.web.outputs.present == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "26"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - if: steps.web.outputs.present == 'true'
+        run: npm ci
+      - if: steps.web.outputs.present == 'true'
+        run: npm run build
+      - if: steps.web.outputs.present == 'true'
+        run: npm test --if-present
