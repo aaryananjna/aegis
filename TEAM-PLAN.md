@@ -17,7 +17,7 @@ Last updated: 2026-11-13 by Aryan (goal, demo and status gaps; see the PR).
 | Accessibility | Huge live captions on every call, one calm card at a time |
 | UI/UX | The `/elder` screen and the `/family` page |
 | AI Security | Reads the scam, not the voice, so a perfect voice clone doesn't beat it. The AI layer can only add risk, never remove it, so a caller saying "ignore your instructions" can't talk the score down |
-| Most Secure | No audio stored, no caption text logged, keys only on the server, per-call family link that expires |
+| Most Secure | No audio stored, no caption text logged, keys only on the server, hashed passwords, per-call family link that expires |
 
 **Done means** (all of these by the deadline):
 1. The demo below runs cleanly in a noisy room (M4).
@@ -78,8 +78,11 @@ from another part, open a GitHub issue (see `CLAUDE.md`).
 | Screens | React, Vite, Tailwind. One app, two pages: `/elder` and `/family` |
 | Demo voice clone | ElevenLabs, made from the presenter's own voice with consent |
 | Running the demo | Server on the presenter's laptop. Family phone joins through a Cloudflare quick tunnel over a phone hotspot |
+| Database | TigerDB, for user accounts (login info) |
 
-No database and no logins beyond the family page link. We don't store audio.
+User accounts and login info are stored in TigerDB. Passwords are stored only as hashes
+(argon2 or bcrypt), never as plain text. The connection string stays in `.env`. We don't
+store audio, caption text or the family code word.
 
 ## How the parts connect
 
@@ -117,6 +120,8 @@ the other two OK.
 5. Test it in a noisy room with the phone speaker about 10 cm from the mic. Done when captions
    show up less than a second behind speech.
 6. Demo network: phone hotspot plus a Cloudflare quick tunnel so the family phone can connect.
+7. User accounts in TigerDB: sign up, log in and log out, hashed passwords, login sessions
+   that expire. Seed demo accounts with made-up names.
 
 ### B: detection (Mihir)
 1. Done and merged: rules, risk score, cards, alerts, replay, type mode, test harness and
@@ -178,3 +183,7 @@ catch the practice scams. Twilio texts (open question 4) are out; keep the famil
    grandparent; with no speaker labels it stays rules only.
 6. Who plays the cloned "grandson" off stage in the demo?
 7. Which prizes we're going for (the table in "Goal for the hackathon" is a proposal).
+8. **User accounts:** who logs in (family members, the grandparent or both), and what else a
+   user record holds (for example which grandparent a family member watches, and their
+   phone number). Does logging in replace the per-call family link, or work alongside it?
+   Replacing it changes `CONTRACTS.md`.
