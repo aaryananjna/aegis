@@ -63,7 +63,8 @@ def test_wrong_elder_scores_grandma_but_meter_only_before_confirm():
 def test_fixtures_match_regeneration(name):
     path = ROOT / "fixtures" / f"events-{name}.jsonl"
     got = [json.loads(l) for l in path.read_text().splitlines()]
-    assert got == replay(parse_call((ROOT / "examples" / f"{name}.call").read_text()), elder="0")
+    assert got == replay(parse_call((ROOT / "examples" / f"{name}.call").read_text()), elder="0",
+                         captions=True)
 
 
 def test_parse_typed():

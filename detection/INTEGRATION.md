@@ -51,7 +51,9 @@ python -m hangup_detect.cli                                                    #
 ```
 
 Ready-made event streams for building C's screens: `fixtures/events-scam-grandson.jsonl`
-and `fixtures/events-benign-party.jsonl`.
+and `fixtures/events-benign-party.jsonl`. They include the `caption` events A will forward
+(with `t`, no `seq`), in order, so the `/elder` screen can show live captions and line up the
+highlight spans with the caption text. Regenerate with `--json --captions`.
 
 ## Data
 
