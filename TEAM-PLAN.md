@@ -3,7 +3,27 @@
 **Read this first.** It's the single source of truth for who does what. If you're a Claude
 working in this repo, also read `CLAUDE.md` and `CONTRACTS.md`.
 
-Last updated: 2026-11-13 by Mihir (B).
+Last updated: 2026-11-13 by Aryan (goal, demo and status gaps; see the PR).
+
+## Goal for the hackathon
+
+**Deadline:** 9 pm, Sat 14 Nov 2026 (local time). **Judging time:** _TBD._
+
+**Prizes we're going for** (proposal from the original pitch; confirm in issue #1):
+
+| Prize | What proves it |
+|---|---|
+| Impactful AI | The live demo, plus held-out results on staged calls |
+| Accessibility | Huge live captions on every call, one calm card at a time |
+| UI/UX | The `/elder` screen and the `/family` page |
+| AI Security | Reads the scam, not the voice, so a perfect voice clone doesn't beat it. The AI layer can only add risk, never remove it, so a caller saying "ignore your instructions" can't talk the score down |
+| Most Secure | No audio stored, no caption text logged, keys only on the server, per-call family link that expires |
+
+**Done means** (all of these by the deadline):
+1. The demo below runs cleanly in a noisy room (M4).
+2. The held-out results table, with counts, described as staged role-play (M3).
+3. A `README.md` that says what Hang Up is, how to run it and the held-out numbers.
+4. Whatever the hackathon asks for (video, form). _TBD._
 
 ## What we're building
 
@@ -17,18 +37,31 @@ Hang Up sits next to a grandparent's phone while it's on speaker.
    alerts a family member's phone with the exact words that set it off.
 
 It never tries to tell if a voice is fake. It reads the scam, so a perfect voice clone
-doesn't beat it.
+doesn't beat it. **No voice-clone detection, not even as a stretch goal.** It would weaken
+this claim.
 
 **The demo:** the presenter's phone rings mid pitch, the judge answers and hears the
 presenter's own cloned voice asking for bail money while the presenter stands silent. Then we
 turn the laptop around and Hang Up has already caught it. Right after, the "real grandson"
 calls about a birthday party and the meter stays green.
 
+Demo details that must be true:
+- The judge answers **on speakerphone**, with the phone about 10 cm from the laptop mic.
+  Otherwise the laptop hears nothing.
+- A named teammate off stage plays the "grandson" from the soundboard of cloned clips:
+  _who: TBD_. It's a live call with scripted clips, and we say so if asked.
+- The presenter taps "who is the grandparent?" at the start (issue #4).
+- The scam script runs **at least 30 s** and the caller **dodges the code word question**.
+  In the replay of `examples/scam-grandson.call`, the code word card and first family alert
+  fire at 18.7 s and the "hang up" card at 24.3 s, after the dodge.
+- The family phone has the `/family` page **open before the call**. A web page can't make
+  an iPhone buzz or ring (see open question 4).
+
 ## Who does what
 
 | Role | Person | Folder | Owns |
 |---|---|---|---|
-| **A: server and audio** | _claim it_ | `server/` | Mic audio, Deepgram live captions, the FastAPI WebSocket server, sessions, family page login |
+| **A: server and audio** | Aryan | `server/` | Mic audio, Deepgram live captions, the FastAPI WebSocket server, sessions, family page login |
 | **B: detection** | Mihir | `detection/` | Scam rules, risk score, cards and alerts, the AI layer, test harness |
 | **C: screens and demo** | _claim it_ | `web/` | Grandparent screen, family phone page, demo setup (voice clone, call script, props) |
 
@@ -40,7 +73,7 @@ from another part, open a GitHub issue (see `CLAUDE.md`).
 | Part | Choice |
 |---|---|
 | Server | Python, FastAPI, WebSockets |
-| Live captions | Deepgram streaming with speaker labels (diarization). Backup: local faster-whisper |
+| Live captions | Deepgram streaming with speaker labels (diarization). Backup: local faster-whisper. Not Groq Whisper: no speaker labels, not live (issue #3) |
 | Scam detection | Python package in `detection/`, no dependencies. AI layer later: Groq, Gemini as backup |
 | Screens | React, Vite, Tailwind. One app, two pages: `/elder` and `/family` |
 | Demo voice clone | ElevenLabs, made from the presenter's own voice with consent |
@@ -67,9 +100,9 @@ the other two OK.
 
 | Part | Where it is |
 |---|---|
-| B | Rules, risk score, cards, alerts, replay, type mode and test harness are built with 162 tests on branch `b/detection`. PR coming. Works on typed or replayed calls today. |
-| A | Not started as far as B knows |
-| C | Not started as far as B knows. C can start now from the sample event files in `detection/fixtures/` once B's PR is merged |
+| B | Rules, risk score, cards, alerts, replay, type mode and test harness are merged into `main` (PR #2), 171 tests passing. Practice calls (synthetic, dev set): 8/8 scams reach HIGH, 0/8 false alarms. Rules only; no AI layer yet. |
+| A | Not started. Aryan |
+| C | Not started. Role unclaimed. C can start now from the sample event files in `detection/fixtures/` |
 
 ## Tasks
 
@@ -86,9 +119,10 @@ the other two OK.
 6. Demo network: phone hotspot plus a Cloudflare quick tunnel so the family phone can connect.
 
 ### B: detection (Mihir)
-1. Done on the branch: rules, risk score, cards, alerts, replay, type mode, test harness and
+1. Done and merged: rules, risk score, cards, alerts, replay, type mode, test harness and
    16 synthetic practice calls.
-2. Next: code review and PR, then the AI layer (Groq), then held-out results.
+2. Next: the AI layer (Groq, Gemini as backup), with a test proving the AI layer can never
+   lower the score. Then held-out results once A and C record the calls.
 
 ### C: screens and demo
 1. `/elder` screen: huge live captions, highlighted scam words, a risk meter and one card at a
@@ -107,15 +141,20 @@ reading B's rules**. These give the only numbers we show judges. Steps:
 
 ## Milestones
 
-The submission deadline is unknown to B. Whoever finds it, put it here.
+Deadline is 9 pm Sat 14 Nov, so about one day. Times are a proposal; change them in a PR if
+they don't work for you.
 
-| # | Done when |
-|---|---|
-| M0 | Roles claimed in the table and `CONTRACTS.md` OK'd by all three |
-| M1 | C's screens run on the sample event files. A's server shows live captions |
-| M2 | One full run: phone on speaker → captions → detector → both screens |
-| M3 | Held-out calls recorded and the results table printed |
-| M4 | Five clean rehearsals of the demo in a noisy room. Feature freeze |
+| # | By | Done when |
+|---|---|---|
+| M0 | Fri 13 Nov, 11 pm | Roles claimed in the table and `CONTRACTS.md` OK'd by all three |
+| M1 | Sat 14 Nov, 10 am | C's screens run on the sample event files. A's server shows live captions |
+| M2 | Sat 14 Nov, 2 pm | One full run: phone on speaker → captions → detector → both screens |
+| M3 | Sat 14 Nov, 4 pm | Held-out calls recorded and the results table printed |
+| M4 | Sat 14 Nov, 6 pm | Feature freeze. Then five clean rehearsals in a noisy room |
+| Submit | Sat 14 Nov, 8:30 pm | Everything in "Done means" submitted, 30 min before the deadline |
+
+With this little time, B's AI layer only goes in if it's working by M2. Rules alone already
+catch the practice scams. Twilio texts (open question 4) are out; keep the family page open.
 
 ## Team rules
 
@@ -128,6 +167,14 @@ The submission deadline is unknown to B. Whoever finds it, put it here.
 
 ## Open questions
 
-1. Who takes A and who takes C?
-2. Exact submission deadline and judging time.
+1. Who takes C? Claim it in issue #1. (A is Aryan.)
+2. Exact submission deadline and judging time, and what we must submit.
 3. Can each of us merge our own PR once tests pass, or does someone review first?
+4. **Family phone buzz:** keep the `/family` page open on the phone (no work), or add a Twilio
+   text that links to it (new event, needs a `CONTRACTS.md` change OK'd by all three)?
+5. **What goes to the AI layer before the tap:** `CONTRACTS.md` says only caller text goes to
+   Groq or Gemini, but before the grandparent tap (or with no speaker labels) we can't tell
+   who the caller is. Proposal for B: the AI layer stays off until the tap names a
+   grandparent; with no speaker labels it stays rules only.
+6. Who plays the cloned "grandson" off stage in the demo?
+7. Which prizes we're going for (the table in "Goal for the hackathon" is a proposal).
