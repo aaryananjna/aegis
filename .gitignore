@@ -5,3 +5,4 @@ __pycache__/
 .pytest_cache/
 server/.env
 server/.last_call
+server/.device_token

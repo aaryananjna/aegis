@@ -14,12 +14,15 @@ from __future__ import annotations
 import os
 from urllib.parse import urlencode
 
-from fastapi import APIRouter, HTTPException, Request, Response
+from typing import Annotated
+
+from fastapi import APIRouter, Header, HTTPException, Request, Response
 from hangup_detect import make_segment
 from pydantic import BaseModel, Field
 
 from .. import db
 from ..config import settings
+from ..history import elder_for_device
 from ..netguard import is_laptop
 from ..roles import ROLES
 from ..sessions import TooManySessions, store
@@ -58,13 +61,25 @@ async def health() -> dict:
 
 @router.post("/sessions")
 async def create_session(request: Request, response: Response,
-                         body: NewSession | None = None) -> dict:
+                         body: NewSession | None = None,
+                         x_device_token: Annotated[str | None, Header()] = None) -> dict:
     require_laptop(request)
     body = body or NewSession()
     if body.mic and not settings.deepgram_api_key:
         raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY is not set")
+    # A paired laptop says which grandparent this is, so the call goes in her history.
+    elder_id = None
+    if x_device_token and db.is_open():
+        try:
+            elder_id = await elder_for_device(x_device_token)
+            if elder_id is None:
+                raise HTTPException(status_code=401, detail="this laptop isn't paired")
+        except HTTPException:
+            raise
+        except Exception:
+            elder_id = None  # the database is down: the call still runs, just unrecorded
     try:
-        s = store.create()
+        s = store.create(elder_id)
     except TooManySessions:
         raise HTTPException(status_code=429, detail="too many calls at once; end one first")
     if body.mic:
@@ -75,10 +90,11 @@ async def create_session(request: Request, response: Response,
         {"session": s.session_id, "token": s.tokens[role], **(extra if role == "family" else {})})
         for role in ROLES}
     # Printed to the laptop's own terminal only (the server's logs never hold tokens).
-    print(f"\n  Aegis call {s.session_id}{' (live mic)' if body.mic else ''}\n"
+    print(f"\n  Aegis call {s.session_id}{' (live mic)' if body.mic else ''}"
+          f"{' (saved to history)' if s.recorder else ''}\n"
           f"  elder:  {urls['elder']}\n  family: {urls['family']}\n", flush=True)
     return {"session_id": s.session_id, "elder_url": urls["elder"],
-            "family_url": urls["family"]}
+            "family_url": urls["family"], "recorded": s.recorder is not None}
 
 
 @router.post("/sessions/{session_id}/end")

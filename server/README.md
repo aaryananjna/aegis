@@ -117,6 +117,20 @@ under her label and be ignored). With labels off, every line is scored from the 
 tap and no guess. Keep the grandparent's script lines free of scam words. The AI layer is off in
 this mode (the detector needs a named grandparent for it).
 
+## Call history (TigerDB)
+
+Calls started from a paired laptop are saved: one `calls` row (start, end, highest score and
+level, when it first went high, which card showed) and the risk score once a second in
+`risk_points`, a Timescale hypertable kept 30 days. Numbers only, never text or audio.
+`python -m aegis_server.seed` saves the demo laptop's token to `server/.device_token`
+(gitignored), and `start-call` sends it, so demo calls land in Grandma Rose's history.
+
+- `GET /elders/{id}/calls?limit=20`: newest first, for any member.
+- `GET /elders/{id}/calls/{call_id}/risk?bucket=1`: the risk line, one point per `bucket` seconds
+  (`time_bucket`).
+
+If the database is down, calls still run, just unrecorded.
+
 ## Security
 
 **Where the voice goes:** laptop mic → server memory → Deepgram, over TLS with the certificate

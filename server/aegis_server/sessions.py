@@ -35,7 +35,9 @@ from fastapi import WebSocket
 from hangup_detect import Config, Detector
 from hangup_detect.llm_runner import LLMRunner
 
+from . import db
 from .config import settings
+from .history import CallRecorder
 from .messages import parse
 from .roles import ROLES, allowed
 
@@ -101,7 +103,7 @@ class Listener:
 
 
 class Session:
-    def __init__(self, session_id: str, store: "SessionStore") -> None:
+    def __init__(self, session_id: str, store: "SessionStore", elder_id=None) -> None:
         self.session_id = session_id
         self.store = store
         self.tokens = {role: secrets.token_urlsafe(32) for role in ROLES}
@@ -116,6 +118,10 @@ class Session:
         # greeting), "tap" (the screen or the laptop). "declined": the first line wasn't a
         # greeting, so the server won't guess for this call.
         self.elder_pick: str | None = None
+        # Call history in TigerDB, only for calls from a paired laptop (numbers only).
+        self.recorder = None
+        if elder_id is not None and db.is_open():
+            self.recorder = CallRecorder(session_id, elder_id)
         self.loop = asyncio.get_running_loop()
         self.start = self.loop.time()
         self.stt_stop = asyncio.Event()
@@ -171,18 +177,25 @@ class Session:
                         out += d.apply_llm(seq, result.raw, now)
                 elif kind == "tick":
                     out = d.tick(now)
+                    if self.recorder:
+                        self.recorder.sample()
                 elif kind == "status":  # from the server itself (C7), no seq
                     out = [{"type": "status", "session_id": self.session_id,
                             "t": round(now, 3), **payload}]
                 else:  # "end" (C5)
                     out = d.end(now) + [{"type": "call_ended", "session_id": self.session_id,
                                          "t": round(now, 3)}]
+                    if self.recorder:
+                        self.recorder.observe(out)
+                        self.recorder.finish()
                     self.broadcast(out)
                     self.close()
                     return
             except Exception as e:  # one bad item must never stop detection
                 log.error("session %s: %s on %s item", self.session_id, type(e).__name__, kind)
                 continue
+            if self.recorder:
+                self.recorder.observe(out)
             self.broadcast(out)
             self._maybe_ask_llm()
 
@@ -337,11 +350,11 @@ class SessionStore:
     def __init__(self) -> None:
         self._sessions: dict[str, Session] = {}
 
-    def create(self) -> Session:
+    def create(self, elder_id=None) -> Session:
         if len(self._sessions) >= MAX_SESSIONS:
             raise TooManySessions
         sid = secrets.token_urlsafe(9)
-        s = self._sessions[sid] = Session(sid, self)
+        s = self._sessions[sid] = Session(sid, self, elder_id)
         return s
 
     def get(self, session_id: str) -> Session | None:

@@ -19,7 +19,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import db
 from .config import settings
-from .routes import auth, captions_ws, elders, events_ws, sessions
+from .routes import auth, captions_ws, elders, events_ws, history, sessions
 from .sessions import store
 
 log = logging.getLogger("aegis")
@@ -84,3 +84,4 @@ app.include_router(captions_ws.router)
 app.include_router(events_ws.router)
 app.include_router(auth.router)
 app.include_router(elders.router)
+app.include_router(history.router)

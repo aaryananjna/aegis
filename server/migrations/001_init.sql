@@ -72,7 +72,13 @@ CREATE TABLE IF NOT EXISTS risk_points (
   score   real NOT NULL,
   level   text NOT NULL
 );
-SELECT create_hypertable('risk_points', by_range('time'), if_not_exists => true);
+-- Timescale-only parts are skipped on plain Postgres, so anyone can run this locally.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'timescaledb') THEN
+    PERFORM create_hypertable('risk_points', by_range('time'), if_not_exists => true);
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS risk_points_call_time_idx ON risk_points (call_id, time DESC);
 
 DO $$
@@ -86,5 +92,10 @@ BEGIN
   END IF;
 END $$;
 
--- Keep risk history for 30 days only.
-SELECT add_retention_policy('risk_points', INTERVAL '30 days', if_not_exists => true);
+-- Keep risk history for 30 days only (Timescale).
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'timescaledb') THEN
+    PERFORM add_retention_policy('risk_points', INTERVAL '30 days', if_not_exists => true);
+  END IF;
+END $$;
