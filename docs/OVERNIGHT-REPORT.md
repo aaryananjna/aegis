@@ -17,7 +17,7 @@ _Filled in as the night goes on._
 | 4 | `/family` phone page | `c/family` | [#24](https://github.com/aaryananjna/aegis/pull/24) (stacked on #23) | done, draft |
 | 5 | `/evidence` judge page | `c/evidence` | [#26](https://github.com/aaryananjna/aegis/pull/26) (stacked on #24) | done, draft |
 | extra | Contract v2.1 PR with A's 4 additions + B's AI step (B asked in #25) | `docs/contract-v2.1` | [#27](https://github.com/aaryananjna/aegis/pull/27), **ready for review** (not draft: B asked to review it) | done |
-| 6 | CI for `web/` | | | |
+| 6 | CI for `web/` | `c/web-ci` | [#28](https://github.com/aaryananjna/aegis/pull/28) | done, draft, CI green |
 | 7 | Accessibility pass | | | |
 | 8 | `docs/DEMO-RUNBOOK.md` | | | |
 
@@ -43,6 +43,7 @@ _Filled in as the night goes on._
 | #24 `/family` at 390×844: idle, amber, red, earlier, passed code word, call ended | fixture shots `family-1-idle`, `-2-codeword`, `-3-hangup-full`; live with a real family token, `family-live-ended` |
 | #26 `/evidence`: chart, hover, breakdown, table | screenshots `evidence-1-scam`, `-2-hover`, `-3-bank`; reducer tests |
 | `/evidence` with real AI evidence ("rules + AI") | **not verified**: needs an API key; covered by reducer test only |
+| #28 CI: `npm ci` → build → test | same commands on clean exports: `c/evidence` 20/20, `c/web-scaffold` build OK + test skipped. **On GitHub only the skip path has run** (no `web/` on `main` yet) |
 | Vibration, wake lock, `tel:` on a real phone | **not verified**, needs a phone |
 | #21 dev server does C1, C3–C6, C12 and `/typed` | 10 pytest tests; real uvicorn run with `typed_cli.py` → typed captions → codeword card → alert → `call_ended` |
 
