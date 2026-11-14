@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { ApiError, api, errorMessage, type ElderRef, type User } from './api'
 import { Button, Field, Notice, Page } from './ui'
+import { useAuth } from './auth'
 
 /** /home: the logged-in family member's grandparents, adding one, and pairing a laptop. */
 export function HomePage() {
@@ -30,12 +31,10 @@ export function HomePage() {
     load()
   }, [load])
 
+  const { logout: endLogin } = useAuth()
   const logout = async () => {
-    try {
-      await api('POST', '/auth/logout')
-    } finally {
-      navigate('/account', { replace: true })
-    }
+    await endLogin()
+    navigate('/account', { replace: true })
   }
 
   return (

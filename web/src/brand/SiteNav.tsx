@@ -1,4 +1,5 @@
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
+import { useAuth } from '../accounts/auth'
 import { AegisWordmark } from './AegisWordmark'
 import { ThemeToggle } from './ThemeToggle'
 
@@ -7,41 +8,60 @@ const pill =
   'focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent'
 
 /**
- * The top bar on every page except /elder: the wordmark (links home), the section name in the
- * same display face, a visible way back home, log in, and the theme toggle.
+ * The top bar on every page except /elder. The wordmark is the way home (no separate Home
+ * button); the front page hides it because its big wordmark is already there. Logged in:
+ * "My family" and "Log out". Logged out: "Log in".
  */
 export function SiteNav({
   section,
-  home = true,
+  brand = true,
   login = true,
 }: {
   section?: string
-  home?: boolean
+  brand?: boolean
   login?: boolean
 }) {
+  const { auth, logout } = useAuth()
+  const navigate = useNavigate()
+
   return (
-    <nav aria-label="Aegis" className="flex flex-wrap items-center justify-between gap-3">
-      <div className="flex items-baseline gap-3">
-        <Link to="/" aria-label="Aegis home" className="rounded-lg focus-visible:outline-2 focus-visible:outline-accent">
-          <AegisWordmark size="nav" />
-        </Link>
-        {section && (
-          <span className="font-display text-[1.6rem] leading-none font-semibold text-mist">
-            <span aria-hidden className="mr-3 text-paper/30">/</span>
-            {section}
-          </span>
-        )}
-      </div>
+    <nav aria-label="Aegis" className={`flex flex-wrap items-center gap-3 ${brand ? 'justify-between' : 'justify-end'}`}>
+      {brand && (
+        <div className="flex items-baseline gap-3">
+          <Link to="/" aria-label="Aegis home" className="rounded-lg focus-visible:outline-2 focus-visible:outline-accent">
+            <AegisWordmark size="nav" />
+          </Link>
+          {section && (
+            <span className="font-display text-[1.6rem] leading-none font-semibold text-mist">
+              <span aria-hidden className="mr-3 text-paper/30">/</span>
+              {section}
+            </span>
+          )}
+        </div>
+      )}
       <div className="flex flex-wrap items-center gap-2">
-        {home && (
-          <Link to="/" className={pill}>
-            <span aria-hidden className="mr-1.5">←</span> Home
-          </Link>
-        )}
-        {login && (
-          <Link to="/account" className={pill}>
-            Log in
-          </Link>
+        {auth.status === 'in' ? (
+          <>
+            <Link to="/home" className={pill}>
+              My family
+            </Link>
+            <button
+              type="button"
+              className={pill}
+              onClick={async () => {
+                await logout()
+                navigate('/account', { replace: true })
+              }}
+            >
+              Log out
+            </button>
+          </>
+        ) : (
+          login && (
+            <Link to="/account" className={pill}>
+              Log in
+            </Link>
+          )
         )}
         <ThemeToggle />
       </div>

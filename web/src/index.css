@@ -205,7 +205,7 @@ body {
 .wm {
   display: inline-flex;
   align-items: baseline;
-  font-family: var(--font-display);
+  font-family: var(--font-read); /* the original bold sans; Playfair is for other headings */
   font-weight: 800;
   letter-spacing: -0.04em;
   line-height: 1;

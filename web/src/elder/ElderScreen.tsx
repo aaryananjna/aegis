@@ -123,17 +123,16 @@ function ElderCall({ feed, pickVoices, embedded }: { feed: Feed; pickVoices: boo
       >
         <StatusBand level={state.level} notes={notes} brand={
           <>
-            {feed.kind !== 'live' && !embedded && (
-              <Link
-                to="/"
-                className="min-h-[48px] content-center rounded-xl border-2 border-paper/30 px-5 text-[length:clamp(18px,1.4vw,22px)]
-                           font-semibold text-paper hover:border-paper/60 focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-paper"
-              >
-                <span aria-hidden>← </span>Home
-              </Link>
-            )}
             {!state.ended && <EndCall onEnd={endCall} hangupShowing={state.card?.kind === 'hangup'} />}
-            <AegisWordmark size="nav" />
+            {feed.kind !== 'live' && !embedded ? (
+              // Sample calls: the wordmark takes you home. Never during a live call, so Grandma
+              // can't leave the call screen by accident.
+              <Link to="/" aria-label="Aegis home" className="rounded-lg focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-paper">
+                <AegisWordmark size="nav" />
+              </Link>
+            ) : (
+              <AegisWordmark size="nav" />
+            )}
           </>
         }>
           {!picked && state.card && (guess !== null ? (

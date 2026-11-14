@@ -34,7 +34,7 @@ export function LandingPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-6xl flex-col gap-14 px-[5vw] py-10">
-      <SiteNav home={false} />
+      <SiteNav brand={false} />
 
       <section className="flex max-w-4xl flex-col gap-6">
         <h1>
@@ -104,9 +104,6 @@ export function LandingPage() {
       </section>
 
       <nav aria-label="Other screens" className="flex flex-wrap gap-4">
-        <Link to="/family?fixture=scam-grandson" className={linkClass}>
-          Family phone view <span aria-hidden>→</span>
-        </Link>
         <Link to="/evidence?fixture=scam-grandson" className={linkClass}>
           Evidence for judges <span aria-hidden>→</span>
         </Link>
