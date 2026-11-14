@@ -26,6 +26,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from .. import db, ratelimit
 from ..config import settings
+from ..netguard import LOOPBACK, is_laptop
 from ..security import hash_password, new_token, token_hash, verify_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -81,11 +82,27 @@ async def _start_login(conn: asyncpg.Connection, response: Response, user_id: UU
                         samesite="lax", secure=settings.cookie_secure, path="/")
 
 
-def _client(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+def _client(request: Request) -> str | None:
+    """Who to count per-address limits against.
+
+    The screens reach us through Vite's proxy, so everything arrives from 127.0.0.1. Phone
+    traffic through the Cloudflare tunnel carries CF-Connecting-IP (set by Cloudflare, so it
+    can't be faked from outside), and we count that. The laptop itself returns None and skips
+    the per-address limits; the per-email limit on wrong passwords still applies to everyone.
+    """
+    host = request.client.host if request.client else None
+    if host in LOOPBACK:
+        cf = request.headers.get("cf-connecting-ip", "").strip()
+        if cf:
+            return f"cf:{cf[:64]}"
+        if is_laptop(request):
+            return None
+    return host or "unknown"
 
 
-def _check(limiter: ratelimit.Limiter, key: str) -> None:
+def _check(limiter: ratelimit.Limiter, key: str | None) -> None:
+    if key is None:
+        return
     wait = limiter.retry_after(key)
     if wait:
         raise HTTPException(status_code=429, detail="too many attempts, try again later",
@@ -120,7 +137,8 @@ CurrentUser = Annotated[User, Depends(current_user)]
 async def signup(body: SignupIn, request: Request, response: Response) -> dict:
     ip = _client(request)
     _check(ratelimit.signup_by_ip, ip)
-    ratelimit.signup_by_ip.hit(ip)
+    if ip:
+        ratelimit.signup_by_ip.hit(ip)
     pw_hash = await asyncio.to_thread(hash_password, body.password)
     async with db.pool().acquire() as conn, conn.transaction():
         try:
@@ -146,7 +164,8 @@ async def login(body: LoginIn, request: Request, response: Response) -> dict:
                                      row["password_hash"] if row else None, body.password)
         if not ok:
             ratelimit.login_by_email.hit(email)
-            ratelimit.login_by_ip.hit(ip)
+            if ip:
+                ratelimit.login_by_ip.hit(ip)
             raise HTTPException(status_code=401, detail="wrong email or password")
         ratelimit.login_by_email.reset(email)
         await conn.execute("DELETE FROM login_sessions WHERE user_id = $1 AND expires_at <= now()",
