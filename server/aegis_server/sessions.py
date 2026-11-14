@@ -11,6 +11,14 @@
 - Event history for replay on reconnect (C6) lives in memory only and is dropped at the end.
 - Limits: MAX_SESSIONS calls at once, MAX_LISTENERS screens per role per call (the oldest is
   dropped for a newer one, so a phone that reconnects always gets in), MAX_CALL_S per call.
+- Who is the grandparent, without a tap (proposal, issue to B and C): she's answering an
+  incoming call, so the first line of the call is normally her "Hello?". If that first live line
+  is a short greeting (GREETING_MAX_WORDS words or fewer, in the first GREETING_WINDOW_S
+  seconds, with a speaker label), the server sends set_elder for that voice itself. If the first
+  line is long (a robocall, or the caller talking first) it doesn't guess, and the screen asks
+  for the tap as before. A tap always wins: it replaces the guess, and once anyone has tapped
+  the server never guesses. Screens get an `elder_set` event (elder only) saying who was picked
+  and how ("server" or "tap"). AUTO_ELDER=0 turns the guess off.
 """
 from __future__ import annotations
 
@@ -19,6 +27,7 @@ import contextlib
 import hmac
 import logging
 import os
+import re
 import secrets
 from collections import deque
 
@@ -38,6 +47,16 @@ MAX_CALL_S = 2 * 3600      # a call that runs this long is ended
 MAX_HISTORY = 20_000       # events kept for replay; a 2-hour call stays well under this
 OUTBOX = 2_000             # events a screen may fall behind before it's disconnected
 QUEUE = 1_000              # inbound items waiting for the owner
+GREETING_MAX_WORDS = 5     # "Hello?", "Hi, who's this?", "Hello, this is Rose."
+GREETING_WINDOW_S = 30.0   # only guess from a line in the first 30 s of the call
+AUTO_ELDER = os.getenv("AUTO_ELDER", "1") != "0"
+
+_WORD = re.compile(r"[A-Za-z0-9']+")
+
+
+def is_greeting(text: str) -> bool:
+    n = len(_WORD.findall(text))
+    return 0 < n <= GREETING_MAX_WORDS
 
 
 _WRITERS: set[asyncio.Task] = set()
@@ -93,6 +112,10 @@ class Session:
         self.history: deque[dict] = deque(maxlen=MAX_HISTORY)
         self.ended = False
         self.typed_count = 0
+        # Who picked the grandparent's voice: None (nobody yet), "server" (guessed from the first
+        # greeting), "tap" (the screen or the laptop). "declined": the first line wasn't a
+        # greeting, so the server won't guess for this call.
+        self.elder_pick: str | None = None
         self.loop = asyncio.get_running_loop()
         self.start = self.loop.time()
         self.stt_stop = asyncio.Event()
@@ -133,8 +156,10 @@ class Session:
                     seg, source = payload
                     # C1: the caption goes out before the detector's events for it.
                     out = [self._caption_event(seg, source, now)] + d.feed(seg, now)
-                elif kind == "set_elder":
-                    out = d.set_elder(payload, now)
+                    out += self._maybe_guess_elder(seg, source, now)
+                elif kind == "set_elder":  # a tap (or the laptop) always wins
+                    self.elder_pick = "tap"
+                    out = d.set_elder(payload, now) + [self._elder_set(payload, "tap", now)]
                 elif kind == "codeword_result":
                     out = d.codeword_result(payload, now)
                 elif kind == "llm":
@@ -158,6 +183,28 @@ class Session:
                 continue
             self.broadcast(out)
             self._maybe_ask_llm()
+
+    def _maybe_guess_elder(self, seg, source: str, now: float) -> list[dict]:
+        """After the first live final line: set_elder for that voice if it's a short greeting."""
+        if not AUTO_ELDER or self.elder_pick is not None or source != "live":
+            return []
+        if not seg.is_final or not seg.text.strip():
+            return []
+        if seg.speaker_raw is None or now > GREETING_WINDOW_S or not is_greeting(seg.text):
+            self.elder_pick = "declined"  # no labels, too late or not a greeting: wait for a tap
+            log.info("session %s: first line isn't a short greeting; waiting for the tap",
+                     self.session_id)
+            return []
+        self.elder_pick = "server"
+        log.info("session %s: grandparent guessed from the first greeting (voice %s)",
+                 self.session_id, seg.speaker_raw)
+        return (self.detector.set_elder(seg.speaker_raw, now)
+                + [self._elder_set(seg.speaker_raw, "server", now)])
+
+    def _elder_set(self, speaker_raw, by: str, now: float) -> dict:
+        """Server event (no seq), elder screens only: whose voice is the grandparent's."""
+        return {"type": "elder_set", "session_id": self.session_id, "t": round(now, 3),
+                "speaker_raw": speaker_raw, "by": by}
 
     def _caption_event(self, seg, source: str, now: float) -> dict:
         return {"type": "caption", "session_id": self.session_id, "t": round(now, 3),

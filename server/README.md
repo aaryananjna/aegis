@@ -88,6 +88,15 @@ curl -s -X POST localhost:8000/sessions -H 'content-type: application/json' \
 End with `POST /sessions/<id>/end`. Ending stops the mic, kills both tokens and drops the call's
 history from memory.
 
+## Who is the grandparent (no tap needed)
+
+She's answering an incoming call, so the first line is normally her "Hello?". If the call's
+first live line is a short greeting (5 words or fewer, in the first 30 s, with a speaker label),
+the server picks that voice itself (`set_elder`). If the first line is long, it doesn't guess and
+the screen asks for the tap. A tap always replaces the guess, and after a tap the server never
+guesses. Elder screens get `{"type": "elder_set", "speaker_raw", "by": "server" | "tap"}`.
+`AUTO_ELDER=0` turns the guess off. **Proposal:** waiting for B's and C's OK.
+
 ## Security
 
 **Where the voice goes:** laptop mic → server memory → Deepgram, over TLS with the certificate
