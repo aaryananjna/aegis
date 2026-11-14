@@ -1,8 +1,8 @@
 # Hang Up event contracts
 
-**Version 2.1, DRAFT.** v2 was written by B (Mihir). The v2.1 additions are proposed by C
-(Aaryan) after `docs/INTEGRATION_AUDIT.md`. **Needs an OK from A and B before anyone builds
-against it as final.** Every v2.1 change is additive, so nothing that works today breaks.
+**Version 2.1.** v2 was written by B (Mihir). The v2.1 additions come from C (Aaryan) after
+`docs/INTEGRATION_AUDIT.md`, plus the items A asked for in #1 and B in #25. **OK from A (#1).**
+Every v2.1 change is additive, so nothing that works today breaks.
 
 Everything between the three parts travels as JSON over A's WebSockets.
 
@@ -17,16 +17,19 @@ Everything between the three parts travels as JSON over A's WebSockets.
 | C1 | The server forwards every `caption` to elder-role listeners | ADDITIVE |
 | C2 | Optional `caption.source`: `"live"` or `"typed"` | ADDITIVE |
 | C3 | Transport written down: WebSocket paths, query params, which socket accepts which inbound message | ADDITIVE |
-| C4 | `role=family` receives only `alert`, `intervention`, `status`, `call_ended`, with a token | ADDITIVE |
+| C4 | `role=family` receives only `alert`, `intervention`, `codeword_ok`, `status`, `call_ended`, with a token | ADDITIVE |
 | C5 | Inbound `end` message and a new `call_ended` event | ADDITIVE |
 | C6 | On connect or reconnect, the server replays that session's past events for the role | ADDITIVE |
 | C7 | `status` is documented as warnings only, plus an optional `stt` field from the server | ADDITIVE |
 | C8 | Doc fixes: the envelope covers B's events only, `none` is never sent, alerts carry ≤ 3 quotes, warning strings listed | ADDITIVE (docs only) |
-| C12 | Inbound `codeword_result` from the elder screen after the code word card | ADDITIVE |
+| C12 | Inbound `codeword_result` from the elder screen after the code word card, and `codeword_ok` when the answer is right | ADDITIVE |
+| C13 | `verify` card and alert kind, for callers claiming to be a bank, the government or a company (#8) | ADDITIVE |
+| C14 | `/captions` accepts connections from the laptop itself only (localhost) | ADDITIVE |
+| C15 | The AI layer's answers come back through the same session queue (`llm` item, #16) | ADDITIVE |
 
 ## Envelope
 
-Every event **the detector emits** (`tactic_set`, `risk`, `intervention`, `alert`, `status`)
+Every event **the detector emits** (`tactic_set`, `risk`, `intervention`, `alert`, `codeword_ok`, `status`)
 has `type`, `session_id`, `t` (seconds since the session started, detector clock, never goes
 backwards) and `seq` (per session, starts at 1, always increasing).
 
@@ -43,10 +46,13 @@ Server base URL: `http://localhost:8000` on the laptop. The family phone uses th
 
 | Socket | Who connects | Server → client | Client → server |
 |---|---|---|---|
-| `WS /captions/{session_id}` | A's STT (inside the server), type mode, tests | nothing | `caption`, `set_elder`, `end` |
+| `WS /captions/{session_id}` | A's STT (inside the server), type mode, tests. **Laptop only** (C14) | nothing | `caption`, `set_elder`, `end` |
 | `WS /events/{session_id}?role=elder&token=…` | C's `/elder` and `/evidence` screens on the laptop | all events (C1) | `set_elder`, `codeword_result` (C12) |
-| `WS /events/{session_id}?role=family&token=…` | C's `/family` page on the phone | `alert`, `intervention`, `status`, `call_ended` only (C4) | nothing (inbound ignored) |
+| `WS /events/{session_id}?role=family&token=…` | C's `/family` page on the phone | `alert`, `intervention`, `codeword_ok`, `status`, `call_ended` only (C4) | nothing (inbound ignored) |
 
+- **`/captions` has no token**, so the server accepts it only from the laptop itself (localhost)
+  and closes anything else with `1008` (C14). On a shared hotspot, no other device can inject
+  captions or end a call.
 - Each session has **two random tokens**, one per role. A family token can't open `role=elder`.
   A wrong or expired token closes the socket with code `4401`.
 - Tokens are checked on every connect and reconnect, and stop working when the session ends.
@@ -55,7 +61,8 @@ Server base URL: `http://localhost:8000` on the laptop. The family phone uses th
 - The server sends one JSON event per WebSocket message.
 - **Replay on connect (C6):** when a listener connects or reconnects, the server first sends that
   session's past events for that role, in order and from memory only, then live events. A family
-  page that reconnects after the alert still sees it.
+  page that reconnects after the alert still sees it. This is why the detector needs no
+  `snapshot()`: the server's history is the snapshot.
 
 ## A → B: `caption`
 
@@ -122,12 +129,21 @@ word. The elder screen sends this on its `/events` socket:
 - `ok: true`: the **score-based** path to `hangup` (score ≥ 0.95 held for 20 s after the card)
   is turned off for the rest of the call. A `verification_avoidance` rule hit, meaning the caller
   dodged, still escalates to `hangup`.
-- The detector ignores it unless the current card is `codeword`, and only the first one counts.
-  It emits nothing for `ok: true`.
+- The detector ignores it unless the current card is `codeword` (not `verify`), and only the
+  first one counts. Any other time it returns a `status` warning
+  `"codeword_result ignored: no code word card showing"`.
+- `ok` must be a real `true` or `false`. Anything else (`"false"`, `0`, `null`) is rejected, never
+  coerced (#10).
+- `ok: true` produces one `codeword_ok` event, which goes to the family page too, so they see it
+  was handled:
+
+```json
+{"type": "codeword_ok", "session_id": "s1", "t": 21.0, "seq": 40, "resolves": "s1:codeword"}
+```
+
 - The app still never asks for or stores the code word itself. The grandparent judges the answer.
-- **Owner:** B implements it in `detection/hangup_detect/counter.py`, with a new `Detector`
-  method (suggested name `codeword_result(ok, now_s)`). A routes the message into the session
-  queue like `set_elder`.
+- **Owner:** B (`Detector.codeword_result(ok, now_s)`, merged in #9). A routes the message into
+  the session queue like `set_elder`.
 
 ## End of call (C5)
 
@@ -185,9 +201,16 @@ Tactics: `impersonation`, `urgency`, `secrecy`, `payment`, `threat`, `verificati
  "latched": true}
 ```
 
-Kinds in order: `codeword`, then `hangup` ("Hang up. Call back on the saved number."). Before
-the first card the state is `none`, but **no `none` event is ever sent** (C8). Once shown, a
-card **stays** until the call ends, even if the meter drops. It's advice already given.
+Kinds in order: `codeword` **or** `verify` first, then `hangup`. Before the first card the
+state is `none`, but **no `none` event is ever sent** (C8). Once shown, a card **stays** until
+the call ends, even if the meter drops. It's advice already given.
+
+- `codeword`: the caller claimed to be family, so the card asks for the family code word.
+- `verify` (C13, #8): the caller claimed to be a bank, the government or a company, or no one at
+  all. "This might be a scam. Don't pay or share any numbers. Ask for their name and say you'll
+  call back."
+- `hangup` text follows the first card: "Hang up. Call back on the saved number." after
+  `codeword`, "Hang up. Call the number on your card or their official website." after `verify`.
 
 ## B → family page: `alert`
 
@@ -198,15 +221,15 @@ card **stays** until the call ends, even if the meter drops. It's advice already
  "summary": "Caller asked for secrecy and asked for gift cards."}
 ```
 
-- At most two per call (`codeword`, `hangup`).
+- At most two per call: `codeword` or `verify`, then `hangup`.
 - `evidence` holds **at most 3** quotes, strongest first (C8).
 - Same `alert_id` twice means the same alert, so show it once. Replays after a reconnect (C6)
   rely on this.
 
 ## `status` (C7)
 
-The detector sends `status` **only to report a warning**. There's no status event at the start
-of a call.
+The detector sends `status` only to report a warning, or when the AI layer turns on (`full`) or
+off (`rules_only`). There's no status event at the start of a call.
 
 ```json
 {"type": "status", "session_id": "s1", "t": 40.2, "seq": 51, "mode": "rules_only",
@@ -214,7 +237,9 @@ of a call.
 ```
 
 - `mode`: `rules_only` or `full` (AI layer on).
-- Current warnings: `"duplicate final ignored"`, `"oldest caption dropped from the rebuild store"`.
+- Current warnings: `"duplicate final ignored"`, `"oldest caption dropped from the rebuild store"`,
+  `"codeword_result ignored: no code word card showing"`, and the AI layer's error when it falls
+  back to rules only (for example `"groq timed out"`).
 
 The **server** may also send `status` (no `seq`) with an optional `stt` field when captions
 start or the source changes:
@@ -231,7 +256,13 @@ start or the source changes:
 - **Tokens:** as in Transport (C3, C4). Random per session and per role, read only for family,
   expire when the session ends, checked on every connect and reconnect.
 - One detector per session, used by one task at a time (queue). Captions, ticks, `set_elder`,
-  `codeword_result` and `end` all go through that queue.
+  `codeword_result`, `end` and `llm` all go through that queue.
+- **AI layer (C15, #16):** at session start `LLMRunner.from_env(os.environ)` (it's `None` with
+  no keys, so rules only still works). After each queue item, if the runner isn't busy and
+  `detector.llm_request(now)` returns a request, run it in a task that puts
+  `("llm", (req.seq, result))` back on the queue. On an `llm` item the owner sends
+  `detector.llm_status(result.mode, now, result.error)`, then `detector.apply_llm(seq,
+  result.raw, now)` if `result.raw` is set. Working copy: `detection/examples/server_example.py`.
 - The event history kept for replay (C6) lives in memory only and is dropped when the session ends.
 - Don't log transcript text by default. API keys stay on the server.
 
