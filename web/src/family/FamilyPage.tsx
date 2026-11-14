@@ -116,14 +116,15 @@ function AlertCard({
 }) {
   const k = KIND[alert.kind]
   const passed = alert.kind === 'codeword' && codewordOk
+  const Heading = big ? 'h2' : 'h3' // cards under "Earlier" sit one level below it
   return (
     <article className={`flex flex-col gap-3 rounded-2xl border-2 ${big ? 'p-5' : 'p-4 opacity-90'} ${k.box}`}>
       <div className="flex items-start gap-3">
         <span className={`mt-1 shrink-0 ${big ? 'text-[34px]' : 'text-[26px]'} ${k.iconColor}`}>{k.icon}</span>
         <div className="flex flex-col gap-1">
-          <h2 className={`${big ? 'text-[28px]' : 'text-[22px]'} leading-tight font-semibold text-paper`}>
+          <Heading className={`${big ? 'text-[28px]' : 'text-[22px]'} leading-tight font-semibold text-paper`}>
             {k.title}
-          </h2>
+          </Heading>
           <p className="text-[16px] text-paper-dim">
             {clock(alert.receivedAt)} · {k.told(name)}
           </p>
