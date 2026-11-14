@@ -160,6 +160,8 @@ class Session:
                 elif kind == "set_elder":  # a tap (or the laptop) always wins
                     self.elder_pick = "tap"
                     out = d.set_elder(payload, now) + [self._elder_set(payload, "tap", now)]
+                elif kind == "no_labels":  # labels off: score everyone from line one
+                    out = d.set_elder(None, now) + [self._elder_set(None, "server", now)]
                 elif kind == "codeword_result":
                     out = d.codeword_result(payload, now)
                 elif kind == "llm":
@@ -273,8 +275,14 @@ class Session:
 
     # ---- live captions from the laptop mic (inside the server) ---------------------------
 
-    def start_mic(self, device: int | str | None) -> None:
+    def start_mic(self, device: int | str | None, labels: bool = True) -> None:
+        """Live captions from the laptop mic. labels=False: no speaker labels, every line is
+        scored from the start (set_elder(None) now), and the server never guesses a voice."""
         from .stt import deepgram
+
+        if not labels:
+            self.elder_pick = "server"
+            self.queue.put_nowait(("no_labels", None))
 
         async def sink(cap: dict) -> None:
             item = parse(cap, {"caption"})
@@ -289,7 +297,7 @@ class Session:
                 await deepgram.transcribe(
                     self.session_id, deepgram.mic_chunks(device, self.stt_stop), sink,
                     api_key=settings.deepgram_api_key, stop=self.stt_stop,
-                    on_connect=on_connect)
+                    on_connect=on_connect, diarize=labels)
             except asyncio.CancelledError:
                 raise
             except Exception as e:

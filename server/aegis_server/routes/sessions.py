@@ -6,7 +6,8 @@ POST /typed               {session_id, text, speaker_raw?} -> {ok, utterance_id}
 GET  /health                                             -> {ok, ...}
 
 `mic: true` starts live captions from the laptop mic inside the server (Deepgram) for this
-call; they stop when the call ends. Without it, captions come in on WS /captions or /typed.
+call; they stop when the call ends. `labels: false` turns off speaker labels: every line is
+scored from the start, no tap and no voice guess. Without it, captions come in on WS /captions or /typed.
 """
 from __future__ import annotations
 
@@ -36,6 +37,9 @@ class NewSession(BaseModel):
     phone: str | None = Field(default=None, max_length=20, pattern=r"^\+?[0-9 ()-]{3,20}$")
     mic: bool = False                                        # live captions from the laptop mic
     device: str | None = Field(default=None, max_length=80)  # mic number or name
+    # False: no speaker labels from Deepgram; every line is scored. For one laptop mic that
+    # hears both the phone speaker and the grandparent, where labels drift between voices.
+    labels: bool = True
 
 
 class Typed(BaseModel):
@@ -65,7 +69,7 @@ async def create_session(request: Request, response: Response,
         raise HTTPException(status_code=429, detail="too many calls at once; end one first")
     if body.mic:
         device = int(body.device) if body.device and body.device.isdigit() else body.device
-        s.start_mic(device)
+        s.start_mic(device, labels=body.labels)
     extra = {k: v for k, v in (("name", body.name), ("phone", body.phone)) if v}
     urls = {role: f"{settings.web_base_url}/{role}?" + urlencode(
         {"session": s.session_id, "token": s.tokens[role], **(extra if role == "family" else {})})

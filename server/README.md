@@ -97,6 +97,12 @@ the screen asks for the tap. A tap always replaces the guess, and after a tap th
 guesses. Elder screens get `{"type": "elder_set", "speaker_raw", "by": "server" | "tap"}`.
 `AUTO_ELDER=0` turns the guess off. **Proposal:** waiting for B's and C's OK.
 
+**Labels off** (`"labels": false` on `POST /sessions`): Deepgram's live speaker labels drift on
+one laptop mic that hears both the phone speaker and the grandparent (a caller line can land
+under her label and be ignored). With labels off, every line is scored from the start, with no
+tap and no guess. Keep the grandparent's script lines free of scam words. The AI layer is off in
+this mode (the detector needs a named grandparent for it).
+
 ## Security
 
 **Where the voice goes:** laptop mic → server memory → Deepgram, over TLS with the certificate
