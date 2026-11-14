@@ -7,7 +7,7 @@ Last updated: 2026-11-13 by Aryan (goal, demo and status gaps; see the PR).
 
 ## Goal for the hackathon
 
-**Deadline:** _TBD, whoever finds it puts it here._ **Judging time:** _TBD._
+**Deadline:** 9 pm, Sat 14 Nov 2026 (local time). **Judging time:** _TBD._
 
 **Prizes we're going for** (proposal from the original pitch; confirm in issue #1):
 
@@ -141,15 +141,20 @@ reading B's rules**. These give the only numbers we show judges. Steps:
 
 ## Milestones
 
-Times are TBD until we know the deadline (see "Goal for the hackathon").
+Deadline is 9 pm Sat 14 Nov, so about one day. Times are a proposal; change them in a PR if
+they don't work for you.
 
-| # | Done when |
-|---|---|
-| M0 | Roles claimed in the table and `CONTRACTS.md` OK'd by all three |
-| M1 | C's screens run on the sample event files. A's server shows live captions |
-| M2 | One full run: phone on speaker → captions → detector → both screens |
-| M3 | Held-out calls recorded and the results table printed |
-| M4 | Five clean rehearsals of the demo in a noisy room. Feature freeze |
+| # | By | Done when |
+|---|---|---|
+| M0 | Fri 13 Nov, 11 pm | Roles claimed in the table and `CONTRACTS.md` OK'd by all three |
+| M1 | Sat 14 Nov, 10 am | C's screens run on the sample event files. A's server shows live captions |
+| M2 | Sat 14 Nov, 2 pm | One full run: phone on speaker → captions → detector → both screens |
+| M3 | Sat 14 Nov, 4 pm | Held-out calls recorded and the results table printed |
+| M4 | Sat 14 Nov, 6 pm | Feature freeze. Then five clean rehearsals in a noisy room |
+| Submit | Sat 14 Nov, 8:30 pm | Everything in "Done means" submitted, 30 min before the deadline |
+
+With this little time, B's AI layer only goes in if it's working by M2. Rules alone already
+catch the practice scams. Twilio texts (open question 4) are out; keep the family page open.
 
 ## Team rules
 
