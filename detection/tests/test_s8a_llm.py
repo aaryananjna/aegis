@@ -125,7 +125,7 @@ def test_apply_once_and_stale_or_unknown_seq_ignored():
 
 
 def test_same_hit_from_overlapping_windows_counts_once():
-    d = confirmed()
+    d = confirmed(cfg=Config(llm_min_interval_s=0))  # two requests 2 s apart
     d.feed(seg("u2", UTTS[1][1], "1", 0.0), 1.0)
     r1 = d.llm_request(1.0)
     d.feed(seg("u3", "Hurry please.", "1", 2.0), 3.0)

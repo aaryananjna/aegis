@@ -26,6 +26,7 @@ class Config:
     combos: dict[tuple[Tactic, Tactic], float] = field(default_factory=_combos)
     prior: float = -3.0
     llm_mixed: bool = True  # labels off: let the AI read both voices once the rules have fired
+    llm_min_interval_s: float = 8.0  # at most one AI request per 8 s (free-tier token limits)
     llm_mixed_always: bool = True  # labels off: let the AI read both voices from the first line
     half_life_s: float = 120.0
     horizon_s: float = 600.0
