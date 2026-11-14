@@ -65,7 +65,7 @@ PATTERNS: dict[T, list[str]] = {
         r"\bqr code\b",
         r"\bpay (the |a |any )?(taxes|fees?|shipping|processing|registration)\b.{0,40}\b(claim|receive|release|get) (your|the) (prize|winnings|money|reward)",
         r"\b(refunded|overpaid|refund) you too much\b|\bsend (back )?the difference\b",
-        r"\b(bitcoin( atm)?|crypto(currency)?)\b",
+        r"\b(bit ?coin( atm| machine)?|crypto(currency)?)\b",
         r"\b(wire (the )?(money|transfer)|wire it|western union|moneygram)\b",
         r"\b(zelle|venmo|cash ?app) (it|the money|me)\b",
         r"\b(courier|driver|someone) (will|to) (come )?(pick up|collect)\b",
@@ -132,9 +132,34 @@ _HAPPY_AFTER = re.compile(r"^[^.!?]*\b(surprise|party|birthday)\b", _I)
 _HAPPY_ANY = re.compile(r"\b(it'?s a surprise|surprise (party|dinner|visit|trip)|birthday (party|surprise))\b", _I)
 
 
+# Speech fillers that captions can drop into the middle of a phrase ("gift, um, cards").
+# Only pure fillers: "like" and "so" carry meaning and stay.
+_FILLER = re.compile(r"[,\s]*\b(?:um+|uh+|erm+|hmm+|ah+|mm+)\b[,]?\s*", re.IGNORECASE)
+
+
+def _strip_fillers(text: str) -> tuple[str, list[int]]:
+    """Text without fillers, plus pos[i] = index in the original text of clean char i."""
+    clean: list[str] = []
+    pos: list[int] = []
+    last = 0
+    for m in _FILLER.finditer(text):
+        clean.append(text[last:m.start()])
+        pos.extend(range(last, m.start()))
+        clean.append(" ")  # keep word boundaries
+        pos.append(m.start())
+        last = m.end()
+    clean.append(text[last:])
+    pos.extend(range(last, len(text)))
+    return "".join(clean), pos
+
+
 def find_evidence(text: str, utterance_id: str, t_s: float) -> list[Evidence]:
-    """Return at most one Evidence per tactic, using the first unguarded match."""
-    norm = text.translate(_APOSTROPHES)  # one char for one char, so spans stay valid
+    """Return at most one Evidence per tactic, using the first unguarded match.
+
+    Matching runs on a cleaned copy (curly apostrophes made straight, fillers removed).
+    Spans and quotes always point back into the original caption text.
+    """
+    norm, pos = _strip_fillers(text.translate(_APOSTROPHES))
     if _DESCRIBES_SCAM.search(norm):
         return []
     out: list[Evidence] = []
@@ -143,6 +168,7 @@ def find_evidence(text: str, utterance_id: str, t_s: float) -> list[Evidence]:
         hit = _first_match(norm, patterns, skip)
         if hit:
             start, end, idx = hit
+            start, end = pos[start], pos[end - 1] + 1  # back to the original text
             detail = None
             if tactic is T.IMPERSONATION:
                 detail = "family" if idx < _FAMILY_PATTERNS else "official"
