@@ -149,12 +149,18 @@ class Detector:
         return [ev.status(self.session_id, self._now, self._next(), mode, warning)]
 
     def codeword_result(self, ok: bool, now_s: float) -> list[dict]:
-        """The elder screen says whether the caller gave the right family code word (C12)."""
+        """The elder screen says whether the caller gave the right family code word (C12).
+
+        `ok` must be a real bool. Anything else ("false", 0, None) raises TypeError rather than
+        being read as truthy, which would wrongly switch off the hang up card (issue #10).
+        """
+        if not isinstance(ok, bool):
+            raise TypeError(f"codeword_result ok must be True or False, got {type(ok).__name__}")
         now = self._clock(now_s)
         if self.counter.state != "codeword":
             return [self._status("codeword_result ignored: no code word card showing")]
         quotes, tactics = self._ranked(now)
-        return self._actions(self.counter.codeword_result(bool(ok), quotes, tactics, now), now)
+        return self._actions(self.counter.codeword_result(ok, quotes, tactics, now), now)
 
     def end(self, now_s: float) -> list[dict]:
         out = self.tick(now_s)

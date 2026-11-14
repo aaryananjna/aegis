@@ -78,3 +78,15 @@ def test_detector_result_out_of_place_gives_status_warning():
     d = Detector(Config(), "s1")
     (e,) = d.codeword_result(False, 1.0)
     assert e["type"] == "status" and "codeword_result" in e["warning"]
+
+
+# Issue #10 (Aryan): "false" is a non-empty string, so bool("false") is True. Fail closed.
+import pytest  # noqa: E402
+
+
+@pytest.mark.parametrize("bad", ["false", "no", "true", 0, 1, None, [], "False"])
+def test_codeword_result_rejects_anything_but_a_real_bool(bad):
+    d = detector_at_codeword()
+    with pytest.raises(TypeError):
+        d.codeword_result(bad, 5.0)
+    assert d.state()["intervention"] == "codeword"  # nothing changed
