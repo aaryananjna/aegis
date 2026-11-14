@@ -1,58 +1,279 @@
 """One Session per call (CONTRACTS v2.1, "Rules for A's server").
 
 - One owner task is the only code that touches the Detector. Captions, ticks, set_elder,
-  codeword_result and end all go through one asyncio.Queue, in order.
+  codeword_result, llm and end all go through one asyncio.Queue, in order.
 - A tick every second, even in silence.
-- Two random tokens per session, one per role. They stop working when the session ends.
+- Two random tokens per session, one per role, compared in constant time. They stop working
+  when the session ends.
+- Every screen has its own outbox and writer task, so a slow or stuck phone can't stall the
+  detector or the other screens. A screen that falls too far behind is disconnected; when it
+  reconnects it gets the replay.
 - Event history for replay on reconnect (C6) lives in memory only and is dropped at the end.
+- Limits: MAX_SESSIONS calls at once, MAX_LISTENERS screens per role per call (the oldest is
+  dropped for a newer one, so a phone that reconnects always gets in), MAX_CALL_S per call.
 """
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass, field
+import contextlib
+import hmac
+import logging
+import os
+import secrets
+from collections import deque
 
 from fastapi import WebSocket
+from hangup_detect import Config, Detector
+from hangup_detect.llm_runner import LLMRunner
+
+from .config import settings
+from .messages import parse
+from .roles import ROLES, allowed
+
+log = logging.getLogger("aegis.sessions")
+
+MAX_SESSIONS = 8
+MAX_LISTENERS = 4          # per role, per call
+MAX_CALL_S = 2 * 3600      # a call that runs this long is ended
+MAX_HISTORY = 20_000       # events kept for replay; a 2-hour call stays well under this
+OUTBOX = 2_000             # events a screen may fall behind before it's disconnected
+QUEUE = 1_000              # inbound items waiting for the owner
 
 
-@dataclass
+_WRITERS: set[asyncio.Task] = set()
+
+
 class Listener:
-    ws: WebSocket
-    role: str  # "elder" or "family"
+    def __init__(self, ws: WebSocket, role: str) -> None:
+        self.ws = ws
+        self.role = role
+        self.outbox: asyncio.Queue[dict | None] = asyncio.Queue()
+        self.writer: asyncio.Task | None = None
+        self.closed = False
+
+    def send(self, event: dict) -> bool:
+        """Queue one event; False if this screen is too far behind."""
+        if self.closed:
+            return False
+        if self.outbox.qsize() >= OUTBOX:
+            return False
+        self.outbox.put_nowait(event)
+        return True
+
+    def close(self) -> None:
+        if not self.closed:
+            self.closed = True
+            self.outbox.put_nowait(None)
+
+    async def write(self, on_done) -> None:
+        try:
+            while True:
+                e = await self.outbox.get()
+                if e is None:
+                    break
+                await self.ws.send_json(e)
+        except Exception:
+            pass
+        finally:
+            self.closed = True
+            with contextlib.suppress(Exception):
+                await self.ws.close()
+            on_done(self)
 
 
-@dataclass
 class Session:
-    session_id: str
-    tokens: dict[str, str]  # role -> token
-    queue: asyncio.Queue = field(default_factory=asyncio.Queue)
-    listeners: set = field(default_factory=set)
-    history: list[dict] = field(default_factory=list)  # every outbound event, in order
-    ended: bool = False
+    def __init__(self, session_id: str, store: "SessionStore") -> None:
+        self.session_id = session_id
+        self.store = store
+        self.tokens = {role: secrets.token_urlsafe(32) for role in ROLES}
+        self.detector = Detector(Config(), session_id)
+        self.runner = LLMRunner.from_env(os.environ)  # AI layer only if a key is set
+        self.queue: asyncio.Queue = asyncio.Queue(maxsize=QUEUE)
+        self.listeners: list[Listener] = []
+        self.history: deque[dict] = deque(maxlen=MAX_HISTORY)
+        self.ended = False
+        self.typed_count = 0
+        self.loop = asyncio.get_running_loop()
+        self.start = self.loop.time()
+        self.stt_stop = asyncio.Event()
+        self.side_tasks: set[asyncio.Task] = set()  # ticker, mic, AI requests
+        self.owner_task = asyncio.create_task(self.owner())
+        self._spawn(self.ticker())
+
+    # ---- basics ------------------------------------------------------------------------
+
+    def _spawn(self, coro) -> asyncio.Task:
+        t = asyncio.create_task(coro)
+        self.side_tasks.add(t)
+        t.add_done_callback(self.side_tasks.discard)
+        return t
+
+    def now(self) -> float:
+        return self.loop.time() - self.start
 
     def check_token(self, role: str, token: str) -> bool:
-        """Constant-time token check for this role; False once the session has ended."""
-        raise NotImplementedError
+        good = self.tokens.get(role)
+        if not good or self.ended or not isinstance(token, str):
+            return False
+        return hmac.compare_digest(good.encode(), token.encode())
+
+    async def put(self, item) -> None:
+        if not self.ended:
+            await self.queue.put(item)
+
+    # ---- the owner: the only code that touches the detector ------------------------------
 
     async def owner(self) -> None:
-        """The only task that touches the detector. Forwards captions to elder listeners
-        before the detector's events for them (C1), then broadcasts everything."""
-        raise NotImplementedError
+        d = self.detector
+        while True:
+            kind, payload = await self.queue.get()
+            now = self.now()
+            try:
+                if kind == "caption":
+                    seg, source = payload
+                    # C1: the caption goes out before the detector's events for it.
+                    out = [self._caption_event(seg, source, now)] + d.feed(seg, now)
+                elif kind == "set_elder":
+                    out = d.set_elder(payload, now)
+                elif kind == "codeword_result":
+                    out = d.codeword_result(payload, now)
+                elif kind == "llm":
+                    seq, result = payload
+                    out = d.llm_status(result.mode, now, result.error)
+                    if result.raw:
+                        out += d.apply_llm(seq, result.raw, now)
+                elif kind == "tick":
+                    out = d.tick(now)
+                elif kind == "status":  # from the server itself (C7), no seq
+                    out = [{"type": "status", "session_id": self.session_id,
+                            "t": round(now, 3), **payload}]
+                else:  # "end" (C5)
+                    out = d.end(now) + [{"type": "call_ended", "session_id": self.session_id,
+                                         "t": round(now, 3)}]
+                    self.broadcast(out)
+                    self.close()
+                    return
+            except Exception as e:  # one bad item must never stop detection
+                log.error("session %s: %s on %s item", self.session_id, type(e).__name__, kind)
+                continue
+            self.broadcast(out)
+            self._maybe_ask_llm()
+
+    def _caption_event(self, seg, source: str, now: float) -> dict:
+        return {"type": "caption", "session_id": self.session_id, "t": round(now, 3),
+                "utterance_id": seg.utterance_id, "revision": seg.revision,
+                "speaker_raw": seg.speaker_raw, "text": seg.text, "start_s": seg.start_s,
+                "end_s": seg.end_s, "is_final": seg.is_final, "source": source}
+
+    def _maybe_ask_llm(self) -> None:
+        """C15: one AI request at a time; the answer comes back through the queue."""
+        if self.runner is None or self.runner.busy or self.ended:
+            return
+        req = self.detector.llm_request(self.now())
+        if req is not None:
+            self._spawn(self._ask(req))
+
+    async def _ask(self, req) -> None:
+        try:
+            result = await self.runner.run(req)
+        except Exception as e:
+            log.warning("session %s: AI layer failed (%s)", self.session_id, type(e).__name__)
+            return
+        await self.put(("llm", (req.seq, result)))
 
     async def ticker(self) -> None:
-        """Queue a tick every settings.tick_s seconds until the session ends."""
-        raise NotImplementedError
+        while not self.ended:
+            await asyncio.sleep(settings.tick_s)
+            if self.now() > MAX_CALL_S:
+                await self.put(("end", None))
+                return
+            with contextlib.suppress(asyncio.QueueFull):
+                self.queue.put_nowait(("tick", None))  # skip a tick rather than pile up
 
-    async def broadcast(self, events: list[dict]) -> None:
-        """Record events in history and send each to listeners whose role allows it."""
-        raise NotImplementedError
+    # ---- screens -------------------------------------------------------------------------
 
-    async def replay(self, listener: Listener) -> None:
-        """Send this role's past events, in order, to a listener that just (re)connected."""
-        raise NotImplementedError
+    def broadcast(self, events: list[dict]) -> None:
+        """Record events and queue each for every screen whose role allows it. Never awaits,
+        so it can't be slowed by a screen, and it can't interleave with join()."""
+        self.history.extend(events)
+        for lis in list(self.listeners):
+            for e in events:
+                if allowed(lis.role, e) and not lis.send(e):
+                    log.warning("session %s: %s screen too slow, disconnected",
+                                self.session_id, lis.role)
+                    lis.close()
+                    break
 
-    async def end(self) -> None:
-        """Run Detector.end, send call_ended to everyone, expire tokens, drop history."""
-        raise NotImplementedError
+    def join(self, ws: WebSocket, role: str) -> Listener:
+        """Replay this role's past events (C6), then live ones. Synchronous, so no event can
+        land between the replay and the registration."""
+        same = [x for x in self.listeners if x.role == role]
+        if len(same) >= MAX_LISTENERS:
+            same[0].close()  # drop the oldest: a reconnecting phone must always get in
+        lis = Listener(ws, role)
+        for e in self.history:
+            if allowed(role, e):
+                lis.outbox.put_nowait(e)
+        self.listeners.append(lis)
+        lis.writer = asyncio.create_task(lis.write(self._gone))  # ends after its last event
+        _WRITERS.add(lis.writer)  # asyncio keeps only weak references to tasks
+        lis.writer.add_done_callback(_WRITERS.discard)
+        return lis
+
+    def _gone(self, lis: Listener) -> None:
+        with contextlib.suppress(ValueError):
+            self.listeners.remove(lis)
+
+    # ---- live captions from the laptop mic (inside the server) ---------------------------
+
+    def start_mic(self, device: int | str | None) -> None:
+        from .stt import deepgram
+
+        async def sink(cap: dict) -> None:
+            item = parse(cap, {"caption"})
+            if item is not None:
+                await self.put(item)
+
+        async def on_connect() -> None:
+            await self.put(("status", {"stt": "deepgram", "warning": None}))
+
+        async def run() -> None:
+            try:
+                await deepgram.transcribe(
+                    self.session_id, deepgram.mic_chunks(device, self.stt_stop), sink,
+                    api_key=settings.deepgram_api_key, stop=self.stt_stop,
+                    on_connect=on_connect)
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                msg = str(e) if isinstance(e, deepgram.SttError) else type(e).__name__
+                log.error("session %s: live captions stopped: %s", self.session_id, msg)
+                await self.put(("status", {"stt": "none",
+                                           "warning": "live captions stopped"}))
+
+        self._spawn(run())
+
+    # ---- the end -------------------------------------------------------------------------
+
+    def close(self) -> None:
+        """Tokens stop working, the mic stops, history is dropped, screens are let go after
+        their last events (call_ended) are sent."""
+        if self.ended:
+            return
+        self.ended = True
+        self.stt_stop.set()
+        self.history.clear()
+        for lis in list(self.listeners):
+            lis.close()
+        self.store.drop(self.session_id)
+        for t in list(self.side_tasks):  # ticker, mic (audio stops at once), AI requests
+            t.cancel()
+        if asyncio.current_task() is not self.owner_task:
+            self.owner_task.cancel()
+
+
+class TooManySessions(Exception):
+    pass
 
 
 class SessionStore:
@@ -62,10 +283,24 @@ class SessionStore:
         self._sessions: dict[str, Session] = {}
 
     def create(self) -> Session:
-        raise NotImplementedError
+        if len(self._sessions) >= MAX_SESSIONS:
+            raise TooManySessions
+        sid = secrets.token_urlsafe(9)
+        s = self._sessions[sid] = Session(sid, self)
+        return s
 
     def get(self, session_id: str) -> Session | None:
         return self._sessions.get(session_id)
+
+    def drop(self, session_id: str) -> None:
+        self._sessions.pop(session_id, None)
+
+    def __len__(self) -> int:
+        return len(self._sessions)
+
+    async def close_all(self) -> None:
+        for s in list(self._sessions.values()):
+            await s.put(("end", None))
 
 
 store = SessionStore()

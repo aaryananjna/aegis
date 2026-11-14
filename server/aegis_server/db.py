@@ -27,6 +27,10 @@ async def close() -> None:
         _pool = None
 
 
+def is_open() -> bool:
+    return _pool is not None
+
+
 def pool() -> asyncpg.Pool:
     """The open pool, or 503 when the database isn't configured or reachable."""
     if _pool is None:

@@ -1,7 +1,8 @@
 # Aegis server (role A)
 
 FastAPI server between the mic, B's detector (`detection/`) and C's screens (`web/`).
-Built to `CONTRACTS.md` v2.1. Accounts and pairing work (TigerDB). Live-call endpoints are still skeletons (501 or close).
+Built to `CONTRACTS.md` v2.1. Built: live calls (sessions, captions, routing, replay, AI layer), live Deepgram captions and
+family accounts (TigerDB).
 
 ## Run
 
@@ -22,7 +23,8 @@ cd server && pytest -q
 | `aegis_server/sessions.py` | One `Session` per call: detector, queue, owner task, ticker, tokens, listeners, replay history |
 | `aegis_server/messages.py` | Checks inbound messages (`caption`, `set_elder`, `codeword_result`, `end`) |
 | `aegis_server/roles.py` | Which events each role gets (C4) |
-| `aegis_server/routes/sessions.py` | `GET /health`, `POST /sessions`, `POST /sessions/{id}/end` |
+| `aegis_server/netguard.py` | Laptop-only check: loopback **and** no proxy/tunnel headers |
+| `aegis_server/routes/sessions.py` | `GET /health`, `POST /sessions`, `POST /sessions/{id}/end`, `POST /typed` |
 | `aegis_server/routes/captions_ws.py` | `WS /captions/{session_id}` (laptop only) |
 | `aegis_server/routes/events_ws.py` | `WS /events/{session_id}?role=…&token=…` |
 | `aegis_server/routes/auth.py` | Family accounts: `POST /auth/signup`, `/auth/login`, `/auth/logout`, `GET /auth/me` |
@@ -30,7 +32,8 @@ cd server && pytest -q
 | `aegis_server/security.py` | argon2id password hashes; random tokens stored only as sha256 |
 | `aegis_server/seed.py` | Demo accounts with made-up names (`python -m aegis_server.seed`) |
 | `aegis_server/migrate.py` | Applies `migrations/*.sql` to TigerDB |
-| `aegis_server/stt/deepgram.py` | Laptop mic → Deepgram → `caption` events (step 2) |
+| `aegis_server/stt/deepgram.py` | Laptop mic → Deepgram → `caption` events, in the server or as its own process |
+| `aegis_server/stt/captions.py` | Deepgram results → contract captions |
 | `aegis_server/db.py` | TigerDB connection (step 5) |
 
 ## Live captions (Deepgram)
@@ -72,3 +75,49 @@ grandparent's laptop once (`POST /elders/{id}/devices` returns a `device_token` 
   worker thread so logins never stall live calls.
 - `pytest` runs the account tests against TigerDB in a throwaway schema that is dropped
   afterwards. They're skipped when `TIGER_DATABASE_URL` isn't set (for example in CI).
+
+## Starting a call
+
+```
+curl -s -X POST localhost:8000/sessions -H 'content-type: application/json' \
+     -d '{"name":"Rose","phone":"+15550100","mic":true}'
+```
+
+`"mic": true` starts live captions from the laptop mic inside the server for this call
+(`"device": "3"` picks a mic). Without it, send captions over `WS /captions/<id>` or `POST /typed`.
+End with `POST /sessions/<id>/end`. Ending stops the mic, kills both tokens and drops the call's
+history from memory.
+
+## Security
+
+**Where the voice goes:** laptop mic → server memory → Deepgram, over TLS with the certificate
+checked, and nowhere else. No endpoint accepts or returns audio. Audio is never written to disk
+or logged. Deepgram's model-improvement opt-out is on. The client refuses any audio destination
+except `wss://api.deepgram.com` (or a local fake for tests). Only text captions come back, and
+they only go to the elder screen.
+
+**Laptop only** (`POST /sessions`, `/sessions/{id}/end`, `/typed`, `WS /captions`): the request
+must come from loopback **and** carry no forwarding headers. The family phone's traffic comes
+through the Cloudflare tunnel and Vite's proxy, so it also arrives on loopback; Cloudflare's
+headers (`CF-Connecting-IP`, `X-Forwarded-For`) give it away. Refused: HTTP 403, or close 1008
+on the socket.
+
+**Screens** (`WS /events`):
+- Each call gets two random 256-bit tokens, one per role, checked in constant time.
+- A wrong token, the other role's token, an unknown call or an ended call all get the same
+  close code, 4401.
+- Family never gets captions, highlights or the risk meter.
+- Inbound messages over 16 KB are dropped, and more than 20 a second closes the socket (1008).
+- Each screen has its own outbox, so a slow phone can't stall the detector. A screen that falls
+  2,000 events behind is dropped and gets the replay when it reconnects.
+
+**Limits:** 8 calls at once, 4 screens per role per call (the oldest is dropped, so a phone that
+reconnects always gets in), 2 hours per call.
+
+**Everywhere:**
+- Tokens are redacted from logs (`token=***`). Caption text is never logged.
+- Responses carry `Cache-Control: no-store`, `Referrer-Policy: no-referrer`, a deny-all CSP and
+  `X-Frame-Options: DENY`.
+- CORS allows only `WEB_BASE_URL`. `/docs` is off unless `API_DOCS=1`.
+- All outbound HTTPS (Deepgram, Groq, Gemini) checks certificates against `certifi`.
+- Shutting down ends every live call.

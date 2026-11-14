@@ -9,6 +9,14 @@ from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
+# Every outbound HTTPS call (Deepgram, and the AI layer's urllib calls to Groq and Gemini)
+# checks certificates against certifi. python.org builds on macOS ship without system roots.
+try:
+    import certifi
+    os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+except ImportError:
+    pass
+
 
 @dataclass(frozen=True)
 class Settings:
@@ -19,6 +27,7 @@ class Settings:
     login_days: int = int(os.getenv("LOGIN_DAYS", "7"))  # how long a family login lasts
     # Set COOKIE_SECURE=1 when the server is served over https (not needed on localhost).
     cookie_secure: bool = os.getenv("COOKIE_SECURE", "") == "1"
+    docs: bool = os.getenv("API_DOCS", "") == "1"  # /docs and /openapi.json, off by default
 
 
 settings = Settings()

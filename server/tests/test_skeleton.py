@@ -9,7 +9,7 @@ client = TestClient(app)
 
 
 def test_health():
-    assert client.get("/health").json() == {"ok": True}
+    assert client.get("/health").json()["ok"] is True
 
 
 def test_http_routes_exist():
@@ -19,9 +19,10 @@ def test_http_routes_exist():
         assert p in paths
 
 
-def test_unbuilt_http_endpoints_say_so():
-    assert client.post("/sessions").status_code == 501
-    assert client.post("/sessions/s1/end").status_code == 501
+def test_laptop_only_endpoints_refuse_the_tunnel():
+    fwd = {"X-Forwarded-For": "1.2.3.4"}
+    assert client.post("/sessions", headers=fwd).status_code == 403
+    assert client.post("/sessions/s1/end", headers=fwd).status_code == 403
 
 
 @pytest.mark.parametrize("url, code", [
