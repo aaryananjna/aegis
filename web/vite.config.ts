@@ -15,6 +15,10 @@ export default defineConfig({
     allowedHosts: ['.trycloudflare.com'],
     proxy: {
       '/events': { target: server, ws: true },
+      // Family accounts (#34/#35): same origin, so the httpOnly login cookie stays first-party.
+      '/auth/': { target: server },
+      '/elders': { target: server },
+      '/device/': { target: server },
     },
   },
 })
