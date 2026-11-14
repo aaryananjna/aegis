@@ -100,7 +100,7 @@ the other two OK.
 
 | Part | Where it is |
 |---|---|
-| B | Rules, risk score, cards, alerts, replay, type mode and test harness are merged into `main` (PR #2), 171 tests passing. Practice calls (synthetic, dev set): 8/8 scams reach HIGH, 0/8 false alarms. Rules only; no AI layer yet. |
+| B | **On `main`:** rules for 8 scam tactics (with FTC, FBI, IRS, AARP and bank phrases), risk score, cards that match the scam (code word for family callers, "don't pay, call back" for banks, the IRS or companies), alerts, caption fixtures for C, replay, type mode, test harness and the demo script (`detection/demo/`). **Open PRs:** #9 code word answer plus `codeword_ok` for the family page, and #11 the AI layer (Groq, Gemini backup; add-only, off until the grandparent tap, waiting on a key) plus caption noise fixes. 278 tests on #11. Practice set (synthetic, 21 calls): 11/11 scams caught, 0/10 false alarms. |
 | A | Not started. Aryan |
 | C | Not started. Role unclaimed. C can start now from the sample event files in `detection/fixtures/` |
 
