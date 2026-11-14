@@ -1,0 +1,15 @@
+# id: example-scam-grandson
+# label: scam
+# source: synthetic
+# set: example
+# group: grandson-bail
+# onset_s: 3.0
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-1.2] spk0: Hello?
+[1.8-4.6] spk1: Nana, it's me. I got in an accident and I'm in trouble.
+[5.0-6.4] spk0: Oh no, are you okay? Where are you?
+[7.0-11.5] spk1: I'm at the police station. Please don't tell Mom, she'll be so upset.
+[12.0-13.0] spk0: What do you need, sweetie?
+[13.5-18.2] spk1: I need bail money right now. They only take Google Play gift cards.
+[19.0-20.5] spk0: What's our family code word?
+[21.0-23.8] spk1: Nana, there's no time for that, please just hurry.
