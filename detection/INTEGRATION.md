@@ -18,6 +18,7 @@ d.feed(make_segment(utterance_id, revision, "unknown", text,
                     start_s, end_s, is_final, speaker_raw="0"), now_s)   # every caption
 d.tick(now_s)                                      # every 1.0 s, even in silence
 d.set_elder("0", now_s)                            # C's "who is the grandparent?" tap (None = no labels)
+d.codeword_result(True, now_s)                     # C's "did they give the right code word?" answer
 d.end(now_s)                                       # call over; the detector refuses input after
 ```
 
@@ -29,7 +30,11 @@ Every call returns a list of event dicts (`tactic_set`, `risk`, `intervention`, 
 1. **One owner per session.** The Detector is not thread safe. Put captions, ticks, the elder
    tap and the end of the call on one `asyncio.Queue` and let one task handle them in order.
 2. **Tick every second.** Without ticks the meter can't calm down when the call goes quiet.
-3. **Cards and alerts wait for `set_elder`.** Until C's screen sends who the grandparent is,
+3. **The code word answer (C12).** When the `codeword` card is up, the elder screen sends
+   `{"type": "codeword_result", "ok": true|false}`. Pass `ok` to `codeword_result`. Wrong
+   answer: the hang up card and its alert come back at once. Right answer: no score-based
+   hang up, but a dodge still escalates. Any other time it returns a `status` warning.
+4. **Cards and alerts wait for `set_elder`.** Until C's screen sends who the grandparent is,
    the meter moves but no card or family alert fires, so Grandma's own words can't set one
    off. Speaker labels come from Deepgram diarization (`speaker_raw`).
 

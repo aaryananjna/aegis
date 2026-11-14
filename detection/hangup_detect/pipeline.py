@@ -75,6 +75,14 @@ class Detector:
         self._last_score = None  # force a fresh risk event
         return out + self._evaluate(now, set())
 
+    def codeword_result(self, ok: bool, now_s: float) -> list[dict]:
+        """The elder screen says whether the caller gave the right family code word (C12)."""
+        now = self._clock(now_s)
+        if self.counter.state != "codeword":
+            return [self._status("codeword_result ignored: no code word card showing")]
+        quotes, tactics = self._ranked(now)
+        return self._actions(self.counter.codeword_result(bool(ok), quotes, tactics, now), now)
+
     def end(self, now_s: float) -> list[dict]:
         out = self.tick(now_s)
         self.ended = True
@@ -139,9 +147,14 @@ class Detector:
             quotes, tactics = self._ranked(now)
             family = any(e.tactic is Tactic.IMPERSONATION and e.detail == "family"
                          for e in self.risk.live(now))
-            for act in self.counter.update(level, score, new_tactics, tactics, quotes, now, family):
-                if act[0] == "intervention":
-                    out.append(ev.intervention(self.session_id, now, self._next(), act[1], act[2]))
-                else:
-                    out.append(ev.alert(self.session_id, now, self._next(), act[1], act[2], act[3]))
+            out += self._actions(self.counter.update(level, score, new_tactics, tactics, quotes, now, family), now)
+        return out
+
+    def _actions(self, acts: list[tuple], now: float) -> list[dict]:
+        out = []
+        for act in acts:
+            if act[0] == "intervention":
+                out.append(ev.intervention(self.session_id, now, self._next(), act[1], act[2]))
+            else:
+                out.append(ev.alert(self.session_id, now, self._next(), act[1], act[2], act[3]))
         return out
