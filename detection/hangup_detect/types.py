@@ -79,3 +79,4 @@ class LLMRequest:
     seq: int
     utterances: tuple[tuple[str, str], ...]  # (utterance_id, text), caller lines only
     created_s: float
+    mixed: bool = False  # labels off: both voices, the AI works out which lines are the caller's

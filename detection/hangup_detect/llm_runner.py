@@ -46,7 +46,7 @@ class LLMRunner:
 
     async def run(self, req: LLMRequest) -> LLMResult:
         loop = asyncio.get_running_loop()
-        messages = build_messages(req.utterances)
+        messages = build_messages(req.utterances, mixed=req.mixed)
         start = time.monotonic()
         error = "no provider"
         for provider in self.providers:

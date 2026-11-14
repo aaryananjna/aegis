@@ -270,4 +270,8 @@ start or the source changes:
 
 - The app never asks for or stores the family code word. Grandma knows it.
 - Only caller text from the last 60 s goes to Groq or Gemini, and only when the AI layer is on.
+  **Exception, labels off** (`set_elder` with `speaker_raw: null`, one shared mic): once a rule
+  flags a line, the last 60 s of **both voices** goes, unlabeled, so the AI can work out which
+  lines are the caller's. Before any rule fires, nothing is sent. `Config(llm_mixed=False)` turns
+  this off.
 - Demo and test calls use made-up names and no real account numbers.

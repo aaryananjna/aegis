@@ -25,6 +25,7 @@ class Config:
     weights: dict[Tactic, float] = field(default_factory=_weights)
     combos: dict[tuple[Tactic, Tactic], float] = field(default_factory=_combos)
     prior: float = -3.0
+    llm_mixed: bool = True  # labels off: let the AI read both voices once the rules have fired
     half_life_s: float = 120.0
     horizon_s: float = 600.0
     second_hit_factor: float = 0.5

@@ -93,22 +93,30 @@ class Detector:
 
     # ---- AI layer (S8a) ---------------------------------------------------
     def llm_request(self, now_s: float) -> LLMRequest | None:
-        """Caller lines from the last 60 s to send to the AI layer, or None.
+        """Lines from the last 60 s to send to the AI layer, or None.
 
-        Off until the grandparent tap names a speaker (open question 5): before that, or with
-        no speaker labels, we can't tell the grandparent's words apart, so nothing is sent.
-        Only asks again once a new caller line has arrived.
+        Labels on: off until the grandparent tap names a speaker, then caller lines only.
+        Labels off (set_elder(None), one shared mic): off until the rules flag something in
+        the window, then both voices go mixed and the AI works out which lines are the
+        caller's (config.llm_mixed). Only asks again once a new line has arrived.
         """
         now = self._clock(now_s)
-        if not (self.confirmed and self.elder_raw is not None and self._llm_dirty):
+        if not (self.confirmed and self._llm_dirty):
             return None
+        mixed = self.elder_raw is None
+        if mixed:
+            window = {uid for uid, (seg, arrival) in self._finals.items() if now - arrival < LLM_WINDOW_S}
+            if not (self.cfg.llm_mixed and any(
+                    e.source == "rule" and e.utterance_id in window for e in self.risk.evidence)):
+                return None
         utts = tuple((uid, seg.text) for uid, (seg, arrival) in self._finals.items()
-                     if self._role(seg) == "caller" and now - arrival < LLM_WINDOW_S)
+                     if now - arrival < LLM_WINDOW_S
+                     and (self._role(seg) != "elder" if mixed else self._role(seg) == "caller"))
         if not utts:
             return None
         self._llm_dirty = False
         self._llm_seq += 1
-        req = LLMRequest(self._llm_seq, utts, now)
+        req = LLMRequest(self._llm_seq, utts, now, mixed)
         self._llm_requests[req.seq] = req
         while len(self._llm_requests) > MAX_LLM_REQUESTS:
             self._llm_requests.popitem(last=False)
