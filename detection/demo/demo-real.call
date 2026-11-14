@@ -1,0 +1,13 @@
+# id: demo-real
+# label: benign
+# source: synthetic
+# set: example
+# group: demo-script
+# elder: 0
+# note: The stage demo's second call. spk1 = the real grandson (live). spk0 = the judge.
+[0.0-1.0] spk0: Hello?
+[1.5-4.5] spk1: Hi Grandma, it's me, Ryan! How are you?
+[5.0-6.0] spk0: Ryan! I'm good.
+[6.5-11.0] spk1: We're planning a surprise party for Mom on Saturday, so don't tell her, okay?
+[11.5-12.5] spk0: My lips are sealed.
+[13.0-16.0] spk1: Can you bring your lemon cake? No rush, just let me know.

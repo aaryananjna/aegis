@@ -1,0 +1,14 @@
+# id: demo-scam
+# label: scam
+# source: synthetic
+# set: example
+# group: demo-script
+# onset_s: 2.0
+# elder: 0
+# note: The stage demo. spk1 = a teammate playing a fake bank caller, live, in their own voice. spk0 = the judge playing Grandma (their words are a guess; they don't affect detection).
+[0.0-1.0] spk0: Hello?
+[1.5-5.0] spk1: Hi, this is Mark from your bank's fraud department. Someone is using your account right now.
+[5.5-6.5] spk0: Oh no, what do I do?
+[7.0-11.0] spk1: We need to move your money to a safe account to protect it. Please don't tell anyone, not even your family.
+[11.5-12.5] spk0: Can I call my bank back?
+[13.0-16.0] spk1: You don't need to call anyone. Stay on the line, there's no time.

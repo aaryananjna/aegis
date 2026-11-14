@@ -67,6 +67,6 @@ def test_evidence_capped_at_three():
 def test_summary_plain_no_oxford_comma():
     s = summary({T.IMPERSONATION, T.SECRECY, T.PAYMENT})
     assert s == ("Caller claimed to be someone you know or an official, "
-                 "asked for secrecy and asked for gift cards, crypto or a wire transfer.")
-    assert summary({T.PAYMENT}) == "Caller asked for gift cards, crypto or a wire transfer."
+                 "asked for secrecy and asked to pay or move money in an unusual way.")
+    assert summary({T.PAYMENT}) == "Caller asked to pay or move money in an unusual way."
     assert summary(set()) == "Caller showed signs of a scam."

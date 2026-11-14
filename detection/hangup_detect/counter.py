@@ -24,7 +24,7 @@ PHRASES = {
     T.IMPERSONATION: "claimed to be someone you know or an official",
     T.URGENCY: "rushed the call",
     T.SECRECY: "asked for secrecy",
-    T.PAYMENT: "asked for gift cards, crypto or a wire transfer",
+    T.PAYMENT: "asked to pay or move money in an unusual way",
     T.THREAT: "made threats",
     T.VERIFICATION_AVOIDANCE: "dodged questions",
     T.REMOTE_ACCESS: "asked to control the computer or for a code",
