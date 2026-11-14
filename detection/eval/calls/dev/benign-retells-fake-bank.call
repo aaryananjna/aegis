@@ -1,0 +1,14 @@
+# id: benign-retells-fake-bank
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-retells-fake-bank
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-1.0] elder: Hello?
+[1.5-4.0] caller: Margaret, it's Dot from church. Are you sitting down?
+[4.5-5.6] elder: What happened?
+[6.1-15.0] caller: A woman called me pretending to be from my bank and she said my account was frozen and I had to move my money today.
+[15.5-17.0] elder: Oh no. Did you do it?
+[17.5-25.6] caller: Almost. She wanted me to buy gift cards and read her the numbers, and that's when I knew. I told her I'd go to the branch and she hung up.
+[26.1-28.4] elder: Good for you, Dot. I'll be careful.
+[28.9-31.0] caller: See you Sunday.

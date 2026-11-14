@@ -1,0 +1,12 @@
+# id: scam-grandson-not-a-scam
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-grandson-not-a-scam
+# onset_s: 4.8
+# note: Written by Claude for development. Not a real or recorded call. The scammer denies being a scam.
+[0.0-1.0] elder: Hello?
+[1.5-4.3] caller: Grandma, it's me. Please don't hang up.
+[4.8-11.0] caller: I know this sounds like a scam but it's not. I got arrested and they said I need bail money tonight.
+[11.5-12.6] elder: Arrested? Are you okay?
+[13.1-19.0] caller: I'm okay but I need you to send two thousand dollars. Please don't tell Mom, she'll kill me.
