@@ -64,8 +64,8 @@ def seg(uid, text, raw_id, t):
     return make_segment(uid, 0, "unknown", text, t, t + 1, True, speaker_raw=raw_id)
 
 
-def confirmed(elder="0"):
-    d = Detector(Config(), "s1")
+def confirmed(elder="0", cfg=None):
+    d = Detector(cfg or Config(), "s1")
     d.set_elder(elder, 0.0)
     return d
 
@@ -77,8 +77,8 @@ def test_ai_off_until_grandparent_is_tapped():
 
 
 def test_ai_off_with_no_speaker_labels_until_the_rules_fire():
-    # Labels off sends nothing until a rule flags a line (see test_referee.py).
-    d = confirmed(elder=None)
+    # Old setting: labels off sends nothing until a rule flags a line (see test_referee.py).
+    d = confirmed(elder=None, cfg=Config(llm_mixed_always=False, ai_alarm_tactics=0))
     d.feed(seg("u1", UTTS[0][1], None, 0.0), 1.0)
     assert d.llm_request(1.0) is None
 
@@ -146,7 +146,8 @@ def test_injection_cannot_lower_risk():
 
 
 def test_llm_alone_cannot_cause_high_or_cards():
-    d = confirmed()
+    # With the AI alarm off (ai_alarm_tactics=0). The demo default lets 2+ tactics alarm.
+    d = confirmed(cfg=Config(llm_mixed_always=False, ai_alarm_tactics=0))
     d.feed(seg("u1", "Hello Margaret, how was your day at the garden club?", "1", 0.0), 1.0)
     req = d.llm_request(1.0)
     # A hostile or broken model labels an innocent line as every tactic.

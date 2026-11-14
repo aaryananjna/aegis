@@ -1,0 +1,22 @@
+# id: heldout-02-medicare-brace
+
+# label: scam
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-medicare-brace
+
+# onset_s: 11.1
+
+# elder: 0
+
+[0.0-1.0] spk0: Hello?
+[1.5-7.5] spk1: Good morning, Mrs. Gable. I'm calling from Senior Health Outreach regarding your back pain records.
+[8.0-10.6] spk0: Oh, did Dr. Miller's office ask you to call?
+[11.1-17.9] spk1: Your file shows you qualify for a zero-cost lumbar brace covered one hundred percent by Medicare this month.
+[18.4-21.6] spk0: Well, my lower back does ache, if it's really free.
+[22.1-28.9] spk1: Completely free to you. I just need to read off the letters and numbers on your Medicare card.
+[29.4-33.4] spk0: Hold on, let me go grab my purse from the kitchen counter.
+[33.9-39.1] spk1: Take your time, ma'am, I'll stay right here on the line and get this shipped.

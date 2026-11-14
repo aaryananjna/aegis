@@ -1,0 +1,22 @@
+# id: heldout-03-jury-warrant
+
+# label: scam
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-jury-warrant
+
+# onset_s: 2.3
+
+# elder: 0
+
+[0.0-1.8] spk0: Hello, this is Arthur speaking.
+[2.3-9.1] spk1: Mr. Pendelton, this is Sergeant Vance with the County Sheriff's Civil Division. We have a warrant out for you.
+[9.6-12.8] spk0: A warrant? What on earth are you talking about?
+[13.3-19.7] spk1: You failed to appear for grand jury duty last Tuesday, and the judge signed a contempt order.
+[20.2-24.2] spk0: I never got a summons in the mail, I swear to you!
+[24.7-31.9] spk1: Regardless, to clear the arrest order while we investigate the mail, you must post a compliance bond immediately.
+[32.4-35.6] spk0: Can I just drive down to the courthouse right now?
+[36.1-43.3] spk1: If you step into the courthouse, deputies will cuff you on sight. You have to use a kiosk voucher.

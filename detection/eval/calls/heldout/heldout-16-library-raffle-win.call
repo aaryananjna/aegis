@@ -1,0 +1,20 @@
+# id: heldout-16-library-raffle-win
+
+# label: benign
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-library-raffle-win
+
+# elder: 0
+
+[0.0-1.2] spk0: Hello?
+[1.7-7.3] spk1: Hi Mr. Sterling! This is Brenda from the Friends of the Maplewood Library. You won our autumn raffle!
+[7.8-11.0] spk0: The library raffle? I bought a ticket at the book sale!
+[11.5-17.5] spk1: You sure did, and we just pulled your name for the hundred-dollar gift certificate to Miller's Garden Center.
+[18.0-22.0] spk0: Well isn't that nice! Wait, you don't want a processing fee, do you?
+[22.5-28.1] spk1: Heavens no! It's sitting in an envelope at the main circulation desk with your name on it.
+[28.6-31.8] spk0: Do I need to bring anything special to claim it?
+[32.3-38.3] spk1: Just bring your library card or photo ID next time you stroll in for your mysteries.

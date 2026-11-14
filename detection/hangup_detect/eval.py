@@ -93,7 +93,11 @@ def run_set(name: str, root: Path = CALLS_ROOT, no_speakers: bool = False) -> di
 
 def report(m: dict, no_speakers: bool) -> str:
     src = ", ".join(m["sources"]) or "no calls"
-    kind = "synthetic, written by Claude" if m["sources"] == ["synthetic"] else src
+    if m["sources"] == ["synthetic"]:
+        kind = ("synthetic, written by the team and never used for tuning" if m["set"] == "heldout"
+                else "synthetic, written by Claude")
+    else:
+        kind = src
     lines = [
         f"Set: {m['set']} ({kind}). {m['n_scam']} scam + {m['n_benign']} benign calls."
         + (" Speaker labels ignored." if no_speakers else ""),

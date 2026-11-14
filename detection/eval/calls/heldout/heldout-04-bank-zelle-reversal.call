@@ -1,0 +1,22 @@
+# id: heldout-04-bank-zelle-reversal
+
+# label: scam
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-bank-zelle-reversal
+
+# onset_s: 10.6
+
+# elder: 0
+
+[0.0-1.4] spk0: Hello?
+[1.9-7.1] spk1: Hi, is this Dorothy? I'm calling from Oakridge Bank Fraud Prevention about a pending wire.
+[7.6-10.1] spk0: Yes, this is Dorothy. What wire?
+[10.6-17.0] spk1: Someone in Miami just tried to send nine hundred dollars from your checking account using our transfer app.
+[17.5-20.7] spk0: Well that certainly wasn't me! Can you stop it?
+[21.2-28.0] spk1: I can cancel it, but because it's already processing, you have to initiate a reversal transfer to yourself.
+[28.5-31.7] spk0: I don't really use the phone app very much.
+[32.2-39.0] spk1: I'll walk you through it gently. Just open the app and send nine hundred to our secure cancellation code.

@@ -1,0 +1,22 @@
+# id: heldout-05-laptop-refund
+
+# label: scam
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-laptop-refund
+
+# onset_s: 8.8
+
+# elder: 0
+
+[0.0-1.1] spk0: Hello?
+[1.6-6.0] spk1: Hello sir, I'm calling from Apex Geek Care billing department. We're closing down.
+[6.5-8.3] spk0: Apex who? I don't remember that.
+[8.8-15.6] spk1: You bought a five-year computer protection plan three years ago, so we owe you a two hundred dollar refund.
+[16.1-19.7] spk0: Oh, maybe my late wife set that up. Will you mail a check?
+[20.2-27.0] spk1: We only do direct bank credits now. Could you sit down at your computer so we can process it?
+[27.5-30.7] spk0: Sure, it's already turned on right here in the den.
+[31.2-37.6] spk1: Wonderful. Please open your web browser and type in the remote connection address I give you.

@@ -15,7 +15,8 @@ LOW, ELEVATED, HIGH = "low", "elevated", "high"
 
 
 def next_level(prev: str, score: float, has_rule: bool, cfg: Config) -> str:
-    """The plan's transition table. High always needs live rule evidence."""
+    """The plan's transition table. High needs live rule evidence, or a strong AI answer when
+    config.ai_alarm_tactics is on (the caller passes that in as has_rule)."""
     if score >= cfg.enter_high and has_rule:
         return HIGH
     if prev == HIGH:
@@ -66,10 +67,14 @@ class RiskModel:
         llm: dict[Tactic, float] = {}
         if include_llm:
             raw = self._ledger(now, "llm")
+            strong = self._ai_strong(raw)
+            if strong:  # enough different quoted tactics: count them like rule evidence
+                raw = {t: v / self.cfg.llm_factor for t, v in raw.items()}
             llm = {t: max(0.0, v - rule.get(t, 0.0)) for t, v in raw.items()}
             total = sum(llm.values())
-            if total > self.cfg.llm_cap:
-                k = self.cfg.llm_cap / total
+            cap = self.cfg.ai_alarm_cap if strong else self.cfg.llm_cap
+            if total > cap:
+                k = cap / total
                 llm = {t: v * k for t, v in llm.items()}
         combined = {t: rule.get(t, 0.0) + llm.get(t, 0.0) for t in set(rule) | set(llm)}
 
@@ -85,6 +90,11 @@ class RiskModel:
             k = self.cfg.combo_cap / total
             combos = {name: v * k for name, v in combos.items()}
         return rule, llm, combos
+
+    def _ai_strong(self, raw_llm: dict) -> bool:
+        """The AI quoted enough different tactics to count as evidence on its own."""
+        n = self.cfg.ai_alarm_tactics
+        return n > 0 and sum(1 for v in raw_llm.values() if v > 0) >= n
 
     def _score_of(self, rule, llm, combos) -> float:
         x = self.cfg.prior + sum(rule.values()) + sum(llm.values()) + sum(combos.values())
@@ -109,5 +119,6 @@ class RiskModel:
         """Update the level and return (level, score, contributions) from one pass."""
         rule, llm, combos = self._parts(now, True)
         score = self._score_of(rule, llm, combos)
-        self.level = next_level(self.level, score, bool(rule), self.cfg)
+        strong_ai = self._ai_strong(self._ledger(now, "llm"))
+        self.level = next_level(self.level, score, bool(rule) or strong_ai, self.cfg)
         return self.level, score, self._named(rule, llm, combos)

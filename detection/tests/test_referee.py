@@ -29,8 +29,8 @@ def raw(*items):
     return json.dumps({"tactics": [dict(tactic=t, utterance_id=u, quote=q) for t, u, q in items]})
 
 
-def test_nothing_sent_before_the_rules_fire():
-    d = nolabels()
+def test_nothing_sent_before_the_rules_fire_when_always_is_off():
+    d = nolabels(Config(llm_mixed_always=False))
     feed(d, "u0", "Hello? Who is this?", 0.0)
     feed(d, "u1", "Hi, it's a lovely day out.", 2.0)
     assert d.llm_request(4.0) is None  # no rule hit yet: grandma's words stay on the laptop

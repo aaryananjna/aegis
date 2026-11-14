@@ -26,11 +26,16 @@ class Config:
     combos: dict[tuple[Tactic, Tactic], float] = field(default_factory=_combos)
     prior: float = -3.0
     llm_mixed: bool = True  # labels off: let the AI read both voices once the rules have fired
+    llm_mixed_always: bool = True  # labels off: let the AI read both voices from the first line
     half_life_s: float = 120.0
     horizon_s: float = 600.0
     second_hit_factor: float = 0.5
     llm_factor: float = 0.7
     llm_cap: float = 1.5
+    # AI alarm: when the AI quotes at least this many different tactics, it may raise the
+    # level on its own (no rule needed) and its cap rises to ai_alarm_cap. 0 = off.
+    ai_alarm_tactics: int = 2
+    ai_alarm_cap: float = 3.0
     combo_cap: float = 2.0
     enter_high: float = 0.80
     exit_high: float = 0.60

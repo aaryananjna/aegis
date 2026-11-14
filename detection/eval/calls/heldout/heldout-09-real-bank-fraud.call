@@ -1,0 +1,20 @@
+# id: heldout-09-real-bank-fraud
+
+# label: benign
+
+# source: synthetic
+
+# set: heldout
+
+# group: ho-real-bank-fraud
+
+# elder: 0
+
+[0.0-1.2] spk0: Hello?
+[1.7-7.3] spk1: Hello, may I speak with Walter? This is Hannah from First Heritage Bank's card security team.
+[7.8-11.0] spk0: This is Walter. Is something wrong with my credit card?
+[11.5-17.9] spk1: We declined a three hundred dollar charge at an electronics store in Ohio and locked your card temporarily.
+[18.4-22.4] spk0: I'm not in Ohio. Do you need my card number or password?
+[22.9-29.3] spk1: No sir, we will never ask for your PIN, password, or full card number over the phone.
+[29.8-33.0] spk0: Oh, good. You hear about so many phone scams lately.
+[33.5-40.7] spk1: You're smart to be careful. Feel free to hang up and call the number on the back of your card.

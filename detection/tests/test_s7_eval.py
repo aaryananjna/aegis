@@ -58,3 +58,14 @@ def test_dev_set_runs_and_reports():
     assert m["n_scam"] == 11 and m["n_benign"] == 10
     assert m["rejected"] == []
     assert m["latency_ms"]["n"] > 0
+
+
+def test_report_does_not_credit_claude_for_heldout_calls():
+    # Held-out calls are written by the team, outside the detector's tuning.
+    m = {"set": "heldout", "sources": ["synthetic"], "n_scam": 1, "n_benign": 1,
+         "detection_rate": "1/1", "false_alarm_rate": "0/1",
+         "time_to_high": {"median": 1, "max": 1, "n": 1}, "time_to_alert": {"median": 1, "max": 1, "n": 1},
+         "latency_ms": {"median": 0.1, "p95": 0.1}, "misses": [], "false_alarm_ids": [], "rejected": []}
+    from hangup_detect.eval import report
+    head = report(m, False).splitlines()[0]
+    assert "Claude" not in head and "team" in head
