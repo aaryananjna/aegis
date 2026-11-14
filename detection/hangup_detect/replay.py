@@ -54,7 +54,7 @@ def parse_call(text: str) -> Call:
         if line.startswith("#"):
             m = _HEADER.match(line)
             if m:
-                headers[m["k"]] = m["v"].strip()
+                headers[m["k"]] = re.sub(r"\s+#.*$", "", m["v"]).strip()
             continue
         m = _LINE.match(line)
         if not m:
@@ -79,6 +79,8 @@ def replay(call: Call, elder: str | None = None, confirm: bool = True, caption_d
            no_speakers: bool = False, config: Config | None = None, realtime: bool = False,
            on_event=None, feed_ms: list[float] | None = None) -> list[dict]:
     """Feed finals at end_s + caption_delay_s, tick every 1.0 s, then end."""
+    if elder is None:
+        elder = call.headers.get("elder")
     d = Detector(config or Config(), call.headers["id"])
     out: list[dict] = []
 

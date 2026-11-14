@@ -36,9 +36,10 @@ class RiskModel:
     def add(self, e: Evidence) -> None:
         self.evidence.append(e)
 
-    def clear(self) -> None:
+    def clear(self, keep_level: bool = False) -> None:
         self.evidence.clear()
-        self.level = LOW
+        if not keep_level:
+            self.level = LOW
 
     # ---- pure reads -------------------------------------------------
     def _live(self, now: float, source: str):

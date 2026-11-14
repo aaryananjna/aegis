@@ -23,7 +23,7 @@ class Detector:
         self.session_id = session_id
         self.risk = RiskModel(self.cfg)
         self.counter = CounterMoves(self.cfg, session_id)
-        self.elder_raw = elder_speaker_raw
+        self.elder_raw = None if elder_speaker_raw is None else str(elder_speaker_raw)
         self.confirmed = confirmed or elder_speaker_raw is not None
         self.ended = False
         self._seq = 0
@@ -74,9 +74,9 @@ class Detector:
 
     def set_elder(self, speaker_raw: str | None, now_s: float) -> list[dict]:
         now = self._clock(now_s)
-        self.elder_raw = speaker_raw
+        self.elder_raw = None if speaker_raw is None else str(speaker_raw)
         self.confirmed = True
-        self.risk.clear()
+        self.risk.clear(keep_level=True)  # same evidence must not move the meter
         out: list[dict] = []
         for uid, (seg, arrival) in self._finals.items():
             hits = [] if self._role(seg) == "elder" else find_evidence(seg.text, uid, arrival)

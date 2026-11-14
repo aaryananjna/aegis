@@ -16,12 +16,14 @@ management and cleanup.
 from __future__ import annotations
 
 import asyncio
+import logging
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from hangup_detect import Config, Detector, make_segment
 
 app = FastAPI()
+log = logging.getLogger("hangup.server")
 SESSIONS: dict[str, "Session"] = {}
 
 
@@ -42,18 +44,27 @@ class Session:
         d = self.detector
         while True:
             kind, msg = await self.queue.get()
-            if kind == "caption":
-                seg = make_segment(msg["utterance_id"], msg["revision"], "unknown", msg["text"],
-                                   msg["start_s"], msg["end_s"], msg["is_final"],
-                                   speaker_raw=msg.get("speaker_raw"))
-                out = d.feed(seg, self.now())
-            elif kind == "set_elder":
-                out = d.set_elder(msg.get("speaker_raw"), self.now())
-            elif kind == "tick":
-                out = d.tick(self.now())
-            else:  # "end"
-                await self.broadcast(d.end(self.now()))
-                return
+            try:
+                if kind == "caption":
+                    seg = make_segment(msg["utterance_id"], msg["revision"], "unknown", msg["text"],
+                                       msg["start_s"], msg["end_s"], msg["is_final"],
+                                       speaker_raw=msg.get("speaker_raw"))
+                    out = d.feed(seg, self.now())
+                elif kind == "set_elder":
+                    out = d.set_elder(msg.get("speaker_raw"), self.now())
+                elif kind == "tick":
+                    out = d.tick(self.now())
+                elif kind == "end":
+                    await self.broadcast(d.end(self.now()))
+                    return
+                else:
+                    log.warning("ignoring unknown message type %r", kind)
+                    continue
+            except (KeyError, TypeError, ValueError) as exc:
+                # One bad message must not stop detection for the rest of the call.
+                # Log the error type only, never caption text.
+                log.warning("bad %s message skipped: %s", kind, type(exc).__name__)
+                continue
             await self.broadcast(out)
 
     async def ticker(self) -> None:
@@ -83,7 +94,7 @@ async def captions(ws: WebSocket, session_id: str):
     try:
         while True:
             msg = await ws.receive_json()
-            await s.queue.put((msg["type"], msg))  # "caption" | "set_elder" | "end"
+            await s.queue.put((msg.get("type"), msg))  # "caption" | "set_elder" | "end"
     except WebSocketDisconnect:
         pass
 

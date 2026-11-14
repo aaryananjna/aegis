@@ -62,5 +62,6 @@ def make_segment(utterance_id: str, revision: int, speaker: str, text: str,
         utterance_id=str(utterance_id), revision=int(revision),
         speaker=speaker if speaker in SPEAKERS else "unknown",
         text=text[:MAX_TEXT], start_s=float(start_s), end_s=float(end_s),
-        is_final=bool(is_final), speaker_raw=speaker_raw, truncated=truncated,
+        is_final=bool(is_final), truncated=truncated,
+        speaker_raw=None if speaker_raw is None else str(speaker_raw),
     )

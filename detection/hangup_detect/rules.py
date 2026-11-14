@@ -19,7 +19,7 @@ _I = re.IGNORECASE
 PATTERNS: dict[T, list[str]] = {
     T.IMPERSONATION: [
         # "it's me" with no name right after it (real family say their name)
-        r"\bit'?s me\b(?!,?\s+(?-i:[A-Z][a-z]+)\b)",
+        r"\bit'?s me\b(?!,?\s+(?!(?:grandma|grandpa|nana|papa|granny|gran|mom|mum|dad|grandmother|grandfather|aunt|auntie|uncle)\b)(?-i:[A-Z][a-z]+)\b)",
         r"\b(this is )?your (favorite )?(grandson|granddaughter|grandkid|nephew|niece)\b",
         r"\b(this is|i'?m) (officer|detective|sergeant|deputy|agent)\b",
         r"\b(calling )?(from|with) the (police|sheriff'?s? (office|department)|court|irs)\b",
@@ -48,7 +48,7 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(wire (the )?(money|transfer)|wire it|western union|moneygram)\b",
         r"\b(zelle|venmo|cash ?app) (it|the money|me)\b",
         r"\b(courier|driver|someone) (will|to) (come )?(pick up|collect)\b",
-        r"\bbail( money)?\b",
+        r"\b(bail money|bail bond|(pay|post|make) (my |the |his |her )?bail|bail is set)\b",
     ],
     T.THREAT: [
         r"\b(warrant (out )?for (your|his|her) arrest|arrest warrant)\b",
@@ -90,30 +90,37 @@ COMPILED = {t: [re.compile(p, _I) for p in ps] for t, ps in PATTERNS.items()}
 # Skip a single match when "not/never/no" sits within two words before it.
 _NEGATED = re.compile(r"\b(not|never|no)\s+(\w+\s+){0,2}$", _I)
 # Skip the whole utterance when it describes a scam rather than runs one.
-_DESCRIBES_SCAM = re.compile(r"\b(that'?s|it'?s|sounds like|this is) a scam\b|\bscammers? (said|told|asked)\b", _I)
-# Secrecy about a happy surprise is normal family talk.
-_HAPPY_SECRET = re.compile(r"\b(surprise|party|birthday)\b", _I)
+# Narrow on purpose: scammers say "I know this sounds like a scam" to get ahead of doubt.
+_DESCRIBES_SCAM = re.compile(r"\b(that'?s|it'?s) a scam\b|\bscammers? (said|told|asked)\b", _I)
+# Secrecy about a happy surprise is normal family talk: the event is named after the secret
+# ("don't tell Mom about the party") or the call says outright it's a surprise.
+_HAPPY_AFTER = re.compile(r"^[^.!?]*\b(surprise|party|birthday)\b", _I)
+_HAPPY_ANY = re.compile(r"\b(it'?s a surprise|surprise (party|dinner|visit|trip)|birthday (party|surprise))\b", _I)
 
 
 def find_evidence(text: str, utterance_id: str, t_s: float) -> list[Evidence]:
     """Return at most one Evidence per tactic, using the first unguarded match."""
-    if _DESCRIBES_SCAM.search(text):
+    norm = text.replace("\u2019", "'").replace("\u2018", "'")  # same length, spans stay valid
+    if _DESCRIBES_SCAM.search(norm):
         return []
     out: list[Evidence] = []
     for tactic, patterns in COMPILED.items():
-        if tactic is T.SECRECY and _HAPPY_SECRET.search(text):
-            continue
-        hit = _first_match(text, patterns)
+        skip = _happy_secret if tactic is T.SECRECY else None
+        hit = _first_match(norm, patterns, skip)
         if hit:
             out.append(Evidence(tactic, text[hit[0]:hit[1]], utterance_id, hit, "rule", t_s))
     return out
 
 
-def _first_match(text: str, patterns: list[re.Pattern]) -> tuple[int, int] | None:
+def _happy_secret(text: str, m: re.Match) -> bool:
+    return bool(_HAPPY_ANY.search(text) or _HAPPY_AFTER.search(text[m.end():]))
+
+
+def _first_match(text: str, patterns: list[re.Pattern], skip=None) -> tuple[int, int] | None:
     best = None
     for p in patterns:
         for m in p.finditer(text):
-            if _NEGATED.search(text[:m.start()]):
+            if _NEGATED.search(text[:m.start()]) or (skip and skip(text, m)):
                 continue
             if best is None or m.start() < best[0]:
                 best = (m.start(), m.end())
