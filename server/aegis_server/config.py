@@ -16,6 +16,9 @@ class Settings:
     tiger_database_url: str = os.getenv("TIGER_DATABASE_URL", "")
     web_base_url: str = os.getenv("WEB_BASE_URL", "http://localhost:5173")
     tick_s: float = 1.0  # detector tick, even in silence (CONTRACTS: caption section)
+    login_days: int = int(os.getenv("LOGIN_DAYS", "7"))  # how long a family login lasts
+    # Set COOKIE_SECURE=1 when the server is served over https (not needed on localhost).
+    cookie_secure: bool = os.getenv("COOKIE_SECURE", "") == "1"
 
 
 settings = Settings()
