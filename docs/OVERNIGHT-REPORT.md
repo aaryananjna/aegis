@@ -18,7 +18,7 @@ _Filled in as the night goes on._
 | 5 | `/evidence` judge page | `c/evidence` | [#26](https://github.com/aaryananjna/aegis/pull/26) (stacked on #24) | done, draft |
 | extra | Contract v2.1 PR with A's 4 additions + B's AI step (B asked in #25) | `docs/contract-v2.1` | [#27](https://github.com/aaryananjna/aegis/pull/27), **ready for review** (not draft: B asked to review it) | done |
 | 6 | CI for `web/` | `c/web-ci` | [#28](https://github.com/aaryananjna/aegis/pull/28) | done, draft, CI green |
-| 7 | Accessibility pass | | | |
+| 7 | Accessibility pass | `c/a11y` | [#29](https://github.com/aaryananjna/aegis/pull/29) (stacked on #26) | done, draft. No axe: Playwright isn't installed |
 | 8 | `docs/DEMO-RUNBOOK.md` | | | |
 
 ## Findings worth knowing
@@ -44,6 +44,8 @@ _Filled in as the night goes on._
 | #26 `/evidence`: chart, hover, breakdown, table | screenshots `evidence-1-scam`, `-2-hover`, `-3-bank`; reducer tests |
 | `/evidence` with real AI evidence ("rules + AI") | **not verified**: needs an API key; covered by reducer test only |
 | #28 CI: `npm ci` → build → test | same commands on clean exports: `c/evidence` 20/20, `c/web-scaffold` build OK + test skipped. **On GitHub only the skip path has run** (no `web/` on `main` yet) |
+| #29 every control named, rings on every Tab stop, contrast ≥ 4.5 (text) / ≥ 3 (large) | Chrome DevTools accessibility tree, real Tab presses, computed WCAG contrast; re-checked after fixes |
+| Screen reader (VoiceOver), 200% zoom | **not verified** |
 | Vibration, wake lock, `tel:` on a real phone | **not verified**, needs a phone |
 | #21 dev server does C1, C3–C6, C12 and `/typed` | 10 pytest tests; real uvicorn run with `typed_cli.py` → typed captions → codeword card → alert → `call_ended` |
 
