@@ -11,6 +11,7 @@ Known gaps (documented, not handled here):
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 
 from .types import Evidence, Tactic as T
 
@@ -229,18 +230,103 @@ def _strip_fillers(text: str) -> tuple[str, list[int]]:
     return "".join(clean), pos
 
 
-def find_evidence(text: str, utterance_id: str, t_s: float) -> list[Evidence]:
+# ---- Talking ABOUT scams -------------------------------------------------------------------
+# People warn each other ("if anyone calls and says gift cards, hang up") and retell calls they
+# beat ("a man said he was from the IRS"). Those words are reported speech, not an ask.
+# A match is skipped when a reporting frame comes before it in the same sentence. A direct ask
+# to the listener ("you need to buy gift cards") is never inside such a frame, so it still counts.
+
+_WHO = (r"(someone|somebody|anyone|anybody|people|scammers?|crooks?|con (men|artists?)"
+        r"|(this|that|a|some) (young |nice |strange |old )?(man|guy|woman|lady|girl|boy|fellow|kid))")
+# Always a frame: a stranger's words retold, a hypothetical caller, or "pretending to be".
+_STRONG_FRAME = re.compile(
+    rf"\b{_WHO}\s+((\w+\s+){{0,2}}?)(said|says|say|told|tells|tell|wanted|wants|want|asked|asks|ask"
+    rf"|claimed|claims|claiming|pretend\w*|call(s|ed)?)\b"
+    r"|\bpretending to be\b"
+    r"|\bif (anyone|anybody|someone|somebody|a caller|the caller|a stranger)\s+((\w+\s+){0,2}?)"
+    r"(calls?|says?|asks?|tells?|wants?|claims?)\b", _I)
+# A frame only once the call is clearly about scams: a friend's or family member's retelling.
+_WEAK_FRAME = re.compile(
+    r"\b(he|she|they|i)\s+((\w+\s+){0,1}?)(said|told (me|him|her|them|us)|wanted (me|us|him|her)"
+    r"|asked (me|us|him|her|for)|claimed|(was|were) pretending)\b", _I)
+# The call is about scams: someone names one (not "this is not a scam") or retells a call.
+_SCAM_TOPIC = re.compile(r"\b(scams?|scammers?|scammed|fraudsters?)\b|\bone of (those|these) calls\b"
+                         r"|\b(it was|that'?s|it'?s) (a )?fake\b", _I)
+_TOPIC_NEGATED = re.compile(r"(\bnot|n'?t|\bno)\s+(\w+\s+){0,2}$", _I)
+# "Who pays a bill with gift cards?" asks about it, it doesn't ask for it.
+_WHO_QUESTION = re.compile(r"\bwho\s+(\w+\s+){0,4}$", _I)
+# Gift cards as a present ("the boys want gift cards for Christmas").
+_OCCASION = re.compile(r"\b(birthday|christmas|hanukkah|holiday|graduation|anniversary|wedding|stocking"
+                       r"|presents?|party)\b", _I)
+_PAYS_WITH_CARD = re.compile(r"\b(numbers?|codes?|scratch|pin|back of)\b", _I)
+_YOU = re.compile(r"\b(you|your|ya)\b", _I)
+_SENTENCE_END = re.compile(r"[.!?]")
+
+
+@dataclass(frozen=True)
+class Context:
+    """What the call so far is about. Built from every final line, both voices."""
+    scam_talk: bool = False      # someone is warning about or retelling a scam
+    gift_occasion: bool = False  # a birthday or holiday came up, so gift cards may be presents
+
+
+def context_of(texts) -> Context:
+    talk = gift = False
+    for raw in texts:
+        text = raw.translate(_APOSTROPHES)
+        talk = talk or bool(_STRONG_FRAME.search(text)) or any(
+            not _TOPIC_NEGATED.search(text[:m.start()]) for m in _SCAM_TOPIC.finditer(text))
+        gift = gift or bool(_OCCASION.search(text))
+    return Context(talk, gift)
+
+
+def _sentence_start(text: str, at: int) -> int:
+    ends = [m.end() for m in _SENTENCE_END.finditer(text, 0, at)]
+    return ends[-1] if ends else 0
+
+
+def _reported(text: str, m: re.Match, ctx: Context) -> bool:
+    start = _sentence_start(text, m.start())
+    before = text[start:m.start()]
+    if _STRONG_FRAME.search(before) or _WHO_QUESTION.search(before):
+        return True
+    if ctx.scam_talk and _WEAK_FRAME.search(before):
+        return True
+    rest = _SENTENCE_END.search(text, m.end())
+    sentence = text[start:rest.end() if rest else len(text)]
+    # A quote retold over several sentences: "A man said Grandma, it's me. I need bail money."
+    if _STRONG_FRAME.search(text[:start]) and not _YOU.search(sentence):
+        return True
+    # An echo while talking about scams: "Gift cards?"
+    if ctx.scam_talk and sentence.strip().endswith("?") and len(sentence.split()) <= 4:
+        return True
+    return False
+
+
+def _gift_present(text: str, m: re.Match, ctx: Context) -> bool:
+    return (ctx.gift_occasion and "gift" in m.group(0).lower()
+            and not _PAYS_WITH_CARD.search(text))
+
+
+def find_evidence(text: str, utterance_id: str, t_s: float,
+                  context: Context | None = None) -> list[Evidence]:
     """Return at most one Evidence per tactic, using the first unguarded match.
 
     Matching runs on a cleaned copy (curly apostrophes made straight, fillers removed).
     Spans and quotes always point back into the original caption text.
+    `context` says what the call so far is about (see context_of); None means nothing yet.
     """
+    ctx = context or Context()
     norm, pos = _strip_fillers(text.translate(_APOSTROPHES))
     if _DESCRIBES_SCAM.search(norm):
         return []
     out: list[Evidence] = []
     for tactic, patterns in COMPILED.items():
-        skip = {T.SECRECY: _happy_secret, T.PAYMENT: _calls_the_number}.get(tactic)
+        own = {T.SECRECY: _happy_secret, T.PAYMENT: _calls_the_number}.get(tactic)
+
+        def skip(text, m, own=own, tactic=tactic):
+            return (_reported(text, m, ctx) or (own is not None and own(text, m))
+                    or (tactic is T.PAYMENT and _gift_present(text, m, ctx)))
         hit = _first_match(norm, patterns, skip)
         if hit:
             start, end, idx = hit

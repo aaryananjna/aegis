@@ -1,0 +1,13 @@
+# id: benign-holiday-gift-cards
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-holiday-gift-cards
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-1.0] elder: Hello?
+[1.5-6.2] caller: Hi Mom. I'm making the Christmas list for the kids. Any ideas?
+[6.7-9.4] elder: I never know what teenagers want anymore.
+[9.9-16.0] caller: Honestly the boys just want gift cards right now. Steam or Amazon, either one.
+[16.5-18.7] elder: Gift cards feel so cold to me.
+[19.2-24.8] caller: Put them in a card with a note and they'll love it. Twenty five each is plenty.
+[25.3-27.0] elder: Alright, I'll pick some up.

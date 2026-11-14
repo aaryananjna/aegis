@@ -1,0 +1,14 @@
+# id: benign-warns-medicare-callers
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-warns-medicare-callers
+# note: Written by Claude for development. Not a real or recorded call.
+[0.0-1.0] elder: Hello?
+[1.5-4.8] caller: Hi Grandpa, it's Theo. Do you have a minute?
+[5.3-6.6] elder: Always for you.
+[7.1-15.9] caller: My friend's grandma almost got scammed. Somebody called saying they were from Medicare and wanted her card number to send a new card.
+[16.4-18.2] elder: Medicare doesn't call like that?
+[18.7-27.5] caller: No. So if anyone calls and says they need your Medicare number or your bank info, just hang up and call me or Mom.
+[28.0-30.1] elder: Hang up and call you. Got it.
+[30.6-33.0] caller: Thanks Grandpa. Talk Sunday.

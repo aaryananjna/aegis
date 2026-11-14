@@ -1,0 +1,13 @@
+# id: benign-elder-retells-grandkid
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-elder-retells-grandkid
+# elder: 0
+# note: Written by Claude for development. Not a real or recorded call. The scam words are in the grandparent's own lines.
+[0.0-1.0] spk0: Hello?
+[1.5-3.8] spk1: Hi Dad, it's Laura. You sounded upset in your message.
+[4.3-13.6] spk0: I got one of those calls. This boy said Grandpa it's me, I wrecked the car and I need money for a lawyer, and don't tell Dad.
+[14.1-15.6] spk1: Oh Dad. What did you do?
+[16.1-21.8] spk0: I asked him what my dog's name is and he hung up. I called Sam and he's fine, he's at school.
+[22.3-24.9] spk1: That was smart. I'm proud of you.

@@ -13,7 +13,7 @@ from .config import Config
 from .counter import CounterMoves
 from .risk import RiskModel
 from .guard import parse_llm
-from .rules import find_evidence
+from .rules import Context, context_of, find_evidence
 from .types import Evidence, LLMRequest, Segment, Tactic, speaker_id
 
 LLM_WINDOW_S = 60.0
@@ -33,6 +33,7 @@ class Detector:
         self._now = 0.0
         self._last_rev: dict[str, int] = {}
         self._finals: OrderedDict[str, tuple[Segment, float]] = OrderedDict()
+        self._ctx: dict[str, Context] = {}  # running call context after each final (rules.Context)
         self._shown: dict[str, list[dict]] = {}  # utterance_id -> evidence C currently shows
         self._last_score: float | None = None
         self._last_level = "low"
@@ -63,7 +64,9 @@ class Detector:
         out: list[dict] = []
         self._finals[uid] = (seg, now)
         if len(self._finals) > self.cfg.max_finals:
-            self._finals.popitem(last=False)
+            old, _ = self._finals.popitem(last=False)
+            if len(self._ctx) > 1:
+                self._ctx.pop(old, None)
             out.append(self._status("oldest caption dropped from the rebuild store"))
         hits = self._score_final(seg, now)
         if self._role(seg) != "elder":
@@ -189,7 +192,25 @@ class Detector:
     # ---- internals ------------------------------------------------------
     def _hits(self, seg: Segment, t: float) -> list[Evidence]:
         """Rule evidence for a caption, or nothing if the grandparent said it."""
-        return [] if self._role(seg) == "elder" else find_evidence(seg.text, seg.utterance_id, t)
+        if self._role(seg) == "elder":
+            return []
+        return find_evidence(seg.text, seg.utterance_id, t, self._context(seg))
+
+    def _context(self, seg: Segment) -> Context:
+        """What the call is about up to and including this line (both voices).
+
+        Context only ever turns on, so each final stores the running value once; a rebuild
+        reuses it and a live interim adds its own words to the latest one.
+        """
+        uid = seg.utterance_id
+        if uid in self._ctx:
+            return self._ctx[uid]
+        prev = self._ctx[next(reversed(self._ctx))] if self._ctx else Context()
+        mine = context_of([seg.text])
+        ctx = Context(prev.scam_talk or mine.scam_talk, prev.gift_occasion or mine.gift_occasion)
+        if seg.is_final and uid in self._finals:
+            self._ctx[uid] = ctx
+        return ctx
 
     def _score_final(self, seg: Segment, t: float) -> list[Evidence]:
         hits = self._hits(seg, t)

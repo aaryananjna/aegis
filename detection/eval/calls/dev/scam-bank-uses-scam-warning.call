@@ -1,0 +1,13 @@
+# id: scam-bank-uses-scam-warning
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-bank-uses-scam-warning
+# onset_s: 1.5
+# note: Written by Claude for development. Not a real or recorded call. The scammer talks about scams to sound safe.
+[0.0-1.0] elder: Hello?
+[1.5-9.0] caller: Hello, this is Mark from the fraud department at your bank. There's a scam going around targeting seniors in your area.
+[9.5-10.8] elder: Oh dear, really?
+[11.3-19.0] caller: Yes, and your account was flagged. To protect you, you need to move your savings to a secure account today.
+[19.5-20.8] elder: How do I do that?
+[21.3-28.6] caller: Go to the store and buy gift cards, then read me the numbers on the back. Don't tell anyone at the branch, they could be involved.
