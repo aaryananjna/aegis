@@ -33,8 +33,9 @@ Kolakaluri (detection) and Aaryan Anjna (screens and demo).
   capped, and a caller saying "ignore your instructions" can't talk the score down.
 - **A risk score** combines both, with decay over time and extra weight when tricks appear
   together (pretending to be the bank plus asking to move money).
-- **With one shared mic** the server runs without speaker labels, so every line is scored. Once
-  a rule flags something, the AI reads both voices and works out which lines are the caller's.
+- **With one shared mic** the server runs without speaker labels, so every line is scored, and
+  the AI reads both voices and works out which lines are the caller's. When it quotes two or
+  more different tricks, it can raise the warning on its own.
 
 ## Run it
 
@@ -69,8 +70,8 @@ No keys? The detector still runs on rules only, and the web app can replay sampl
 - Audio is never stored. It streams only to Deepgram for live captions.
 - Caption text isn't logged. The database keeps only when calls happened and how risky they
   looked (scores and levels), never what was said.
-- The AI layer gets at most the last 60 seconds of text, and with one shared mic only after a
-  rule has flagged something.
+- The AI layer gets at most the last 60 seconds of text. With one shared mic it can't tell
+  the voices apart, so both voices go to it, unlabeled.
 - The app never asks for or stores the family code word.
 
 ## Tests
