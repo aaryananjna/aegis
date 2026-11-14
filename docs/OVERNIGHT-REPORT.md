@@ -16,6 +16,7 @@ _Filled in as the night goes on._
 | 4b | Elder "no speaker labels" mode | `c/elder-nolabels` | [#23](https://github.com/aaryananjna/aegis/pull/23) (stacked on #18) | done, draft |
 | 4 | `/family` phone page | `c/family` | [#24](https://github.com/aaryananjna/aegis/pull/24) (stacked on #23) | done, draft |
 | 5 | `/evidence` judge page | `c/evidence` | [#26](https://github.com/aaryananjna/aegis/pull/26) (stacked on #24) | done, draft |
+| extra | Contract v2.1 PR with A's 4 additions + B's AI step (B asked in #25) | `docs/contract-v2.1` | [#27](https://github.com/aaryananjna/aegis/pull/27), **ready for review** (not draft: B asked to review it) | done |
 | 6 | CI for `web/` | | | |
 | 7 | Accessibility pass | | | |
 | 8 | `docs/DEMO-RUNBOOK.md` | | | |
@@ -56,6 +57,9 @@ _Filled in as the night goes on._
   `/family` ("Watching over Rose", "Call Rose"). They're not in the contract; I proposed them to
   A in #19.
 
+- **I did #25 (B → C: open the v2.1 contract PR) before task 6.** It wasn't on your list, but
+  it's labelled for C, it unblocks A and B, and it's doc-only. #27 is not a draft, so B can
+  review it.
 - **`/family` takes `name` and `phone` from the link**, defaulting to "your family member" and no
   call button when they're missing. Sample calls default to Rose and +1 555 0100 (a fictional
   number).
