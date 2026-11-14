@@ -24,13 +24,16 @@ Kolakaluri (detection) and Aaryan Anjna (screens and demo).
    - it keeps going: **"Hang up."** with who to call instead
 5. The family page gets the same alert with the quotes, and "code word passed" if the caller
    got it right.
+6. Family members can log in to see their grandparent's past calls: when they happened and how
+   risky they looked. The grandparent never logs in; their laptop is paired once.
 
 ## How detection works
 
 - **Rules** catch known scam wording instantly and point at the exact words.
 - **An AI layer** (Groq, Gemini as backup) reads the caller's recent lines for tricks the
   rules don't know. It can only **add** risk: every quote it gives must match a real line, it's
-  capped, and a caller saying "ignore your instructions" can't talk the score down.
+  capped, and a caller saying "ignore your instructions" can't talk the score down. It's asked
+  at most every 8 seconds, so a long call stays within free-tier limits.
 - **A risk score** combines both, with decay over time and extra weight when tricks appear
   together (pretending to be the bank plus asking to move money).
 - **With one shared mic** the server runs without speaker labels, so every line is scored, and
@@ -42,14 +45,29 @@ Kolakaluri (detection) and Aaryan Anjna (screens and demo).
 Everything runs on one laptop. Full steps, fallbacks and a pre-demo checklist are in
 [`docs/DEMO-RUNBOOK.md`](docs/DEMO-RUNBOOK.md).
 
+Once, from the repo root:
+
 ```
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e detection -e server
-cp server/.env.example server/.env        # add DEEPGRAM_API_KEY, and GROQ/GEMINI keys for the AI layer
-uvicorn aegis_server.main:app --app-dir server --port 8000
-cd web && npm ci && npm run dev           # http://localhost:5173
-server/scripts/start-call                 # starts a live call and prints the elder and family links
+cp server/.env.example server/.env        # fill in the keys (below)
+python -m aegis_server.seed               # optional: demo family accounts (needs DEMO_PASSWORD)
+(cd web && npm ci)
 ```
+
+`server/.env` needs `DEEPGRAM_API_KEY` for live captions, `GROQ_API_KEY` and `GEMINI_API_KEY`
+for the AI layer (Gemini is the backup), and `TIGER_DATABASE_URL` and `DEMO_PASSWORD` for
+family accounts and call history.
+
+Then three terminals, each from the repo root:
+
+```
+uvicorn aegis_server.main:app --app-dir server --port 8000   # 1: server
+cd web && npm run dev                                         # 2: screens at http://localhost:5173
+server/scripts/start-call                                     # 3: starts a call, prints the elder and family links
+```
+
+`server/scripts/end-call` ends it.
 
 No keys? The detector still runs on rules only, and the web app can replay sample calls:
 `http://localhost:5173/elder?fixture=scam-grandson`.
@@ -59,7 +77,7 @@ No keys? The detector still runs on rules only, and the web app can replay sampl
 | Folder | What's in it |
 |---|---|
 | `detection/` | The detector: rules, risk score, cards, AI layer, replay, test calls and tests |
-| `server/` | FastAPI server: sessions, Deepgram live captions, the event stream, accounts (TigerDB) |
+| `server/` | FastAPI server: sessions, Deepgram live captions, the event stream, family accounts and call history (TigerDB) |
 | `web/` | The grandparent screen (`/elder`), family page (`/family`), evidence page (`/evidence`) |
 | `tools/dev_server/` | A small fallback server with the same routes, plus typed captions |
 | `CONTRACTS.md` | The exact messages between the parts |
@@ -67,17 +85,22 @@ No keys? The detector still runs on rules only, and the web app can replay sampl
 
 ## Privacy
 
-- Audio is never stored. It streams only to Deepgram for live captions.
+- Audio is never stored. It streams only to Deepgram for live captions, with model training
+  turned off.
 - Caption text isn't logged. The database keeps only when calls happened and how risky they
   looked (scores and levels), never what was said.
+- Passwords are stored only as argon2 hashes. Login and pairing tokens are stored only as
+  hashes.
 - The AI layer gets at most the last 60 seconds of text. With one shared mic it can't tell
   the voices apart, so both voices go to it, unlabeled.
 - The app never asks for or stores the family code word.
 
 ## Tests
 
+Each from the repo root:
+
 ```
-cd detection && python -m pytest -q      # detector
-cd server && pytest -q                   # server
-cd web && npm test                       # screens
+(cd detection && python -m pytest -q)    # detector
+(cd server && pytest -q)                 # server
+(cd web && npm test)                     # screens
 ```
