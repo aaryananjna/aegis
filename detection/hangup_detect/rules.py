@@ -164,7 +164,7 @@ def find_evidence(text: str, utterance_id: str, t_s: float) -> list[Evidence]:
         return []
     out: list[Evidence] = []
     for tactic, patterns in COMPILED.items():
-        skip = _happy_secret if tactic is T.SECRECY else None
+        skip = {T.SECRECY: _happy_secret, T.PAYMENT: _calls_the_number}.get(tactic)
         hit = _first_match(norm, patterns, skip)
         if hit:
             start, end, idx = hit
@@ -174,6 +174,14 @@ def find_evidence(text: str, utterance_id: str, t_s: float) -> list[Evidence]:
                 detail = "family" if idx < _FAMILY_PATTERNS else "official"
             out.append(Evidence(tactic, text[start:end], utterance_id, (start, end), "rule", t_s, detail))
     return out
+
+
+# "Call the number on the back of your card" is what real banks (and our own card) tell you to do.
+_CALL_BEFORE = re.compile(r"\b(call|dial|phone|ring)( the| that)?\s*$", _I)
+
+
+def _calls_the_number(text: str, m: re.Match) -> bool:
+    return bool(re.match(r"numbers?\b", m.group(0), _I) and _CALL_BEFORE.search(text[:m.start()]))
 
 
 def _happy_secret(text: str, m: re.Match) -> bool:
