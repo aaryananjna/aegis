@@ -61,7 +61,7 @@ Demo details that must be true:
 
 | Role | Person | Folder | Owns |
 |---|---|---|---|
-| **A: server and audio** | _claim it_ | `server/` | Mic audio, Deepgram live captions, the FastAPI WebSocket server, sessions, family page login |
+| **A: server and audio** | Aryan | `server/` | Mic audio, Deepgram live captions, the FastAPI WebSocket server, sessions, family page login |
 | **B: detection** | Mihir | `detection/` | Scam rules, risk score, cards and alerts, the AI layer, test harness |
 | **C: screens and demo** | _claim it_ | `web/` | Grandparent screen, family phone page, demo setup (voice clone, call script, props) |
 
@@ -101,7 +101,7 @@ the other two OK.
 | Part | Where it is |
 |---|---|
 | B | Rules, risk score, cards, alerts, replay, type mode and test harness are merged into `main` (PR #2), 171 tests passing. Practice calls (synthetic, dev set): 8/8 scams reach HIGH, 0/8 false alarms. Rules only; no AI layer yet. |
-| A | Not started. Role unclaimed |
+| A | Not started. Aryan |
 | C | Not started. Role unclaimed. C can start now from the sample event files in `detection/fixtures/` |
 
 ## Tasks
@@ -167,7 +167,7 @@ catch the practice scams. Twilio texts (open question 4) are out; keep the famil
 
 ## Open questions
 
-1. Who takes A and who takes C? Claim it in issue #1.
+1. Who takes C? Claim it in issue #1. (A is Aryan.)
 2. Exact submission deadline and judging time, and what we must submit.
 3. Can each of us merge our own PR once tests pass, or does someone review first?
 4. **Family phone buzz:** keep the `/family` page open on the phone (no work), or add a Twilio
