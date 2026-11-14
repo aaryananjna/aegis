@@ -15,7 +15,7 @@ _Filled in as the night goes on._
 | 3 | `tools/dev_server/` reference server + `POST /typed` | `c/dev-server` | [#21](https://github.com/aaryananjna/aegis/pull/21) | done, draft |
 | 4b | Elder "no speaker labels" mode | `c/elder-nolabels` | [#23](https://github.com/aaryananjna/aegis/pull/23) (stacked on #18) | done, draft |
 | 4 | `/family` phone page | `c/family` | [#24](https://github.com/aaryananjna/aegis/pull/24) (stacked on #23) | done, draft |
-| 5 | `/evidence` judge page | | | |
+| 5 | `/evidence` judge page | `c/evidence` | [#26](https://github.com/aaryananjna/aegis/pull/26) (stacked on #24) | done, draft |
 | 6 | CI for `web/` | | | |
 | 7 | Accessibility pass | | | |
 | 8 | `docs/DEMO-RUNBOOK.md` | | | |
@@ -40,6 +40,8 @@ _Filled in as the night goes on._
 | #18 `/elder` works in fixture and live mode | see #18: build, 9 tests, headless Chrome screenshots, live run against a v2.1 test server |
 | #23 Start protection → `set_elder null` → real card | fixture screenshots (`nolabels-1-start`, `-2-auto-started`, `-3-codeword`); live with `tools/dev_server` (`live-nolabels-card`) |
 | #24 `/family` at 390×844: idle, amber, red, earlier, passed code word, call ended | fixture shots `family-1-idle`, `-2-codeword`, `-3-hangup-full`; live with a real family token, `family-live-ended` |
+| #26 `/evidence`: chart, hover, breakdown, table | screenshots `evidence-1-scam`, `-2-hover`, `-3-bank`; reducer tests |
+| `/evidence` with real AI evidence ("rules + AI") | **not verified**: needs an API key; covered by reducer test only |
 | Vibration, wake lock, `tel:` on a real phone | **not verified**, needs a phone |
 | #21 dev server does C1, C3–C6, C12 and `/typed` | 10 pytest tests; real uvicorn run with `typed_cli.py` → typed captions → codeword card → alert → `call_ended` |
 
