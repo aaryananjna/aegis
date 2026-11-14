@@ -38,6 +38,7 @@ from hangup_detect.llm_runner import LLMRunner
 from . import db
 from .config import settings
 from .history import CallRecorder
+from .test_transcript import TestTranscript
 from .messages import parse
 from .roles import ROLES, allowed
 
@@ -103,7 +104,8 @@ class Listener:
 
 
 class Session:
-    def __init__(self, session_id: str, store: "SessionStore", elder_id=None) -> None:
+    def __init__(self, session_id: str, store: "SessionStore", elder_id=None,
+                 save_transcript: bool = False) -> None:
         self.session_id = session_id
         self.store = store
         self.tokens = {role: secrets.token_urlsafe(32) for role in ROLES}
@@ -120,6 +122,9 @@ class Session:
         self.elder_pick: str | None = None
         # Call history in TigerDB, only for calls from a paired laptop (numbers only).
         self.recorder = None
+        # Test transcripts (opt-in, staged calls only): a local .call file, never the database.
+        self.transcript = TestTranscript(session_id) if save_transcript else None
+        self.elder_raw: str | None = None
         if elder_id is not None and db.is_open():
             self.recorder = CallRecorder(session_id, elder_id)
         self.loop = asyncio.get_running_loop()
@@ -162,9 +167,12 @@ class Session:
                     seg, source = payload
                     # C1: the caption goes out before the detector's events for it.
                     out = [self._caption_event(seg, source, now)] + d.feed(seg, now)
+                    if self.transcript:
+                        self.transcript.add(seg)
                     out += self._maybe_guess_elder(seg, source, now)
                 elif kind == "set_elder":  # a tap (or the laptop) always wins
                     self.elder_pick = "tap"
+                    self.elder_raw = payload
                     out = d.set_elder(payload, now) + [self._elder_set(payload, "tap", now)]
                 elif kind == "no_labels":  # labels off: score everyone from line one
                     out = d.set_elder(None, now) + [self._elder_set(None, "server", now)]
@@ -188,6 +196,8 @@ class Session:
                     if self.recorder:
                         self.recorder.observe(out)
                         self.recorder.finish()
+                    if self.transcript:
+                        self.transcript.write(self.elder_raw)
                     self.broadcast(out)
                     self.close()
                     return
@@ -211,6 +221,7 @@ class Session:
                      self.session_id)
             return []
         self.elder_pick = "server"
+        self.elder_raw = seg.speaker_raw
         log.info("session %s: grandparent guessed from the first greeting (voice %s)",
                  self.session_id, seg.speaker_raw)
         return (self.detector.set_elder(seg.speaker_raw, now)
@@ -350,11 +361,11 @@ class SessionStore:
     def __init__(self) -> None:
         self._sessions: dict[str, Session] = {}
 
-    def create(self, elder_id=None) -> Session:
+    def create(self, elder_id=None, save_transcript: bool = False) -> Session:
         if len(self._sessions) >= MAX_SESSIONS:
             raise TooManySessions
         sid = secrets.token_urlsafe(9)
-        s = self._sessions[sid] = Session(sid, self, elder_id)
+        s = self._sessions[sid] = Session(sid, self, elder_id, save_transcript)
         return s
 
     def get(self, session_id: str) -> Session | None:
