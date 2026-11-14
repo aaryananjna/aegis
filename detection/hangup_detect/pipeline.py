@@ -104,7 +104,12 @@ class Detector:
 
     # ---- internals ------------------------------------------------------
     def _on_interim(self, seg: Segment, now: float) -> list[dict]:
-        return []  # S5b: provisional highlights
+        """Highlight words while they're still being spoken. Never scores."""
+        if self._role(seg) == "elder":
+            return []
+        hits = find_evidence(seg.text, seg.utterance_id, now)
+        return self._set_highlights(seg.utterance_id, seg.revision, True,
+                                    [h.as_dict() for h in hits], now)
 
     def _clock(self, now_s: float) -> float:
         if self.ended:
