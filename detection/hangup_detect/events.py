@@ -26,5 +26,10 @@ def alert(session_id, t, seq, kind, evidence, summary):
             "kind": kind, "evidence": evidence, "summary": summary}
 
 
+def codeword_ok(session_id, t, seq):
+    """The caller gave the right family code word. `resolves` names the alert it answers."""
+    return {**_base("codeword_ok", session_id, t, seq), "resolves": f"{session_id}:codeword"}
+
+
 def status(session_id, t, seq, mode, warning=None):
     return {**_base("status", session_id, t, seq), "mode": mode, "warning": warning}

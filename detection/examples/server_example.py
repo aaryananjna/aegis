@@ -48,6 +48,8 @@ class Session:
                 out = d.feed(payload, self.now())
             elif kind == "set_elder":
                 out = d.set_elder(payload, self.now())
+            elif kind == "codeword_result":
+                out = d.codeword_result(payload, self.now())
             elif kind == "tick":
                 out = d.tick(self.now())
             else:  # "end"
@@ -85,6 +87,10 @@ def parse_message(msg) -> tuple[str, object] | None:
                                       speaker_raw=msg.get("speaker_raw"))
         if kind == "set_elder":
             return kind, msg.get("speaker_raw")
+        if kind == "codeword_result":
+            if not isinstance(msg["ok"], bool):
+                raise TypeError("ok must be true or false")
+            return kind, msg["ok"]
         if kind == "end":
             return kind, None
     except (KeyError, TypeError, ValueError) as exc:

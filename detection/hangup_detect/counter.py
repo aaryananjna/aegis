@@ -46,6 +46,24 @@ class CounterMoves:
         self.state = "none"
         self._codeword_at: float | None = None
         self._family = True
+        self._codeword_ok = False  # right code word given: score alone no longer escalates
+
+    def codeword_result(self, ok: bool, ranked_quotes: list[str], live_tactics: set[T],
+                        now: float) -> list[tuple]:
+        """The elder screen reports the caller's answer to the code word card (C12).
+
+        Wrong: hang up at once. Right: one ("codeword_ok",) action so the family page can say
+        it was handled; the score-based hang up path turns off, but a dodge still escalates.
+        Ignored unless the code word card is showing.
+        """
+        if self.state != "codeword":
+            return []
+        if ok:
+            if self._codeword_ok:
+                return []  # already reported
+            self._codeword_ok = True
+            return [("codeword_ok",)]
+        return self._move("hangup", ranked_quotes, live_tactics, now)
 
     def update(self, level: str, score: float, new_rule_tactics: set[T],
                live_tactics: set[T], ranked_quotes: list[str], now: float,
@@ -61,11 +79,14 @@ class CounterMoves:
             self._family = family
         elif self.state in FIRST_CARDS and (
                 T.VERIFICATION_AVOIDANCE in new_rule_tactics
-                or (score >= self.cfg.hangup_score
+                or (score >= self.cfg.hangup_score and not self._codeword_ok
                     and now - self._codeword_at >= self.cfg.codeword_min_s)):
             nxt = "hangup"
         if nxt is None:
             return []
+        return self._move(nxt, ranked_quotes, live_tactics, now)
+
+    def _move(self, nxt: str, ranked_quotes: list[str], live_tactics: set[T], now: float) -> list[tuple]:
         self.state = nxt
         if nxt in FIRST_CARDS:
             self._codeword_at = now
