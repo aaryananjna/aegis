@@ -232,7 +232,9 @@ class Detector:
     def _actions(self, acts: list[tuple], now: float) -> list[dict]:
         out = []
         for act in acts:
-            if act[0] == "intervention":
+            if act[0] == "codeword_ok":
+                out.append(ev.codeword_ok(self.session_id, now, self._next()))
+            elif act[0] == "intervention":
                 out.append(ev.intervention(self.session_id, now, self._next(), act[1], act[2]))
             else:
                 out.append(ev.alert(self.session_id, now, self._next(), act[1], act[2], act[3]))
