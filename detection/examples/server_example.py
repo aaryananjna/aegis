@@ -17,10 +17,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
 from hangup_detect import Config, Detector, make_segment
+from hangup_detect.llm_runner import LLMRunner
 
 app = FastAPI()
 log = logging.getLogger("hangup.server")
@@ -30,6 +32,8 @@ SESSIONS: dict[str, "Session"] = {}
 class Session:
     def __init__(self, session_id: str):
         self.detector = Detector(Config(), session_id)
+        # AI layer: on only if GROQ_API_KEY or GEMINI_API_KEY is set. Otherwise rules only.
+        self.runner = LLMRunner.from_env(os.environ)
         self.queue: asyncio.Queue = asyncio.Queue()
         self.listeners: set[WebSocket] = set()
         self.loop = asyncio.get_running_loop()
@@ -50,12 +54,30 @@ class Session:
                 out = d.set_elder(payload, self.now())
             elif kind == "codeword_result":
                 out = d.codeword_result(payload, self.now())
+            elif kind == "llm":  # an AI answer, posted back by ask_llm below
+                seq, result = payload
+                out = d.llm_status(result.mode, self.now(), result.error)
+                if result.raw:
+                    out += d.apply_llm(seq, result.raw, self.now())
             elif kind == "tick":
                 out = d.tick(self.now())
             else:  # "end"
                 await self.broadcast(d.end(self.now()))
                 return
             await self.broadcast(out)
+            self.maybe_ask_llm()
+
+    def maybe_ask_llm(self) -> None:
+        """One AI request at a time. A new one goes out once a new caller line has arrived."""
+        if self.runner is None or self.runner.busy:
+            return
+        req = self.detector.llm_request(self.now())
+        if req is not None:
+            asyncio.create_task(self.ask_llm(req))
+
+    async def ask_llm(self, req) -> None:
+        result = await self.runner.run(req)
+        await self.queue.put(("llm", (req.seq, result)))  # applied by the owner, in order
 
     async def ticker(self) -> None:
         while not self.detector.ended:
