@@ -1,32 +1,17 @@
-import { BrowserRouter, Link, Route, Routes } from 'react-router'
+import { BrowserRouter, Route, Routes } from 'react-router'
 import { AccountPage } from './accounts/AccountPage'
 import { HomePage } from './accounts/HomePage'
 import { PairPage } from './accounts/PairPage'
 import { ElderScreen } from './elder/ElderScreen'
 import { EvidencePage } from './evidence/EvidencePage'
 import { FamilyPage } from './family/FamilyPage'
-
-function Home() {
-  return (
-    <main>
-      <h1>Aegis</h1>
-      <ul>
-        <li><Link to="/elder?fixture=scam-grandson">/elder</Link> (scam sample)</li>
-        <li><Link to="/elder?fixture=benign-party">/elder</Link> (normal call sample)</li>
-        <li><Link to="/elder?fixture=demo-bank">/elder</Link> (fake bank sample)</li>
-        <li><Link to="/family?fixture=scam-grandson">/family</Link> (scam sample)</li>
-        <li><Link to="/evidence?fixture=scam-grandson">/evidence</Link> (scam sample)</li>
-        <li><Link to="/account">/account</Link> (family log in / sign up)</li>
-      </ul>
-    </main>
-  )
-}
+import { LandingPage } from './landing/LandingPage'
 
 export function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Home />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/elder" element={<ElderScreen />} />
         <Route path="/family" element={<FamilyPage />} />
         <Route path="/evidence" element={<EvidencePage />} />

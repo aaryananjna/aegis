@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { Wordmark } from '../brand/Wordmark'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { BreakdownPanel } from './Breakdown'
 import { RiskChart } from './RiskChart'
@@ -23,8 +24,10 @@ function Evidence({ feed }: { feed: Feed }) {
   return (
     <main className="mx-auto flex max-w-6xl flex-col gap-8 px-[4vw] py-8">
       <header className="flex flex-col gap-2">
-        <p className="text-[15px] font-semibold tracking-wide text-mist">Aegis · evidence</p>
-        <h1 className="text-[34px] leading-tight font-semibold text-paper">How Aegis judged this call</h1>
+        <p className="flex items-baseline gap-3 text-[15px] font-semibold tracking-wide text-mist">
+          <Wordmark className="text-[24px]" /> evidence
+        </p>
+        <h1 className="title mt-1 text-paper">How Aegis judged this call</h1>
         <p className="flex flex-wrap items-center gap-3 text-[16px] text-paper-dim">
           <span className={`rounded-full border-2 px-3 py-0.5 font-semibold text-paper
                             ${withAI ? 'border-ai' : 'border-rule'}`}>
@@ -45,7 +48,7 @@ function Evidence({ feed }: { feed: Feed }) {
         </p>
       </header>
 
-      <section aria-labelledby="risk-h" className="flex flex-col gap-3">
+      <section aria-labelledby="risk-h" className="glass flex flex-col gap-3 rounded-2xl p-6">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 id="risk-h" className="text-[20px] font-semibold text-paper">Risk over the call</h2>
           <p className="text-[14px] text-mist">
@@ -67,9 +70,15 @@ function Evidence({ feed }: { feed: Feed }) {
       </section>
 
       <div className="grid gap-10 lg:grid-cols-[5fr_7fr]">
-        {point ? <BreakdownPanel point={point} /> : <div />}
+        {point ? (
+          <div className="glass rounded-2xl p-6">
+            <BreakdownPanel point={point} />
+          </div>
+        ) : (
+          <div />
+        )}
 
-        <section aria-labelledby="table-h" className="flex flex-col gap-3">
+        <section aria-labelledby="table-h" className="glass flex flex-col gap-3 rounded-2xl p-6">
           <h2 id="table-h" className="text-[20px] font-semibold text-paper">Evidence</h2>
           {rows.length ? (
             <div className="overflow-x-auto">

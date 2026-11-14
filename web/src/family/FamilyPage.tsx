@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef } from 'react'
 import { useSearchParams } from 'react-router'
+import { Wordmark } from '../brand/Wordmark'
 import { CheckIcon, KeyIcon, PhoneDownIcon, PhoneIcon, ShieldIcon } from '../elder/Icons'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { endSummary, initialFamilyState, reduceFamily, type FamilyAlert } from './state'
@@ -37,11 +38,11 @@ function FamilyWatch({ feed, name, phone }: { feed: Feed; name: string; phone: s
     feed.kind === 'none' ? 'This link is missing its call. Open the family link the laptop shows.' : error
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 bg-dusk px-5
+    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 px-5
                      pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <header className="flex flex-col gap-1">
-        <p className="text-[17px] font-semibold tracking-wide text-mist">Aegis</p>
-        <h1 className="text-[32px] leading-tight font-semibold text-paper">Watching over {name}</h1>
+        <Wordmark className="text-[24px]" />
+        <h1 className="title mt-2 text-paper">Watching over {name}</h1>
         <p className="text-[17px] text-mist">
           <Connection feed={feed} connection={connection} />
         </p>
@@ -49,10 +50,10 @@ function FamilyWatch({ feed, name, phone }: { feed: Feed; name: string; phone: s
 
       <section aria-live="assertive" aria-label="Alerts" className="flex flex-col gap-4">
         {linkProblem ? (
-          <p className="rounded-2xl bg-dusk-raised p-5 text-[20px] text-paper">{linkProblem}</p>
+          <p className="glass rounded-2xl p-5 text-[20px] text-paper">{linkProblem}</p>
         ) : null}
         {state.endedAt !== null && (
-          <div className="rounded-2xl border-2 border-white/15 p-5">
+          <div className="glass rounded-2xl p-5">
             <h2 className="text-[24px] font-semibold text-paper">Call ended</h2>
             <p className="mt-1 text-[19px] text-paper-dim">{endSummary(state, name)}</p>
             <p className="mt-2 text-[16px] text-mist">{clock(state.endedAt)}</p>
@@ -154,8 +155,7 @@ function AlertCard({
           {phone && (
             <a
               href={`tel:${phone}`}
-              className={`mt-1 flex min-h-[64px] items-center justify-center gap-3 rounded-2xl bg-paper
-                          text-[22px] font-semibold text-dusk ${focusRing}`}
+              className={`btn-accent mt-1 flex min-h-[64px] items-center justify-center gap-3 text-[22px] ${focusRing}`}
             >
               <PhoneIcon />
               Call {name}
@@ -169,7 +169,7 @@ function AlertCard({
 
 function AllQuiet({ name }: { name: string }) {
   return (
-    <div className="flex flex-col items-start gap-3 rounded-2xl bg-dusk-raised p-6">
+    <div className="glass flex flex-col items-start gap-3 rounded-2xl p-6">
       <span className="text-[44px] text-calm">
         <CheckIcon />
       </span>

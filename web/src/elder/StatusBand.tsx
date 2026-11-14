@@ -12,10 +12,12 @@ export function StatusBand({
   level,
   notes,
   children,
+  brand,
 }: {
   level: ElderState['level']
   notes: string[]
   children?: ReactNode
+  brand?: ReactNode
 }) {
   const look = level ? LEVEL[level] : null
 
@@ -29,9 +31,12 @@ export function StatusBand({
         <span className={look ? look.text : 'text-mist'}>{look ? look.word : 'Listening'}</span>
       </p>
       {children}
-      {notes.length > 0 && (
-        <p className="text-[length:clamp(18px,1.4vw,22px)] text-mist">{notes.join(' · ')}</p>
-      )}
+      <div className="flex items-center gap-6">
+        {notes.length > 0 && (
+          <p className="text-[length:clamp(18px,1.4vw,22px)] text-mist">{notes.join(' · ')}</p>
+        )}
+        {brand}
+      </div>
     </div>
   )
 }
