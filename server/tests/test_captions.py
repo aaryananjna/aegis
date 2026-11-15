@@ -78,7 +78,7 @@ def test_new_line_at_each_sentence_end():
                       ("Who", 0.8, 1.0, None), ("is", 1.0, 1.1, None), ("this?", 1.1, 1.4, None),
                       ("Restart", 1.6, 1.9, None), ("the", 1.9, 2.0, None)], True))
     assert [(c["utterance_id"], c["text"]) for c in out] == [
-        ("u0-0", "Oh, no."), ("u0-1", "Who is this?"), ("u0-2", "Restart the")]
+        ("u0-0", "Oh, no."), ("u0-0.1", "Who is this?"), ("u0-0.2", "Restart the")]
     assert out[1]["start_s"] == 0.8 and out[1]["end_s"] == 1.4
 
 
@@ -95,4 +95,22 @@ def test_interim_lines_settle_into_finals():
     out = m.feed(res([("Hello.", 0, 0.3, None), ("There", 0.4, 0.6, None), ("you", 0.6, 0.7, None),
                       ("are.", 0.7, 0.9, None)], True))
     assert [(c["utterance_id"], c["text"], c["is_final"]) for c in out] == [
-        ("u0-0", "Hello.", True), ("u0-1", "There you are.", True)]
+        ("u0-0", "Hello.", True), ("u0-0.1", "There you are.", True)]
+
+
+def test_shifting_punctuation_never_leaves_empty_lines():
+    """The rehearsal bug: interims kept re-splitting, and the final closed the leftovers with
+    empty lines that the screen drew as blank blocks, some out of order."""
+    m = CaptionMaker("s1")
+    every = []
+    for words, final in [
+        ([("You", 0, .2, None), ("just", .2, .4, None), ("found.", .4, .6, None)], False),
+        ([("You", 0, .2, None), ("just", .2, .4, None), ("found.", .4, .6, None),
+          ("Some.", .7, .9, None)], False),
+        ([("You", 0, .2, None), ("just", .2, .4, None), ("found", .4, .6, None),
+          ("some", .7, .9, None), ("roads.", .9, 1.1, None)], True),
+    ]:
+        every += m.feed(res(list(words), final))
+    assert all(c["text"] for c in every), [c for c in every if not c["text"]]
+    assert {c["utterance_id"] for c in every} == {"u0-0"}  # one line, updated in place
+    assert every[-1]["text"] == "You just found some roads." and every[-1]["is_final"]
