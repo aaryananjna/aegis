@@ -268,8 +268,9 @@ off (`rules_only`). There's no status event at the start of a call.
 
 - `mode`: `rules_only` or `full` (AI layer on).
 - Current warnings: `"duplicate final ignored"`, `"oldest caption dropped from the rebuild store"`,
-  `"codeword_result ignored: no code word card showing"`, and the AI layer's error when it falls
-  back to rules only (for example `"groq timed out"`).
+  `"codeword_result ignored: no code word card showing"`.
+- AI layer errors (`"groq timed out"`) are never sent to the screens. `mode` turns to `rules_only`
+  only after 3 failed AI requests in a row and back to `full` on the next answer.
 
 The **server** may also send `status` (no `seq`) with an optional `stt` field when captions
 start or the source changes:
