@@ -256,7 +256,7 @@ _TOPIC_NEGATED = re.compile(r"(\bnot|n'?t|\bno)\s+(\w+\s+){0,2}$", _I)
 # "Who pays a bill with gift cards?" asks about it, it doesn't ask for it.
 _WHO_QUESTION = re.compile(r"\bwho\s+(\w+\s+){0,4}$", _I)
 # Gift cards as a present ("the boys want gift cards for Christmas").
-_OCCASION = re.compile(r"\b(birthday|christmas|hanukkah|holiday|graduation|anniversary|wedding|stocking"
+_OCCASION = re.compile(r"\b(birthday|surprise|christmas|hanukkah|holiday|graduation|anniversary|wedding|stocking"
                        r"|presents?|party)\b", _I)
 _PAYS_WITH_CARD = re.compile(r"\b(numbers?|codes?|scratch|pin|back of)\b", _I)
 _YOU = re.compile(r"\b(you|your|ya)\b", _I)
@@ -267,7 +267,8 @@ _SENTENCE_END = re.compile(r"[.!?]")
 class Context:
     """What the call so far is about. Built from every final line, both voices."""
     scam_talk: bool = False      # someone is warning about or retelling a scam
-    gift_occasion: bool = False  # a birthday or holiday came up, so gift cards may be presents
+    gift_occasion: bool = False  # a birthday, surprise or holiday came up: gift cards may be
+                                 # presents and keeping it quiet may be a happy secret
 
 
 def context_of(texts) -> Context:

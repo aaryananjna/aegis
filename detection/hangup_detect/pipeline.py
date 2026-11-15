@@ -139,12 +139,14 @@ class Detector:
         req = self._llm_requests.pop(seq, None)
         if req is None:
             return []
+        happy = self._happy_occasion()
         hits = [h for h in parse_llm(raw, dict(req.utterances), now)
                 if h.utterance_id in self._finals
                 and self._role(self._finals[h.utterance_id][0]) != "elder"
-                and (h.tactic, h.utterance_id) not in self._llm_seen]
+                and (h.tactic, h.utterance_id) not in self._llm_seen
+                and not (happy and h.tactic is Tactic.SECRECY)]
         if not hits:
-            return []
+            return self._drop_happy_ai_secrecy(now)
         for h in hits:
             self._llm_seen.add((h.tactic, h.utterance_id))
             self._llm_evidence.append(h)
@@ -153,7 +155,26 @@ class Detector:
         for uid in dict.fromkeys(h.utterance_id for h in hits):
             both = [e for e in self.risk.evidence if e.utterance_id == uid]
             out += self._set_highlights(self._finals[uid][0], both, False, now)
+        self._drop_happy_ai_secrecy(now, evaluate=False)
         return out + self._evaluate(now, set())  # only rule dodges escalate cards
+
+    def _happy_occasion(self) -> bool:
+        """The call so far is about a birthday, surprise or holiday (rules.Context)."""
+        return bool(self._ctx) and self._ctx[next(reversed(self._ctx))].gift_occasion
+
+    def _drop_happy_ai_secrecy(self, now: float, evaluate: bool = True) -> list[dict]:
+        """Keeping a surprise party quiet is normal. Once the call says so, the AI's secrecy
+        flags stop counting, including ones it made before the occasion came up. Rule secrecy
+        has its own guard (rules._happy_secret); the AI's payment flags still count."""
+        if not self._happy_occasion():
+            return []
+        stale = [e for e in self._llm_evidence if e.tactic is Tactic.SECRECY]
+        if not stale:
+            return []
+        self._llm_evidence = [e for e in self._llm_evidence if e.tactic is not Tactic.SECRECY]
+        self.risk.evidence = [e for e in self.risk.evidence
+                              if not (e.source == "llm" and e.tactic is Tactic.SECRECY)]
+        return self._evaluate(now, set()) if evaluate else []
 
     def llm_status(self, mode: str, now_s: float, warning: str | None = None) -> list[dict]:
         """Tell the screens when the AI layer turns on ("full") or off ("rules_only")."""
