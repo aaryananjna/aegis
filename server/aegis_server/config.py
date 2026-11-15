@@ -28,6 +28,10 @@ class Settings:
     # Set COOKIE_SECURE=1 when the server is served over https (not needed on localhost).
     cookie_secure: bool = os.getenv("COOKIE_SECURE", "") == "1"
     docs: bool = os.getenv("API_DOCS", "") == "1"  # /docs and /openapi.json, off by default
+    # The mic to use when a call doesn't name one (the website's Start button doesn't). Pin it
+    # so an iPhone (Continuity) or AirPods taking over as the Mac's default input can't silently
+    # swap the mic mid-demo. Empty = the Mac's default input.
+    mic_device: str = os.getenv("MIC_DEVICE", "").strip()
 
 
 settings = Settings()
