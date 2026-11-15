@@ -1,6 +1,7 @@
 """HTTP endpoints for starting and ending calls. All but /health are laptop only.
 
 POST /sessions            {name?, phone?, mic?, device?} -> {session_id, elder_url, family_url}
+POST /sessions/start      form or JSON from the website   -> 303 to the elder screen
 POST /sessions/{id}/end                                  -> {ok}
 POST /typed               {session_id, text, speaker_raw?} -> {ok, utterance_id}
 GET  /health                                             -> {ok, ...}
@@ -12,11 +13,13 @@ scored from the start, no tap and no voice guess. Without it, captions come in o
 from __future__ import annotations
 
 import os
-from urllib.parse import urlencode
+import json
+from urllib.parse import parse_qs, quote, urlencode
 
 from typing import Annotated
 
 from fastapi import APIRouter, Header, HTTPException, Request, Response
+from fastapi.responses import RedirectResponse
 from hangup_detect import make_segment
 from pydantic import BaseModel, Field
 
@@ -67,7 +70,11 @@ async def create_session(request: Request, response: Response,
                          body: NewSession | None = None,
                          x_device_token: Annotated[str | None, Header()] = None) -> dict:
     require_laptop(request)
-    body = body or NewSession()
+    return await _start_call(body or NewSession(), x_device_token)
+
+
+async def _start_call(body: NewSession, x_device_token: str | None) -> dict:
+    """Start a call: tokens, mic, history. Shared by POST /sessions and /sessions/start."""
     if body.mic and not settings.deepgram_api_key:
         raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY is not set")
     # A paired laptop says which grandparent this is, so the call goes in her history.
@@ -98,6 +105,51 @@ async def create_session(request: Request, response: Response,
           f"  elder:  {urls['elder']}\n  family: {urls['family']}\n", flush=True)
     return {"session_id": s.session_id, "elder_url": urls["elder"],
             "family_url": urls["family"], "recorded": s.recorder is not None}
+
+
+def _truthy(v: str | None, default: bool) -> bool:
+    if v is None or v == "":
+        return default
+    return v.strip().lower() in ("1", "true", "yes", "on")
+
+
+@router.post("/sessions/start")
+async def start_from_site(request: Request) -> RedirectResponse:
+    """The website's "Start a call" button: a plain form POST, answered with a redirect to the
+    elder screen. The family link goes after '#family=', so the screen can show it as a QR
+    code without it ever reaching a server or a log.
+
+    Demo defaults: live mic, speaker labels off. Form fields (all optional): name, phone,
+    mic, labels, device, device_token (the paired laptop's token, for the call history).
+    A POST, never a GET: browsers send Origin on form posts, so only our own site gets in.
+    """
+    require_laptop(request)
+    # Browsers also say where a request came from; anything cross-site is refused.
+    if request.headers.get("sec-fetch-site", "same-origin") not in ("same-origin", "none"):
+        raise HTTPException(status_code=403, detail="only from the laptop itself")
+    raw = (await request.body())[:4096]
+    if "application/json" in request.headers.get("content-type", ""):
+        try:
+            data = {k: (str(v) if v is not None else None) for k, v in json.loads(raw or b"{}").items()}
+        except (ValueError, AttributeError):
+            raise HTTPException(status_code=422, detail="bad JSON")
+    else:
+        data = {k: v[0] for k, v in parse_qs(raw.decode(errors="replace")).items()}
+    home = f"{settings.web_base_url}/home"
+    try:
+        body = NewSession(name=data.get("name") or None, phone=data.get("phone") or None,
+                          mic=_truthy(data.get("mic"), True),
+                          labels=_truthy(data.get("labels"), False),
+                          device=data.get("device") or None)
+    except ValueError:
+        return RedirectResponse(f"{home}?call_error=details", status_code=303)
+    try:
+        d = await _start_call(body, data.get("device_token") or None)
+    except HTTPException as e:
+        reason = {400: "no_stt", 401: "not_paired", 429: "busy"}.get(e.status_code, "failed")
+        return RedirectResponse(f"{home}?call_error={reason}", status_code=303)
+    return RedirectResponse(f"{d['elder_url']}#family={quote(d['family_url'], safe='')}",
+                            status_code=303)
 
 
 @router.post("/sessions/{session_id}/end")
