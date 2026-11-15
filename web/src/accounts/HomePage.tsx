@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { ApiError, api, errorMessage, type ElderRef, type User } from './api'
 import { Button, Field, Notice, Page } from './ui'
 import { useAuth } from './auth'
+import { FamilyQr } from '../live/FamilyQr'
 
 /** /home: the logged-in family member's grandparents, adding one, and pairing a laptop. */
 export function HomePage() {
@@ -60,6 +61,7 @@ export function HomePage() {
               me.elders.map((e) => <ElderCard key={e.id} elder={e} onError={guard} />)
             )}
           </section>
+          {me.elders.length > 0 && <WatchQrSection />}
           <AddElder
             onAdded={load}
             onError={guard}
@@ -158,6 +160,25 @@ function AddElder({ onAdded, onError }: { onAdded: () => void; onError: (e: unkn
           {busy ? 'Adding…' : 'Add'}
         </Button>
       </form>
+    </section>
+  )
+}
+
+/**
+ * One fixed QR code for the family's phone (#94): it opens /watch, they log in once, and every
+ * call after that shows up there by itself. No new code per call.
+ */
+function WatchQrSection() {
+  return (
+    <section aria-labelledby="watch-h" className="flex flex-col gap-3">
+      <h2 id="watch-h" className="subtitle">Follow calls on your phone</h2>
+      <p className="text-[18px] text-paper-dim">
+        Scan this once with your phone and log in. Keep the page open, and each call shows up there
+        by itself, with alerts if it looks like a scam.
+      </p>
+      <div className="max-w-sm">
+        <FamilyQr familyUrl={`${window.location.origin}/watch`} />
+      </div>
     </section>
   )
 }
