@@ -21,7 +21,7 @@ export function CardPane({
     <div
       aria-live="assertive"
       aria-atomic
-      className="flex min-h-0 flex-1 flex-col px-[5vw] pt-1 pb-[2.5vh]"
+      className="flex min-h-0 flex-1 flex-col px-[clamp(1rem,3vw,3rem)] pt-0 pb-[clamp(1rem,3vw,3rem)]"
     >
       {state.card ? (
         <Card
