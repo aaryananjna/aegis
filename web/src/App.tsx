@@ -18,9 +18,8 @@ export function App() {
           {/* Open to all: the demo when logged out, live calls once logged in. */}
           <Route path="/" element={<LandingPage />} />
           {/* Behind the login. */}
-          {/* Sample calls (?fixture=) open without a login, so the offline fallback works (#78).
-              So does one live call's link (?session=…&token=…): its token is the way in, as on /elder. */}
-          <Route path="/evidence" element={<RequireAuth unlessCallLink><EvidencePage /></RequireAuth>} />
+          {/* Sample calls (?fixture=) open without a login, so the offline fallback works (#78). */}
+          <Route path="/evidence" element={<RequireAuth unlessSample><EvidencePage /></RequireAuth>} />
           <Route path="/home" element={<RequireAuth><HomePage /></RequireAuth>} />
           {/* The family phone (#94): log in once, calls show up by themselves. */}
           <Route path="/watch" element={<RequireAuth><WatchPage /></RequireAuth>} />

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, useLocation } from 'react-router'
-import { ApiError, api, errorMessage, opensWithoutLogin, type User } from './api'
+import { ApiError, api, errorMessage, type User } from './api'
 
 type Auth =
   | { status: 'loading' }
@@ -50,13 +50,11 @@ export const useAuth = () => useContext(AuthContext)
  * (accounts database down), say so instead of showing the page: the site fails closed.
  * Not used on /elder, /family or /pair: those open from per-call or pairing links, never a login.
  */
-export function RequireAuth({ children, unlessCallLink = false }: { children: ReactNode; unlessCallLink?: boolean }) {
+export function RequireAuth({ children, unlessSample = false }: { children: ReactNode; unlessSample?: boolean }) {
   const { auth, refresh } = useAuth()
   const where = useLocation()
-  // A recorded sample holds no one's data, and must work with the server down (the runbook's
-  // fallback). A live call's link carries that call's own token, like /elder, so the judges'
-  // evidence link from the runbook opens in any laptop window, and with accounts offline.
-  if (unlessCallLink && opensWithoutLogin(where.search)) return <>{children}</>
+  // A recorded sample holds no one's data, and must work with the server down (the runbook's fallback).
+  if (unlessSample && new URLSearchParams(where.search).has('fixture')) return <>{children}</>
   if (auth.status === 'loading') return null
   if (auth.status === 'out') {
     const next = encodeURIComponent(where.pathname + where.search)

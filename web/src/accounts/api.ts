@@ -79,16 +79,6 @@ export interface ElderRef {
   role: 'owner' | 'viewer'
 }
 
-/**
- * True for a link that carries its own way in, so it opens without a login: a recorded sample
- * (`?fixture=`), or one live call's link with that call's token (`?session=…&token=…`), which
- * is all /elder asks for too. The server still checks the token on every connect.
- */
-export function opensWithoutLogin(search: string): boolean {
-  const q = new URLSearchParams(search)
-  return q.has('fixture') || Boolean(q.get('session') && q.get('token'))
-}
-
 const DEVICE_KEY = 'aegis_device_token'
 
 /** The pairing token from a /pair#<token> link, or null. */

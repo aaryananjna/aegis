@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { ApiError, errorMessage, opensWithoutLogin, tokenFromHash } from './api.ts'
+import { ApiError, errorMessage, tokenFromHash } from './api.ts'
 
 test('every server error from #35 has plain words', () => {
   const msg = (status: number, detail = '', retry: number | null = null) =>
@@ -23,14 +23,4 @@ test('pairing token comes only from a plausible #hash', () => {
   assert.equal(tokenFromHash(''), null)
   assert.equal(tokenFromHash('#short'), null)
   assert.equal(tokenFromHash('#<script>alert(1)</script>xxxxxxxx'), null)
-})
-
-test('a sample or a call link with its token opens without a login, nothing else does', () => {
-  assert.equal(opensWithoutLogin('?fixture=demo-bank'), true)
-  // The runbook's judges' link: /evidence?session=<id>&token=<elder token>, also with accounts offline.
-  assert.equal(opensWithoutLogin('?session=abc&token=xyz'), true)
-  assert.equal(opensWithoutLogin('?session=abc'), false)
-  assert.equal(opensWithoutLogin('?token=xyz'), false)
-  assert.equal(opensWithoutLogin('?session=abc&token='), false)
-  assert.equal(opensWithoutLogin(''), false)
 })
