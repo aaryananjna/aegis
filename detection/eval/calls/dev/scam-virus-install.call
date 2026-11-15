@@ -1,0 +1,12 @@
+# id: scam-virus-install
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-virus-install
+# onset_s: 4
+# note: Written by Claude for development. Not a real or recorded call. One sentence per caption, labels-off style.
+[0.0-3.0] elder: Hello?
+[4.0-7.0] caller: Hi, I'm a technician with Windows.
+[8.0-11.0] caller: Your laptop has been sending us error messages, it's infected.
+[12.0-15.0] caller: Open your browser and install the app I tell you, so I can clean it.
+[16.0-19.0] elder: Okay, it's on now.

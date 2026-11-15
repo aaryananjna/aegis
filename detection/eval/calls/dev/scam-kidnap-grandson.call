@@ -1,0 +1,12 @@
+# id: scam-kidnap-grandson
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-kidnap-grandson
+# onset_s: 4
+# note: Written by Claude for development. Not a real or recorded call. One sentence per caption, labels-off style.
+[0.0-3.0] elder: Hello?
+[4.0-7.0] caller: Listen carefully, we've got your grandson here.
+[8.0-11.0] caller: If you want him back safe, you'll pay fifteen thousand.
+[12.0-15.0] caller: And don't you dare call the cops.
+[16.0-19.0] elder: Oh my God.

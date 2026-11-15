@@ -8,7 +8,7 @@ Both calls are tested through the detector: `python -m hangup_detect.replay demo
 ## Before you start
 - `/elder` screen on the laptop, `/family` page open on a second phone.
 - The judge answers the presenter's phone **on speaker**, about 10 cm from the laptop mic.
-- The presenter taps the judge's voice as "the grandparent" once the call connects.
+- Nobody taps anything: the demo runs with no speaker labels, so every line is scored from the first one. Keep Grandma's lines free of scam words.
 
 ## Call 1: fake bank (a teammate, live, own voice)
 

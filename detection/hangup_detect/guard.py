@@ -2,7 +2,9 @@
 
 This is provenance only: a quote must really appear, as whole words, in the caller line it
 names. It does not prove the tactic is right. Safety comes from the rest of the design:
-AI evidence is add-only, capped at +1.5 and can never make the level HIGH on its own.
+AI evidence is add-only and capped. On its own it can raise the level to HIGH only when it
+quotes at least Config.ai_alarm_tactics different tactics (then its cap rises to ai_alarm_cap);
+otherwise HIGH still needs live rule evidence.
 """
 from __future__ import annotations
 
