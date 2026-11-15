@@ -5,6 +5,7 @@ import { WordmarkPage } from './brand/WordmarkPage'
 import { HomePage } from './accounts/HomePage'
 import { PairPage } from './accounts/PairPage'
 import { ElderScreen } from './elder/ElderScreen'
+import { ReadyScreen } from './elder/ReadyScreen'
 import { EvidencePage } from './evidence/EvidencePage'
 import { FamilyPage } from './family/FamilyPage'
 import { WatchPage } from './family/WatchPage'
@@ -30,6 +31,8 @@ export function App() {
           <Route path="/elder" element={<ElderScreen />} />
           <Route path="/family" element={<FamilyPage />} />
           <Route path="/pair" element={<PairPage />} />
+          {/* Grandma's laptop opens straight to one big Start button (#107). */}
+          <Route path="/ready" element={<ReadyScreen />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

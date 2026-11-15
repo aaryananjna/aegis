@@ -39,6 +39,15 @@ export function reduceFamily(s: FamilyState, e: AegisEvent, receivedAt: number):
   }
 }
 
+/**
+ * The heading once the call is over. After an alert, the family's first question is "is she OK?",
+ * so it says she hung up (#107). Uses only call_ended and the alerts already received.
+ */
+export function endTitle(s: FamilyState, name: string): string {
+  if (s.endedAt === null || s.alerts.length === 0) return 'Call ended'
+  return `${name.charAt(0).toUpperCase()}${name.slice(1)} hung up safely`
+}
+
 /** One line for when the call is over. */
 export function endSummary(s: FamilyState, name: string): string {
   const last = s.alerts[s.alerts.length - 1]

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { ApiError, api, deviceToken, type ElderRef, type User } from '../accounts/api'
 import { useEvents } from '../events/useEvents'
+import { AlertCard } from '../family/FamilyPage'
+import { initialFamilyState, reduceFamily } from '../family/state'
 import { CallSides } from '../landing/CallSides'
 import { FamilyQr } from './FamilyQr'
 import { ScaledFrame } from '../landing/ScaledFrame'
@@ -36,7 +38,7 @@ const savedCall = {
   },
 }
 
-const startError = (e: unknown): string => {
+export const startError = (e: unknown): string => {
   if (!(e instanceof ApiError)) return 'Something went wrong. Try again.'
   switch (e.status) {
     case 0:
@@ -164,8 +166,15 @@ function Running({ call, onDone }: { call: Started; onDone: () => void }) {
     const q = new URL(call.familyUrl).searchParams
     return { kind: 'live' as const, sessionId: call.sessionId, role: 'family' as const, token: q.get('token') }
   }, [call])
-  const { events, error } = useEvents(familyFeed)
+  const { events, receivedAt, error } = useEvents(familyFeed)
   const ended = error !== null || events.some((e) => e.type === 'call_ended')
+  // The same alerts the family phone gets, folded the same way (#107).
+  const family = useMemo(
+    () => events.reduce((s, e, i) => reduceFamily(s, e, receivedAt[i]), initialFamilyState),
+    [events, receivedAt],
+  )
+  const latest = family.alerts[family.alerts.length - 1] ?? null
+  const elderName = new URL(call.familyUrl).searchParams.get('name') || 'your family member'
   // Refused before hearing anything: a call kept from earlier in this tab that the server no
   // longer has (it ended, or the server restarted). Drop it and offer a new call instead.
   const stale = error !== null && events.length === 0
@@ -199,7 +208,20 @@ function Running({ call, onDone }: { call: Started; onDone: () => void }) {
               <ScaledFrame title="The family's phone, live call" src={`${localPath(call.familyUrl)}&embed=1`}
                            width={390} height={844} fit className="mx-auto w-full max-w-[360px] rounded-[2rem]" />
             )}
-            {!ended ? (
+            {/* Once an alert has gone out, show it here too, so everyone in the room can see
+                it was sent (#107). The phone frame above already shows it in the demo build. */}
+            {latest && !SHOW_FAMILY_PHONE && (
+              <div className="flex flex-col gap-2">
+                <p className="text-[16px] font-semibold text-paper">Sent to the family’s phone</p>
+                <AlertCard alert={latest} name={elderName} phone={null} codewordOk={family.codewordOk} big />
+              </div>
+            )}
+            {!ended && latest ? (
+              <details className="glass rounded-2xl p-5">
+                <summary className="cursor-pointer text-[16px] font-semibold text-paper">Family link QR code</summary>
+                <div className="mt-3"><FamilyQr familyUrl={call.familyUrl} /></div>
+              </details>
+            ) : !ended ? (
               <div className="glass rounded-2xl p-5">
                 <p className="mb-3 text-[16px] text-paper-dim">Scan with the family’s phone to follow this call.</p>
                 <FamilyQr familyUrl={call.familyUrl} />
