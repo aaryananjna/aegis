@@ -30,7 +30,18 @@ PATTERNS: dict[T, list[str]] = {
         r"\b((your|the) )?bank'?s? (fraud|security) (department|team|division|line|desk|center|office)\b",
         r"\b(public defender|your (grandson'?s|lawyer|attorney))\b",
         # FTC: prize and lottery callers, fake FTC/FBI agents with badge numbers
-        r"\byou('ve| have)? (just )?won\b(?=.{0,40}\b(lottery|sweepstakes|prize|million|grant)\b)",
+        r"\byou('ve| have)? (just )?won\b(?=.{0,40}(\$\s?\d|\b\d[\d,]* (dollars|bucks)\b|\b(lottery|sweepstakes|prize|million|"
+        r"thousand|grant|cash|car|vacation)\b))",
+        # A stranger's money lure (demo test, 2026-11-15): big free money or a grant, before any ask.
+        # The lure alone stays Normal; it makes the fee or bank number that follows a Warning.
+        r"\bgive you\b.{0,30}(\$\s?\d{1,3}(,\d{3})+|\b\d{1,3}(,\d{3})+|\b\d{4,}|\b(thousand|million)\b)"
+        r".{0,40}\b(for free|for no reason|no strings attached|free of charge|nothing in return)\b",
+        r"\byou('ve| have)? (qualify|qualified|are eligible|'?re eligible|been selected|been approved) (for|to (receive|get)) "
+        r"(a |an )?(free |federal |government )?(grant|prize|reward|cash award|award)\b",
+        # A utility company as the caller: "This is Valley Electric Dispatch", "calling from the gas company"
+        r"\b(this is|calling (from|on behalf of)|i'?m (calling )?(with|from)|we'?re (calling )?(with|from)) (the |your )?"
+        r"([a-z]+ ){0,3}(electric|electricity|power|energy|gas|water|utility|utilities)"
+        r"(?= (company|co|dispatch|department|services?|billing|utility|authority|and light|and electric)\b|\s*[.,!]|$)",
         r"\b(federally supervised lottery|publishers clearing house)\b",
         r"\b(agent|investigator|officer) (with|from) the (federal trade commission|ftc|fbi)\b",
         r"\bbadge number\b",
@@ -81,6 +92,13 @@ PATTERNS: dict[T, list[str]] = {
         # Everyday wording of the same payment tricks (trick families, 2026-11-14)
         r"\b(green ?dot|reload(able)? (pack|card)|prepaid (debit )?card|vanilla (card|visa)|money ?pak)\b",
         r"\bread me the (receipt|card|pin|serial) number\b",
+        r"\b(read|give|tell|text|send) (me|us)( off)? (the |those |all the )?(numbers?|codes?|claim codes?|pin)"
+        r"( on| from| off)? (the |that |your )?(receipts?|cards?|back)\b",
+        r"\b(take|snap|send) (me )?(a )?(picture|photo|pic) of (the )?(back of )?(the )?(cards?|receipts?)\b",
+        # The grandparent about to hand over a card (demo test, 2026-11-15). Labels off, every line
+        # is scored; on its own it stays Normal (a pizza order), with a threat or a lure it warns.
+        r"\blet me (give|read|get|grab|find) (you )?(my |the )?(credit card|debit card|card|bank account|account)( number| numbers)?\b",
+        r"\bmy (credit card|debit card|card|account) number is\b",
         r"\b(send|mail|overnight|bring) (us |me )?(a |the )?(cashier'?s check|money order)\b",
         r"\b(send|transfer|move) .{0,30}\bto (our|a|the) (secure|safe|cancellation|reversal|holding|protected) (account|code|wallet)\b",
         r"\breversal transfer\b",
