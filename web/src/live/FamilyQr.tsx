@@ -1,6 +1,6 @@
 import qrcode from 'qrcode-generator'
 import { useMemo, useState, type FormEvent } from 'react'
-import { cleanTunnel, phoneUrl, tunnel } from './familyLink'
+import { cleanTunnel, isPhoneReady, phoneUrl, tunnel } from './familyLink'
 
 /**
  * The family link as a QR code for the phone to scan (#63), drawn here with no network call.
@@ -12,6 +12,7 @@ export function FamilyQr({ familyUrl }: { familyUrl: string }) {
   const [editing, setEditing] = useState(false)
   const [bad, setBad] = useState(false)
   const link = phoneUrl(familyUrl, origin)
+  const ready = isPhoneReady(familyUrl) // the server put it on the tunnel: nothing to set here
 
   const svg = useMemo(() => {
     const qr = qrcode(0, 'M')
@@ -39,13 +40,13 @@ export function FamilyQr({ familyUrl }: { familyUrl: string }) {
         className="mx-auto w-full max-w-[240px] rounded-2xl bg-white p-2 [&>svg]:block [&>svg]:h-auto [&>svg]:w-full"
         dangerouslySetInnerHTML={{ __html: svg }}
       />
-      {!origin && (
+      {!ready && !origin && (
         <p className="text-[15px] text-care-text">
           This link only opens on this laptop. Add the tunnel address so a phone can open it.
         </p>
       )}
       <p className="text-[15px] break-all text-mist">{link}</p>
-      {editing ? (
+      {ready ? null : editing ? (
         <form onSubmit={save} className="flex flex-col gap-2">
           <label htmlFor="tunnel" className="text-[15px] font-semibold text-paper">
             Tunnel address

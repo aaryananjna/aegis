@@ -32,9 +32,21 @@ export const tunnel = {
   },
 }
 
-/** The link as the phone should open it: same path and token, on the tunnel when there is one. */
+/** True when the server already built the link on the tunnel (#90), so it opens on a phone as-is. */
+export function isPhoneReady(familyUrl: string): boolean {
+  try {
+    return new URL(familyUrl).protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+/**
+ * The link as the phone should open it. The server's own https link wins (it follows tunnel
+ * restarts); a saved tunnel address only stands in for a localhost link.
+ */
 export function phoneUrl(familyUrl: string, tunnelOrigin: string | null): string {
-  if (!tunnelOrigin) return familyUrl
+  if (isPhoneReady(familyUrl) || !tunnelOrigin) return familyUrl
   const u = new URL(familyUrl)
   return tunnelOrigin + u.pathname + u.search
 }
