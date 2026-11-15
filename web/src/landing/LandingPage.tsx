@@ -61,7 +61,7 @@ export function LandingPage() {
           <AegisWordmark size="hero" />
         </h1>
         <p className="font-display text-[length:clamp(1.75rem,3.2vw,2.75rem)] leading-tight font-bold text-heading">
-          A second pair of ears on every call.
+          Real-time scam alerts for every call.
         </p>
         <p className="max-w-2xl text-[21px] leading-relaxed text-paper-dim">
           Aegis sits next to a grandparent’s phone while it’s on speaker. It turns the call into
