@@ -17,7 +17,9 @@ def _weights() -> dict[Tactic, float]:
 def _combos() -> dict[tuple[Tactic, Tactic], float]:
     return {(T.IMPERSONATION, T.PAYMENT): 1.5, (T.IMPERSONATION, T.SECRECY): 1.0,
             (T.SECRECY, T.PAYMENT): 1.0, (T.URGENCY, T.PAYMENT): 0.8,
-            (T.THREAT, T.PAYMENT): 1.0, (T.REMOTE_ACCESS, T.IMPERSONATION): 1.5}
+            (T.THREAT, T.PAYMENT): 1.0, (T.REMOTE_ACCESS, T.IMPERSONATION): 1.5,
+            # Claiming to be an official (bank, IRS, police) plus a scare: two suspicious things
+            (T.IMPERSONATION, T.THREAT): 1.0}
 
 
 @dataclass
