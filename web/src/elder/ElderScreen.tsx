@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { eventsForTap, tellDemo } from '../events/demoLink'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { CaptionPane } from './CaptionPane'
 import { CardPane, type Reply } from './CardPane'
@@ -31,18 +32,24 @@ export function ElderScreen() {
   // back the voice picker for setups where labels are reliable.
   const pickVoices = search.get('voices') === 'pick'
   const embedded = search.get('embed') === '1' // inside the landing page's demo
+  const demo = search.get('demo') // the landing demo's id, shared with the family phone beside it
   // A new call (or sample) starts the screen fresh, including the voice choice.
-  return <ElderCall key={JSON.stringify(feed) + pickVoices} feed={feed} pickVoices={pickVoices} embedded={embedded} />
+  return <ElderCall key={JSON.stringify(feed) + pickVoices} feed={feed} pickVoices={pickVoices} embedded={embedded} demo={demo} />
 }
 
-function ElderCall({ feed, pickVoices, embedded }: { feed: Feed; pickVoices: boolean; embedded: boolean }) {
-  const { events, connection, error, send } = useEvents(feed)
+function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoices: boolean; embedded: boolean; demo: string | null }) {
+  const { events, connection, error, send, playLocally } = useEvents(feed)
   const state = useMemo(() => events.reduce(reduceElder, initialElderState), [events])
   const [tapped, setTapped] = useState<{ speakerRaw: string | null } | null>(null)
   const [reply, setReply] = useState<Reply>('none')
   const [endNote, setEndNote] = useState<string | null>(null)
   const endCall = () => {
-    if (feed.kind !== 'live') return setEndNote('Sample call: nothing to end')
+    if (feed.kind === 'fixture') {
+      // A sample has no server: end it here, and on the family phone beside it.
+      playLocally(eventsForTap('end', 'sample'), { stop: true })
+      return tellDemo(demo, 'end')
+    }
+    if (feed.kind !== 'live') return setEndNote('No call to end')
     setEndNote(send({ type: 'end' }) ? 'Ending the call…' : 'Not ended: no connection. Try again in a moment.')
   }
 
@@ -93,6 +100,16 @@ function ElderCall({ feed, pickVoices, embedded }: { feed: Feed; pickVoices: boo
   }, [pickVoices, connection, send])
 
   const answerCodeword = (ok: boolean) => {
+    if (feed.kind === 'fixture') {
+      // A sample plays the answer out here. "They knew it" ends the scam script (it assumed they
+      // didn't); "They didn't" lets it run on to the hang-up card.
+      setReply(ok ? 'sent-yes' : 'sent-no')
+      if (ok) {
+        playLocally(eventsForTap('codeword_ok', 'sample'), { stop: true })
+        tellDemo(demo, 'codeword_ok')
+      }
+      return
+    }
     if (feed.kind !== 'live') return setReply('sample')
     setReply(send({ type: 'codeword_result', ok }) ? (ok ? 'sent-yes' : 'sent-no') : 'not-sent')
   }

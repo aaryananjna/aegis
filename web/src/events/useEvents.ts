@@ -54,6 +54,8 @@ export function useEvents(feed: Feed) {
   const [connection, setConnection] = useState<Connection>('idle')
   const [error, setError] = useState<string | null>(null)
   const socket = useRef<WebSocket | null>(null)
+  // Sample calls only: stop the recording and add events on the spot (the screen's own buttons).
+  const sample = useRef<{ add: (e: AegisEvent) => void; stop: () => void } | null>(null)
   const feedKey = JSON.stringify(feed)
 
   useEffect(() => {
@@ -99,9 +101,18 @@ export function useEvents(feed: Feed) {
           setError(err.message)
           setConnection('error')
         })
+      sample.current = {
+        add,
+        stop: () => {
+          cancelled = true // not loaded yet: never start it
+          stop()
+          setConnection('ended')
+        },
+      }
       return () => {
         cancelled = true
         stop()
+        sample.current = null
       }
     }
 
@@ -160,5 +171,16 @@ export function useEvents(feed: Feed) {
     return true
   }, [])
 
-  return { events: log.events, receivedAt: log.receivedAt, connection, error, send }
+  /**
+   * Sample calls only: what a real call would do after a tap, played here because there's no
+   * server. `stop` ends the recording first (the rest of the script no longer applies).
+   */
+  const playLocally = useCallback((events: AegisEvent[], opts: { stop?: boolean } = {}) => {
+    const s = sample.current
+    if (!s) return
+    if (opts.stop) s.stop()
+    events.forEach(s.add)
+  }, [])
+
+  return { events: log.events, receivedAt: log.receivedAt, connection, error, send, playLocally }
 }

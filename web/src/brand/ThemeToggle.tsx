@@ -10,7 +10,26 @@ export function currentTheme(): Theme {
   return window.matchMedia?.('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
 }
 
-/** Apply a saved choice before React draws (called from main.tsx). Storage may be blocked. */
+/**
+ * Switch this page and every page framed inside it (the landing demo's laptop and phone), so
+ * the demo never stays in the old theme.
+ */
+export function setTheme(theme: Theme) {
+  document.documentElement.dataset.theme = theme
+  for (const f of document.querySelectorAll('iframe')) {
+    try {
+      const root = f.contentDocument?.documentElement
+      if (root) root.dataset.theme = theme
+    } catch {
+      // another site's frame: not ours to theme
+    }
+  }
+}
+
+/**
+ * Apply a saved choice before React draws (called from main.tsx), and follow a switch made in
+ * another tab or in the page around this one. Storage may be blocked.
+ */
 export function applySavedTheme() {
   try {
     const saved = localStorage.getItem(KEY)
@@ -18,22 +37,25 @@ export function applySavedTheme() {
   } catch {
     // no storage: follow the system setting
   }
+  window.addEventListener('storage', (e) => {
+    if (e.key === KEY && (e.newValue === 'light' || e.newValue === 'dark')) setTheme(e.newValue)
+  })
 }
 
 /** Light/dark switch for the nav. The choice is saved; with none, the system setting wins. */
 export function ThemeToggle({ className = '' }: { className?: string }) {
-  const [theme, setTheme] = useState<Theme>('dark')
-  useEffect(() => setTheme(currentTheme()), [])
+  const [theme, setShown] = useState<Theme>('dark')
+  useEffect(() => setShown(currentTheme()), [])
 
   const next: Theme = theme === 'dark' ? 'light' : 'dark'
   const flip = () => {
-    document.documentElement.dataset.theme = next
+    setTheme(next)
     try {
       localStorage.setItem(KEY, next)
     } catch {
       // not saved: still switches for this visit
     }
-    setTheme(next)
+    setShown(next)
   }
 
   return (
