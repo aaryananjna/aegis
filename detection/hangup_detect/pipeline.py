@@ -40,6 +40,7 @@ class Detector:
         self._timing: list[dict] = []
         # AI layer state (S8a)
         self._mode = "rules_only"
+        self._llm_failures = 0
         self._llm_seq = 0
         self._llm_last_s: float | None = None
         self._llm_requests: OrderedDict[int, LLMRequest] = OrderedDict()
@@ -177,12 +178,20 @@ class Detector:
         return self._evaluate(now, set()) if evaluate else []
 
     def llm_status(self, mode: str, now_s: float, warning: str | None = None) -> list[dict]:
-        """Tell the screens when the AI layer turns on ("full") or off ("rules_only")."""
+        """Tell the screens when the AI layer turns on ("full") or off ("rules_only").
+
+        `warning` is the AI layer's own error ("groq timed out"). It is for the server's logs,
+        never the screens: a grandparent must not see it. One failed request is normal on a
+        free API, so the screens only switch to rules only after several in a row.
+        """
         self._clock(now_s)
+        self._llm_failures = 0 if mode == "full" else self._llm_failures + 1
+        if mode == "rules_only" and self._mode == "full" and self._llm_failures < self.cfg.llm_fail_streak:
+            return []
         if mode == self._mode:
             return []
         self._mode = mode
-        return [ev.status(self.session_id, self._now, self._next(), mode, warning)]
+        return [ev.status(self.session_id, self._now, self._next(), mode, None)]
 
     def codeword_result(self, ok: bool, now_s: float) -> list[dict]:
         """The elder screen says whether the caller gave the right family code word (C12).

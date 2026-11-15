@@ -69,7 +69,7 @@ With no key it stays rules only and nothing else changes. `examples/server_examp
 the pattern:
 
 1. After each queue item, if the runner isn't busy, call `d.llm_request(now)`.
-2. If it returns a request, run it in a task (`await runner.run(req)`, 1.5 s budget) and put
+2. If it returns a request, run it in a task (`await runner.run(req)`, 3 s budget, Groq then Gemini) and put
    `("llm", (req.seq, result))` back on the same queue.
 3. The owner calls `d.llm_status(result.mode, now, result.error)` and, if there's an answer,
    `d.apply_llm(seq, result.raw, now)`.

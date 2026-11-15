@@ -34,7 +34,7 @@ async def main():
     if runner is None:
         print("SKIP: no GROQ_API_KEY or GEMINI_API_KEY (rules only)")
         return 0
-    runner.total_s = runner.socket_s = 5.0  # first call can be slow; the demo uses 1.5 s
+    runner.total_s = runner.socket_s = 5.0  # first call can be slow; the demo uses 3 s total, 1.4 s per provider
     utts = (("u1", "Hi, this is the security team at your bank."),
             ("u2", "Go to the store, get Target cards and call me back with the codes."))
     t0 = time.monotonic()

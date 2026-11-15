@@ -3,7 +3,8 @@
 - Groq first, Gemini as backup, then rules only.
 - One request at a time per session. A timed-out request's thread can't be killed, so the
   runner stays `busy` until that thread returns, and the owner skips new requests meanwhile.
-- 1.5 s total budget. Late answers are simply never applied.
+- 3 s total budget, at most 1.4 s per provider, so a Groq timeout still leaves Gemini time.
+  Late answers are simply never applied.
 - Keys are sent in headers only and never appear in errors or logs.
 Model names come from GROQ_MODEL / GEMINI_MODEL. Both defaults checked live 2026-11-14: Groq ~340 ms, Gemini ~0.8 to 1.4 s.
 """
@@ -33,16 +34,17 @@ class LLMResult:
 
 
 class LLMRunner:
-    def __init__(self, transport, providers: list[str], total_s: float = 1.5, socket_s: float = 1.2):
+    def __init__(self, transport, providers: list[str], total_s: float = 3.0, socket_s: float = 1.4):
         self.transport = transport
         self.providers = providers
         self.total_s = total_s
-        self.socket_s = socket_s
-        self._pending: asyncio.Future | None = None
+        self.socket_s = socket_s  # per provider, so a slow Groq still leaves Gemini time
+        self._pending: list[asyncio.Future] = []
 
     @property
     def busy(self) -> bool:
-        return self._pending is not None and not self._pending.done()
+        self._pending = [f for f in self._pending if not f.done()]
+        return bool(self._pending)
 
     async def run(self, req: LLMRequest) -> LLMResult:
         loop = asyncio.get_running_loop()
@@ -53,14 +55,15 @@ class LLMRunner:
             left = self.total_s - (time.monotonic() - start)
             if left <= 0:
                 break
-            fut = loop.run_in_executor(None, self.transport, provider, messages, min(self.socket_s, left))
-            self._pending = fut
+            wait = min(self.socket_s, left)
+            fut = loop.run_in_executor(None, self.transport, provider, messages, wait)
+            self._pending.append(fut)
             try:
-                raw = await asyncio.wait_for(asyncio.shield(fut), left)
+                raw = await asyncio.wait_for(asyncio.shield(fut), wait + 0.1)
                 return LLMResult(raw, provider, "full")
             except asyncio.TimeoutError:
+                # Its thread is still running (busy stays true until it returns); try the next.
                 error = f"{provider} timed out"
-                break  # its thread is still running; stay busy until it returns
             except Exception as exc:  # network or HTTP error: try the next provider
                 error = f"{provider} failed: {type(exc).__name__}"
         return LLMResult(None, None, "rules_only", error)
