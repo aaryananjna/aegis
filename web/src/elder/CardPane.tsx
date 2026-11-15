@@ -72,10 +72,12 @@ function Card({
                   ${look.box} ${focusRing}`}
     >
       <p className="flex items-center gap-[2vw]">
-        <span className={`shrink-0 text-[length:clamp(44px,4vw,72px)] ${look.iconColor}`}>
+        <span className={`shrink-0 text-[length:clamp(48px,4.4vw,80px)] ${look.iconColor}`}>
           {look.icon}
         </span>
-        <span className="text-[length:clamp(32px,2.8vw,48px)] leading-[1.18] font-semibold text-balance">
+        {/* Bigger than any caption (#78): the instruction is the one thing to read. "Hang up." most of all. */}
+        <span className={`${kind === 'hangup' ? 'text-[length:clamp(52px,5vw,76px)] font-bold' : 'text-[length:clamp(40px,3.6vw,56px)] font-semibold'}
+                          leading-[1.12] text-balance`}>
           {text}
         </span>
       </p>

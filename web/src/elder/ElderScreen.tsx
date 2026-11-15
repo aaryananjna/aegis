@@ -125,7 +125,7 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
   if (picked?.speakerRaw === null) notes.push('Listening to everyone on the call')
   if (state.ended) notes.push('Call ended')
   else if (endNote) notes.push(endNote)
-  if (state.warning) notes.push(state.warning)
+  // Detector and server warnings are for us, not Grandma (#78): they stay off this screen.
   if (reply === 'sample') notes.push('Sample call: your answer was not sent')
   if (reply === 'not-sent') notes.push('Answer not sent: no connection. Tap again in a moment.')
 

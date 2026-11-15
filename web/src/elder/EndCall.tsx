@@ -3,8 +3,9 @@ import { PhoneDownIcon } from './Icons'
 import { focusRing } from './VoicePicker'
 
 /**
- * "End call" on the elder screen (#42). Ending is final (links die, history is deleted), so it
- * always asks first. "No, keep listening" is the default and focused; Escape or a tap outside
+ * "I've hung up" (End call, #42) on the elder screen. Named for what Grandma did: "End call"
+ * next to "Hang up." read as if it hung up the phone (#78). Ending is final (links die, history
+ * is deleted), so it always asks first. "No, keep listening" is the default and focused; Escape or a tap outside
  * the box also means no. Only "Yes" calls onEnd, which sends {"type": "end"}.
  */
 export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupShowing: boolean }) {
@@ -37,7 +38,7 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
         className={`min-h-[48px] rounded-xl border-2 border-paper/30 px-5 text-[length:clamp(18px,1.4vw,22px)]
                     font-semibold text-paper hover:border-paper/60 ${focusRing}`}
       >
-        End call
+        I've hung up
       </button>
       <dialog
         ref={dialog}

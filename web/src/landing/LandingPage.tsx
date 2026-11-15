@@ -85,7 +85,7 @@ export function LandingPage() {
             <ScaledFrame
               key={`elder-${run}`}
               title="Grandma's screen, demo call"
-              src={`/elder?fixture=scam-grandson&embed=1&demo=${demoId}-${run}`}
+              src={`/elder?fixture=scam-grandson-ai&embed=1&demo=${demoId}-${run}`}
               width={1280}
               height={800}
               className="w-full rounded-2xl"
@@ -93,7 +93,7 @@ export function LandingPage() {
             <ScaledFrame
               key={`family-${run}`}
               title="Family phone, demo call"
-              src={`/family?fixture=scam-grandson&embed=1&demo=${demoId}-${run}`}
+              src={`/family?fixture=scam-grandson-ai&embed=1&demo=${demoId}-${run}`}
               width={390}
               height={844}
               fit
@@ -119,7 +119,7 @@ export function LandingPage() {
 
       {loggedIn && (
         <nav aria-label="Other screens" className="flex flex-wrap gap-4">
-          <Link to="/evidence?fixture=scam-grandson" className={linkClass}>
+          <Link to="/evidence?fixture=scam-grandson-ai" className={linkClass}>
             Evidence for judges <span aria-hidden>→</span>
           </Link>
         </nav>
