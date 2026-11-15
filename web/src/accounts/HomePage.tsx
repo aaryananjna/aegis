@@ -57,7 +57,7 @@ export function HomePage() {
               Who you watch over
             </h2>
             {me.elders.length === 0 ? (
-              <p className="text-[18px] text-paper-dim">No one yet. Add a grandparent below.</p>
+              <p className="text-[18px] text-paper-dim">No one yet. Add the person you look out for below.</p>
             ) : (
               me.elders.map((e) => <ElderCard key={e.id} elder={e} onError={guard} />)
             )}
@@ -154,9 +154,9 @@ function AddElder({ onAdded, onError }: { onAdded: () => void; onError: (e: unkn
   }
   return (
     <section aria-labelledby="add-h" className="flex flex-col gap-3">
-      <h2 id="add-h" className="subtitle">Add a grandparent</h2>
+      <h2 id="add-h" className="subtitle">Add someone to protect</h2>
       <form onSubmit={submit} className="flex flex-col gap-3">
-        <Field label="Their name" name="name" required maxLength={80} placeholder="Grandma Rose" />
+        <Field label="Their name" name="name" required maxLength={80} placeholder="Rose" />
         <Button type="submit" disabled={busy}>
           {busy ? 'Adding…' : 'Add'}
         </Button>

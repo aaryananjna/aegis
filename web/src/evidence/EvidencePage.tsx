@@ -51,7 +51,7 @@ function Evidence({ feed }: { feed: Feed }) {
           <h2 id="risk-h" className="subtitle">Risk over the call</h2>
           <p className="text-[14px] text-mist">
             <span aria-hidden className="mr-1 inline-block size-2.5 rounded-full bg-mark" /> caller's words flagged
-            <span aria-hidden className="mr-1 ml-4 inline-block h-3 w-0.5 bg-care-text align-middle" /> card shown to the grandparent
+            <span aria-hidden className="mr-1 ml-4 inline-block h-3 w-0.5 bg-care-text align-middle" /> card shown on their screen
             {pinned !== null && (
               <button type="button" onClick={() => setPinned(null)}
                       className="ml-4 underline underline-offset-4 hover:text-paper focus-visible:outline-2 focus-visible:outline-paper">

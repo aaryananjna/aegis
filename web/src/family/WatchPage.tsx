@@ -69,7 +69,7 @@ export function WatchPage() {
       {problem && <p role="alert" className="glass rounded-2xl p-5 text-[19px] text-paper">{problem}</p>}
       {elders && elders.length === 0 && (
         <p className="glass rounded-2xl p-5 text-[19px] text-paper-dim">
-          No grandparent on your account yet.{' '}
+          No one on your account yet.{' '}
           <Link to="/home" className="font-semibold text-paper underline underline-offset-4">Add one in My family</Link>,
           or ask the person who added them to invite you.
         </p>

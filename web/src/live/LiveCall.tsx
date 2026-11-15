@@ -183,14 +183,14 @@ function Running({ call, onDone }: { call: Started; onDone: () => void }) {
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 id="live-h" className="subtitle text-[1.8rem]">{ended ? 'The call has ended' : 'Live call'}</h2>
         <p className="text-[16px] text-mist">
-          {call.recorded ? 'Saved to the grandparent’s history.' : 'Not saved: this laptop isn’t paired.'}
+          {call.recorded ? 'Saved to their call history.' : 'Not saved: this laptop isn’t paired.'}
         </p>
       </div>
       <CallSides
         grandparent={
           // A smaller page than the real 1280 x 800 laptop, so at this size everything on it
           // (captions, the red button, the End call box) shows bigger.
-          <ScaledFrame title="The grandparent's screen, live call" src={`${elderPath}&embed=1`}
+          <ScaledFrame title="Their screen, live call" src={`${elderPath}&embed=1`}
                        width={1040} height={680} className="w-full rounded-2xl" />
         }
         family={

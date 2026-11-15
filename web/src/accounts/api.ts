@@ -47,11 +47,11 @@ export function errorMessage(e: unknown): string {
     case 401:
       return e.message === 'wrong email or password' ? 'Wrong email or password.' : 'Please log in again.'
     case 403:
-      return 'Only the person who added this grandparent can do that.'
+      return 'Only the person who added them can do that.'
     case 404:
       return e.message === 'that person needs to sign up first'
         ? 'That person needs to sign up first.'
-        : "We couldn't find that grandparent on your account."
+        : "We couldn't find that person on your account."
     case 409:
       return e.message.includes('email') ? 'An account with that email already exists. Log in instead.'
         : 'Already done.'
