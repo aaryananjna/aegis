@@ -5,6 +5,7 @@ POST /sessions/start      form or JSON from the website   -> 303 to the elder sc
 POST /sessions/{id}/end                                  -> {ok}
 POST /typed               {session_id, text, speaker_raw?} -> {ok, utterance_id}
 GET  /health                                             -> {ok, ...}
+GET  /tunnel                                             -> {origin} or {origin: null}
 
 `mic: true` starts live captions from the laptop mic inside the server (Deepgram) for this
 call; they stop when the call ends. `labels: false` turns off speaker labels: every line is
@@ -64,6 +65,15 @@ async def health() -> dict:
             "ai_layer": bool(os.environ.get("GROQ_API_KEY") or os.environ.get("GEMINI_API_KEY")),
             "ai_answers": dict(AI_ANSWERS),
             "accounts_db": db.is_open()}
+
+
+@router.get("/tunnel")
+async def tunnel_address(request: Request) -> dict:
+    """The Cloudflare tunnel's public address, for the fixed /watch QR code on /home (#96).
+    Follows tunnel restarts by itself. Laptop only: the phone already opens the site through
+    the tunnel, so it never needs this."""
+    require_laptop(request)
+    return {"origin": await public_origin()}
 
 
 @router.post("/sessions")
