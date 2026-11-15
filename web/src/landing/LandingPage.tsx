@@ -1,5 +1,7 @@
 import { useRef, useState } from 'react'
 import { Link } from 'react-router'
+import { useAuth } from '../accounts/auth'
+import { LiveCall } from '../live/LiveCall'
 import { AegisWordmark } from '../brand/AegisWordmark'
 import { SiteNav } from '../brand/SiteNav'
 import { ScaledFrame } from './ScaledFrame'
@@ -22,8 +24,13 @@ const STEPS = [
 const linkClass =
   'glass rounded-2xl px-5 py-4 text-[18px] font-semibold text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent'
 
-/** "/": what Aegis does, and a way into the demo. */
+/**
+ * "/": open to everyone. Logged out: what Aegis does and the recorded demo call, with Log in
+ * up top. Logged in: no demo; start a live call and watch its captions here, plus Evidence.
+ */
 export function LandingPage() {
+  const { auth } = useAuth()
+  const loggedIn = auth.status === 'in'
   // The demo plays right here: nothing loads until "Watch a demo call", and Restart replays it.
   const [run, setRun] = useState(0)
   // Ties this run's two screens together (a tap on Grandma's reaches the phone), per page load.
@@ -49,6 +56,7 @@ export function LandingPage() {
           Aegis sits beside a grandparent’s phone on speaker. It captions the call, spots the
           moves scammers make, tells Grandma one calm thing to do, and alerts the family.
         </p>
+        {!loggedIn && (
         <div className="flex flex-wrap items-center gap-4">
           <button
             type="button"
@@ -60,9 +68,12 @@ export function LandingPage() {
           </button>
           <span className="text-[16px] text-mist">A recorded sample call, not live.</span>
         </div>
+        )}
       </section>
 
-      {run > 0 && (
+      {loggedIn && <LiveCall />}
+
+      {!loggedIn && run > 0 && (
         <section ref={demo} aria-labelledby="demo-h" className="flex scroll-mt-6 flex-col gap-4">
           <div className="flex flex-wrap items-baseline justify-between gap-3">
             <h2 id="demo-h" className="subtitle text-[1.6rem]">The demo call</h2>
@@ -106,11 +117,13 @@ export function LandingPage() {
         </ul>
       </section>
 
-      <nav aria-label="Other screens" className="flex flex-wrap gap-4">
-        <Link to="/evidence?fixture=scam-grandson" className={linkClass}>
-          Evidence for judges <span aria-hidden>→</span>
-        </Link>
-      </nav>
+      {loggedIn && (
+        <nav aria-label="Other screens" className="flex flex-wrap gap-4">
+          <Link to="/evidence?fixture=scam-grandson" className={linkClass}>
+            Evidence for judges <span aria-hidden>→</span>
+          </Link>
+        </nav>
+      )}
     </main>
   )
 }

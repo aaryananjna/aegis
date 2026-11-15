@@ -46,12 +46,17 @@ export function CaptionPane({
                    [mask-image:linear-gradient(to_bottom,transparent,black_12%)]
                    focus-visible:outline-4 focus-visible:-outline-offset-4 focus-visible:outline-paper"
       >
-        {shown.length === 0 ? (
+        {state.ended ? (
+          // Nothing from the call is kept on screen once it's over.
+          <p className="my-auto font-display text-[length:clamp(44px,4vw,64px)] font-bold text-heading">
+            Call ended
+          </p>
+        ) : shown.length === 0 ? (
           <p className="mt-auto text-[length:clamp(32px,3vw,44px)] text-mist">
             Captions of the call will show here.
           </p>
         ) : (
-          <ol aria-live="polite" aria-relevant="additions text" className="mt-auto flex flex-col gap-5">
+          <ol aria-live="polite" aria-relevant="additions text" className="mt-auto flex flex-col gap-[clamp(18px,2.2vh,28px)]">
             {shown.map((c) => (
               <CaptionLine
                 key={c.utteranceId}
@@ -94,22 +99,22 @@ function CaptionLine({
     : 'rounded-md bg-glow/90 px-1.5 text-glow-ink [box-decoration-break:clone]'
 
   return (
-    <li className="flex flex-col gap-1">
-      {(label || caption.typed) && (
-        <span className="flex items-center gap-3 text-[length:clamp(20px,1.6vw,26px)] font-medium text-mist">
-          {label}
-          {caption.typed && (
-            <span className="rounded-full border-2 border-mist px-3 text-[0.8em] leading-snug">
-              typed
-            </span>
-          )}
-        </span>
-      )}
+    // Each line is its own block: a faint time (and "You"/"Caller" when known) over the words.
+    <li className={`flex flex-col gap-1 border-l-4 pl-[clamp(14px,1.4vw,22px)]
+                    ${caption.isFinal ? 'border-paper/20' : 'border-transparent'}`}>
+      <span className="flex items-center gap-3 text-[length:clamp(17px,1.3vw,21px)] font-medium text-mist tabular-nums">
+        {clock(caption.startS)}
+        {label && <span className="font-semibold">{label}</span>}
+        {caption.typed && (
+          <span className="rounded-full border-2 border-mist px-3 text-[0.85em] leading-snug">typed</span>
+        )}
+      </span>
       <p
         className={[
-          'leading-[1.22] font-medium text-balance',
-          own ? 'text-[length:clamp(44px,3.6vw,56px)]' : 'text-[length:clamp(48px,4.4vw,68px)]',
-          caption.isFinal ? 'text-caption' : 'text-mist', // final captions: white (dark) / #0B1220 (light)
+          'leading-[1.25] font-medium text-balance',
+          own ? 'text-[length:clamp(32px,2.8vw,44px)]' : 'text-[length:clamp(36px,3.2vw,50px)]',
+          // Final: full white (dark) / #0B1220 (light). Still being heard: muted, with "…".
+          caption.isFinal ? 'text-caption' : 'text-mist',
         ].join(' ')}
       >
         {pieces.map((p, i) =>
@@ -121,7 +126,14 @@ function CaptionLine({
             <span key={i}>{p.text}</span>
           ),
         )}
+        {!caption.isFinal && <span aria-hidden>…</span>}
       </p>
     </li>
   )
+}
+
+/** Seconds into the call as "0:42" or "12:05". */
+function clock(seconds: number): string {
+  const s = Math.max(0, Math.floor(seconds))
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }

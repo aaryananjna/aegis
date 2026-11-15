@@ -5,6 +5,8 @@ import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { CaptionPane } from './CaptionPane'
 import { CardPane, type Reply } from './CardPane'
 import { EndCall } from './EndCall'
+import { FamilyLinkButton } from './FamilyLinkButton'
+import { savedFamilyUrl } from '../live/familyLink'
 import { StartProtection } from './StartProtection'
 import { initialElderState, noVoiceLabels, reduceElder, type Voice } from './state'
 import { AegisWordmark } from '../brand/AegisWordmark'
@@ -43,6 +45,8 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
   const [tapped, setTapped] = useState<{ speakerRaw: string | null } | null>(null)
   const [reply, setReply] = useState<Reply>('none')
   const [endNote, setEndNote] = useState<string | null>(null)
+  // Started from the site on this laptop (#63): the family link, to show as a QR code.
+  const familyUrl = feed.kind === 'live' && !embedded ? savedFamilyUrl.get(feed.sessionId) : null
   const endCall = () => {
     if (feed.kind === 'fixture') {
       // A sample has no server: end it here, and on the family phone beside it.
@@ -140,10 +144,11 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
       >
         <StatusBand level={state.level} notes={notes} brand={
           <>
+            {familyUrl && !state.ended && <FamilyLinkButton familyUrl={familyUrl} />}
             {!state.ended && <EndCall onEnd={endCall} hangupShowing={state.card?.kind === 'hangup'} />}
-            {feed.kind !== 'live' && !embedded ? (
-              // Sample calls: the wordmark takes you home. Never during a live call, so Grandma
-              // can't leave the call screen by accident.
+            {!embedded && (feed.kind !== 'live' || state.ended) ? (
+              // The wordmark takes you home on sample calls and once a call is over. Never during
+              // a live call, so Grandma can't leave the call screen by accident.
               <Link to="/" aria-label="Aegis home" className="rounded-lg focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-paper">
                 <AegisWordmark size="nav" />
               </Link>
@@ -178,7 +183,7 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
             ) : (
               <p className={idleText}>
                 {state.ended
-                  ? 'The call has ended.'
+                  ? 'Aegis has stopped listening. Nothing from this call stays on screen.'
                   : state.order.length === 0
                     ? 'Waiting for the call to start.'
                     : 'Aegis is listening.'}

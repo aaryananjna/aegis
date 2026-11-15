@@ -8,6 +8,7 @@ export interface Caption {
   isFinal: boolean
   speakerRaw: string | null
   typed: boolean
+  startS: number // seconds into the call, for the faint "0:42"
 }
 
 export interface Highlight {
@@ -54,6 +55,7 @@ const CARD_RANK: Record<CardKind, number> = { codeword: 1, verify: 1, hangup: 2 
 export function reduceElder(s: ElderState, e: AegisEvent): ElderState {
   switch (e.type) {
     case 'caption': {
+      if (s.ended) return s // nothing is shown (or kept) after the call ends
       const old = s.captions[e.utterance_id]
       const newer =
         !old ||
@@ -67,6 +69,7 @@ export function reduceElder(s: ElderState, e: AegisEvent): ElderState {
         isFinal: e.is_final,
         speakerRaw: e.speaker_raw,
         typed: e.source === 'typed',
+        startS: e.start_s,
       }
       const known = s.voices.some((v) => v.speakerRaw === e.speaker_raw)
       const voices = known
@@ -86,8 +89,9 @@ export function reduceElder(s: ElderState, e: AegisEvent): ElderState {
       return { ...s, highlights }
     }
     case 'risk':
-      return { ...s, level: e.level }
+      return s.ended ? s : { ...s, level: e.level }
     case 'intervention': {
+      if (s.ended) return s
       if (s.card && CARD_RANK[e.kind] <= CARD_RANK[s.card.kind]) return s
       return { ...s, card: { kind: e.kind, text: e.text } }
     }
@@ -98,7 +102,8 @@ export function reduceElder(s: ElderState, e: AegisEvent): ElderState {
     case 'elder_set':
       return { ...s, elderSet: { speakerRaw: e.speaker_raw, by: e.by } }
     case 'call_ended':
-      return { ...s, ended: true }
+      // The call isn't saved, so the screen lets go of everything that was said.
+      return { ...s, ended: true, order: [], captions: {}, highlights: {}, voices: [], card: null, level: null }
     default:
       return s
   }

@@ -24,9 +24,10 @@ export function SiteNav({
 }) {
   const { auth, logout } = useAuth()
   const navigate = useNavigate()
-  useLocation() // redraw on every move, so the back arrow appears once there's somewhere to go
+  const { pathname } = useLocation() // redraw on every move
   // React Router numbers this tab's history entries; 0 is the first page opened in it.
-  const canGoBack = ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0
+  // No arrow on the front page: it's home, and the wordmark is the way there from everywhere else.
+  const canGoBack = pathname !== '/' && ((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0
 
   return (
     <nav aria-label="Aegis" className="flex flex-wrap items-center justify-between gap-3">
@@ -51,7 +52,7 @@ export function SiteNav({
             <AegisWordmark size="nav" />
           </Link>
           {section && (
-            <span className="font-display text-[1.6rem] leading-none font-semibold text-mist">
+            <span className="font-display text-[1.6rem] leading-none font-bold text-mist">
               <span aria-hidden className="mr-3 text-paper/30">/</span>
               {section}
             </span>
