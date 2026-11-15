@@ -15,7 +15,9 @@ export function CaptionPane({
   state: ElderState
   speakerLabel: (speakerRaw: string | null) => string | null
 }) {
-  const shown = state.order.map((uid) => state.captions[uid])
+  // A final caption with empty text closes a line the speech service took back (#83): never
+  // draw a block with only a time in it.
+  const shown = state.order.map((uid) => state.captions[uid]).filter((c) => c.text.trim() !== '')
   const scroller = useRef<HTMLDivElement>(null)
   const [following, setFollowing] = useState(true)
   const last = shown[shown.length - 1]

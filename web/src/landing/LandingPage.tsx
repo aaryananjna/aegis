@@ -4,22 +4,33 @@ import { useAuth } from '../accounts/auth'
 import { LiveCall } from '../live/LiveCall'
 import { AegisWordmark } from '../brand/AegisWordmark'
 import { SiteNav } from '../brand/SiteNav'
+import { CallSides } from './CallSides'
 import { ScaledFrame } from './ScaledFrame'
 
 const STEPS = [
   {
-    title: 'Huge live captions',
-    body: 'The call on speaker becomes large, clear text on the laptop beside the phone, for every call.',
+    title: 'Captions they can read',
+    body: 'Every word of the call shows up on the laptop in large type as it’s spoken, so a quiet or fast caller is easy to follow.',
   },
   {
-    title: 'Reads the scam, not the voice',
-    body: 'It watches what the caller does: pretending to be family, rushing, asking for secrecy or gift cards. A perfect voice clone doesn’t fool it.',
+    title: 'Listens for the script, not the voice',
+    body: 'Scammers follow the same playbook: pretend to be family or the bank, invent an emergency, ask for secrecy, then gift cards or a transfer. Aegis flags those moves, so a cloned voice doesn’t get past it.',
   },
   {
-    title: 'One calm step, and family knows',
-    body: 'Grandma sees one plain instruction. Family get an alert on their phone with the caller’s exact words.',
+    title: 'One step for them, an alert for you',
+    body: 'The grandparent gets a single instruction, like asking for the family code word or hanging up. The family’s phone gets an alert quoting what the caller said.',
   },
 ]
+
+// What it runs on. Plain text on purpose: judges asked, and it should be checkable.
+const STACK = [
+  ['Speech to text', 'Deepgram Nova-3, streamed from the laptop microphone'],
+  ['Scam detection', 'Python rules for 8 scam tactics and a running risk score, plus an AI check alongside them (Groq, with Google Gemini as backup)'],
+  ['Server', 'Python, FastAPI and WebSockets'],
+  ['Accounts and call history', 'TigerDB (PostgreSQL), passwords hashed with Argon2'],
+  ['Screens', 'React, TypeScript, Vite and Tailwind CSS'],
+  ['Family phone link', 'Cloudflare Tunnel'],
+] as const
 
 const linkClass =
   'glass rounded-2xl px-5 py-4 text-[18px] font-semibold text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent'
@@ -33,7 +44,7 @@ export function LandingPage() {
   const loggedIn = auth.status === 'in'
   // The demo plays right here: nothing loads until "Watch a demo call", and Restart replays it.
   const [run, setRun] = useState(0)
-  // Ties this run's two screens together (a tap on Grandma's reaches the phone), per page load.
+  // Ties this run's two screens together (a tap on the grandparent's reaches the phone), per page load.
   const [demoId] = useState(() => Math.random().toString(36).slice(2, 10))
   const demo = useRef<HTMLElement>(null)
   const start = () => {
@@ -50,11 +61,13 @@ export function LandingPage() {
           <AegisWordmark size="hero" />
         </h1>
         <p className="font-display text-[length:clamp(1.75rem,3.2vw,2.75rem)] leading-tight font-bold text-heading">
-          Scam calls, caught by what they say.
+          A second pair of ears on every call.
         </p>
         <p className="max-w-2xl text-[21px] leading-relaxed text-paper-dim">
-          Aegis sits beside a grandparent’s phone on speaker. It captions the call, spots the
-          moves scammers make, tells Grandma one calm thing to do, and alerts the family.
+          Aegis sits next to a grandparent’s phone while it’s on speaker. It turns the call into
+          big captions and listens for the moves scammers use: a family emergency, a rush, a
+          secret, a gift card. When it hears them, it tells the grandparent what to do and alerts
+          the family.
         </p>
         {!loggedIn && (
         <div className="flex flex-wrap items-center gap-4">
@@ -75,31 +88,33 @@ export function LandingPage() {
 
       {!loggedIn && run > 0 && (
         <section ref={demo} aria-labelledby="demo-h" className="flex scroll-mt-6 flex-col gap-4">
-          <div className="flex flex-wrap items-baseline justify-between gap-3">
+          <div className="flex flex-col gap-1">
             <h2 id="demo-h" className="subtitle text-[1.6rem]">The demo call</h2>
-            <p className="text-[16px] text-mist">
-              A recorded sample: a fake grandson asks for bail money. Left: Grandma’s laptop. Right: the family’s phone.
-            </p>
+            <p className="text-[16px] text-mist">A recorded sample, not live: a fake grandson asks for bail money.</p>
           </div>
-          <div className="grid items-start gap-5 lg:grid-cols-[1fr_360px]">
-            <ScaledFrame
-              key={`elder-${run}`}
-              title="Grandma's screen, demo call"
-              src={`/elder?fixture=scam-grandson-ai&embed=1&demo=${demoId}-${run}`}
-              width={1280}
-              height={800}
-              className="w-full rounded-2xl"
-            />
-            <ScaledFrame
-              key={`family-${run}`}
-              title="Family phone, demo call"
-              src={`/family?fixture=scam-grandson-ai&embed=1&demo=${demoId}-${run}`}
-              width={390}
-              height={844}
-              fit
-              className="mx-auto w-full max-w-[360px] rounded-[2rem]"
-            />
-          </div>
+          <CallSides
+            grandparent={
+              <ScaledFrame
+                key={`elder-${run}`}
+                title="The grandparent's screen, demo call"
+                src={`/elder?fixture=scam-grandson-ai&embed=1&demo=${demoId}-${run}`}
+                width={1280}
+                height={800}
+                className="w-full rounded-2xl"
+              />
+            }
+            family={
+              <ScaledFrame
+                key={`family-${run}`}
+                title="The family's phone, demo call"
+                src={`/family?fixture=scam-grandson-ai&embed=1&demo=${demoId}-${run}`}
+                width={390}
+                height={844}
+                fit
+                className="mx-auto w-full max-w-[380px] rounded-[2rem]"
+              />
+            }
+          />
         </section>
       )}
 
@@ -115,6 +130,17 @@ export function LandingPage() {
             </li>
           ))}
         </ul>
+        <div className="glass flex flex-col gap-4 rounded-2xl p-6">
+          <h3 className="subtitle">Tech stack</h3>
+          <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-[max-content_1fr]">
+            {STACK.map(([what, how]) => (
+              <div key={what} className="contents">
+                <dt className="text-[16px] font-semibold text-paper">{what}</dt>
+                <dd className="text-[16px] text-paper-dim">{how}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </section>
 
       {loggedIn && (

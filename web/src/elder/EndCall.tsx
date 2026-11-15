@@ -35,9 +35,12 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
       <button
         type="button"
         onClick={open}
-        className={`min-h-[48px] rounded-xl border-2 border-paper/30 px-5 text-[length:clamp(18px,1.4vw,22px)]
-                    font-semibold text-paper hover:border-paper/60 ${focusRing}`}
+        // Red, so ending the call stands out: white on #B3261E is 6.5:1 in both themes.
+        className={`inline-flex min-h-[58px] items-center gap-3 rounded-2xl bg-[#b3261e] px-6
+                    text-[length:clamp(21px,1.7vw,27px)] font-bold text-white shadow-sm
+                    hover:bg-[#8e1f19] motion-safe:transition-colors ${focusRing}`}
       >
+        <span aria-hidden className="text-[1.1em]"><PhoneDownIcon /></span>
         I've hung up
       </button>
       <dialog
