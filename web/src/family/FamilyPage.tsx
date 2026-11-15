@@ -4,7 +4,7 @@ import { SiteNav } from '../brand/SiteNav'
 import { CheckIcon, KeyIcon, PhoneDownIcon, PhoneIcon, ShieldIcon } from '../elder/Icons'
 import { eventsForTap, useDemoTaps } from '../events/demoLink'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
-import { endSummary, initialFamilyState, reduceFamily, type FamilyAlert } from './state'
+import { endSummary, endTitle, initialFamilyState, reduceFamily, type FamilyAlert } from './state'
 
 // Display only, from the link the server hands out (made up in demos). Sample calls use Rose.
 const SAMPLE = { name: 'Rose', phone: '+15550100' }
@@ -74,7 +74,15 @@ export function FamilyWatch({ feed, name, phone, embedded, demo, onOver }: {
         ) : null}
         {state.endedAt !== null && (
           <div className="glass rounded-2xl p-5">
-            <h2 className="subtitle">Call ended</h2>
+            {state.alerts.length > 0 ? (
+              // After an alert, "is she OK?" comes first (#107).
+              <h2 className="subtitle flex items-center gap-3">
+                <span className="text-calm-text"><CheckIcon /></span>
+                {endTitle(state, name)}
+              </h2>
+            ) : (
+              <h2 className="subtitle">{endTitle(state, name)}</h2>
+            )}
             <p className="mt-1 text-[19px] text-paper-dim">{endSummary(state, name)}</p>
             <p className="mt-2 text-[16px] text-mist">{clock(state.endedAt)}</p>
           </div>
@@ -122,7 +130,7 @@ const KIND = {
   },
 } as const
 
-function AlertCard({
+export function AlertCard({
   alert,
   name,
   phone,
