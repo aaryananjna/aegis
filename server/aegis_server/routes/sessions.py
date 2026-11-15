@@ -25,7 +25,7 @@ from ..config import settings
 from ..history import elder_for_device
 from ..netguard import is_laptop
 from ..roles import ROLES
-from ..sessions import TooManySessions, store
+from ..sessions import AI_ANSWERS, TooManySessions, store
 
 router = APIRouter()
 
@@ -58,6 +58,7 @@ async def health() -> dict:
     return {"ok": True, "server": "aegis", "sessions": len(store),
             "stt": bool(settings.deepgram_api_key),
             "ai_layer": bool(os.environ.get("GROQ_API_KEY") or os.environ.get("GEMINI_API_KEY")),
+            "ai_answers": dict(AI_ANSWERS),
             "accounts_db": db.is_open()}
 
 

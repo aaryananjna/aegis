@@ -1,0 +1,77 @@
+#!/usr/bin/env python3
+"""Live check that the AI layer really answers: Groq on its own, then Gemini on its own.
+
+    cd server && .venv/bin/python scripts/ai-check
+
+Uses the keys in server/.env and costs one request per provider (about 2 of today's quota).
+For each provider it sends one made-up scam call through B's real request and answer code,
+then checks that the detector accepts what came back as AI evidence. Prints no keys and no
+call text beyond the made-up lines below.
+"""
+import asyncio
+import os
+import sys
+import time
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from aegis_server.config import settings  # noqa: E402  (loads server/.env and certifi)
+from hangup_detect import Config, Detector, make_segment  # noqa: E402
+from hangup_detect.llm_runner import LLMRunner, http_transport  # noqa: E402
+
+# Made-up lines, worded so the rules alone barely react: the AI has to do the work.
+LINES = [
+    ("u1", "Hello?"),
+    ("u2", "Hey, it's your nephew. I'm stuck at the station and they won't let me go home."),
+    ("u3", "I need you to pick up some of those store cards and read me the codes on the back."),
+    ("u4", "Don't call my mom about this, okay? She'd lose it."),
+]
+
+
+def detector_with_request():
+    d = Detector(Config(), "ai-check")
+    d.set_elder(None, 0.0)  # the demo's labels-off mode
+    t = 0.0
+    for uid, text in LINES:
+        t += 3.0
+        d.feed(make_segment(uid, 0, "unknown", text, t - 2.5, t, True, speaker_raw=None), t)
+    return d, d.llm_request(t + 0.1), t + 0.1
+
+
+async def check(provider: str) -> bool:
+    key = os.environ.get(f"{provider.upper()}_API_KEY")
+    if not key:
+        print(f"{provider:6} SKIP  no {provider.upper()}_API_KEY in server/.env")
+        return False
+    d, req, now = detector_with_request()
+    if req is None:
+        print(f"{provider:6} FAIL  the detector didn't ask the AI anything (check Config)")
+        return False
+    runner = LLMRunner(http_transport(os.environ), [provider], total_s=6.0, socket_s=5.0)
+    start = time.monotonic()
+    result = await runner.run(req)
+    ms = round((time.monotonic() - start) * 1000)
+    if not result.raw:
+        print(f"{provider:6} FAIL  no answer in {ms} ms: {result.error}")
+        return False
+    events = d.apply_llm(req.seq, result.raw, now)
+    ai = [e for ev in events if ev.get("type") == "tactic_set"
+          for e in ev.get("evidence", []) if e.get("source") == "llm"]
+    tactics = sorted({e["tactic"] for e in ai})
+    risk = [ev for ev in events if ev.get("type") == "risk"]
+    score = f"{risk[-1]['score']:.2f}" if risk else "unchanged"
+    ok = bool(ai)
+    print(f"{provider:6} {'PASS' if ok else 'WEAK'}  answered in {ms} ms, "
+          f"AI evidence accepted: {tactics or 'none'}, risk now {score}")
+    return ok
+
+
+async def main() -> int:
+    print(f"model: groq={os.environ.get('GROQ_MODEL') or 'default'}, "
+          f"gemini={os.environ.get('GEMINI_MODEL') or 'default'}")
+    results = [await check("groq"), await check("gemini")]
+    return 0 if all(results) else 1
+
+
+if __name__ == "__main__":
+    sys.exit(asyncio.run(main()))

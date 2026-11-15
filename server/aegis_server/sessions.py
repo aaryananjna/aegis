@@ -64,6 +64,9 @@ def is_greeting(text: str) -> bool:
 
 _WRITERS: set[asyncio.Task] = set()
 
+# AI answers since the server started, by provider. Numbers only; shown on GET /health.
+AI_ANSWERS: dict[str, int] = {"groq": 0, "gemini": 0, "failed": 0}
+
 
 class Listener:
     def __init__(self, ws: WebSocket, role: str) -> None:
@@ -250,8 +253,14 @@ class Session:
         try:
             result = await self.runner.run(req)
         except Exception as e:
+            AI_ANSWERS["failed"] += 1
             log.warning("session %s: AI layer failed (%s)", self.session_id, type(e).__name__)
             return
+        # Which AI answered (groq, or gemini as backup), so /health shows it really fires.
+        key = (result.provider or "failed") if result.raw else "failed"
+        AI_ANSWERS[key] = AI_ANSWERS.get(key, 0) + 1
+        if not result.raw:
+            log.warning("session %s: AI gave no answer (%s)", self.session_id, result.error)
         await self.put(("llm", (req.seq, result)))
 
     async def ticker(self) -> None:
