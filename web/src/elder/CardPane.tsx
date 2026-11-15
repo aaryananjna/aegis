@@ -21,7 +21,7 @@ export function CardPane({
     <div
       aria-live="assertive"
       aria-atomic
-      className="flex min-h-0 flex-1 flex-col px-[5vw] pt-1 pb-[2.5vh]"
+      className="flex min-h-0 flex-1 flex-col px-[clamp(1rem,3vw,3rem)] pt-0 pb-[clamp(1rem,3vw,3rem)]"
     >
       {state.card ? (
         <Card
@@ -69,7 +69,7 @@ function Card({
       tabIndex={-1}
       role="group"
       aria-label={kind === 'hangup' ? 'Hang up now' : 'What to do'}
-      className={`flex min-h-0 flex-1 flex-col justify-center gap-[clamp(1rem,2vw,1.75rem)] rounded-3xl p-[clamp(1.25rem,2.5vw,2.5rem)]
+      className={`flex min-h-0 flex-1 flex-col justify-center gap-[clamp(1rem,2vw,1.75rem)] rounded-3xl p-[clamp(1.25rem,3vw,3rem)]
                   ${look.box} ${focusRing}`}
     >
       <p className="flex items-center gap-[2vw]">
