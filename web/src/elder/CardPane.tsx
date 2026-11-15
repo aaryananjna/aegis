@@ -69,7 +69,7 @@ function Card({
       tabIndex={-1}
       role="group"
       aria-label={kind === 'hangup' ? 'Hang up now' : 'What to do'}
-      className={`flex min-h-0 flex-1 flex-col justify-center gap-[2vh] rounded-3xl px-[3vw] py-[2vh]
+      className={`flex min-h-0 flex-1 flex-col justify-center gap-[clamp(1rem,2vw,1.75rem)] rounded-3xl p-[clamp(1.25rem,2.5vw,2.5rem)]
                   ${look.box} ${focusRing}`}
     >
       <p className="flex items-center gap-[2vw]">
@@ -77,7 +77,8 @@ function Card({
           {look.icon}
         </span>
         {/* Bigger than any caption (#78): the instruction is the one thing to read. "Hang up." most of all. */}
-        <span className={`${kind === 'hangup' ? 'text-[length:clamp(52px,5vw,76px)] font-bold' : 'text-[length:clamp(40px,3.6vw,56px)] font-semibold'}
+        {/* Sized by height too, so it fits the 40% band on wide, short screens and keeps equal padding. */}
+        <span className={`${kind === 'hangup' ? 'text-[length:clamp(36px,min(5vw,6vh),76px)] font-bold' : 'text-[length:clamp(30px,min(3.6vw,4.8vh),56px)] font-semibold'}
                           leading-[1.12] text-balance`}>
           {text}
         </span>
