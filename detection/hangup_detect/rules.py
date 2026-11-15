@@ -30,7 +30,7 @@ PATTERNS: dict[T, list[str]] = {
         r"\b((your|the) )?bank'?s? (fraud|security) (department|team|division|line|desk|center|office)\b",
         r"\b(public defender|your (grandson'?s|lawyer|attorney))\b",
         # FTC: prize and lottery callers, fake FTC/FBI agents with badge numbers
-        r"\byou('ve| have)? (just )?won\b(?=.{0,40}(\$\s?\d|\b\d[\d,]* (dollars|bucks)\b|\b(lottery|sweepstakes|prize|million|"
+        r"\byou('ve| have)? (just )?won\b(?=.{0,40}(\$\s?\d{1,3}(,\d{3})+|\$\s?\d{4,}|\b\d{1,3}(,\d{3})+ (dollars|bucks)\b|\b\d{4,} (dollars|bucks)\b|\b(lottery|sweepstakes|prize|million|"
         r"thousand|grant|cash|car|vacation)\b))",
         # A stranger's money lure (demo test, 2026-11-15): big free money or a grant, before any ask.
         # The lure alone stays Normal; it makes the fee or bank number that follows a Warning.
