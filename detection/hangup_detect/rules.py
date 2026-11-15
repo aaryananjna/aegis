@@ -260,7 +260,8 @@ _OCCASION = re.compile(r"\b(birthday|surprise|christmas|hanukkah|holiday|graduat
                        r"|presents?|party)\b", _I)
 _PAYS_WITH_CARD = re.compile(r"\b(numbers?|codes?|scratch|pin|back of)\b", _I)
 _YOU = re.compile(r"\b(you|your|ya)\b", _I)
-_SENTENCE_END = re.compile(r"[.!?]")
+# A sentence ends at . ! or ?, but not at the dot of a title ("Dr. Lee").
+_SENTENCE_END = re.compile(r"(?<!\bDr)(?<!\bMr)(?<!\bMrs)(?<!\bMs)(?<!\bSt)(?<!\bJr)(?<!\bSr)[.!?]")
 
 
 @dataclass(frozen=True)
@@ -323,7 +324,7 @@ def find_evidence(text: str, utterance_id: str, t_s: float,
         return []
     out: list[Evidence] = []
     for tactic, patterns in COMPILED.items():
-        own = {T.SECRECY: _happy_secret, T.PAYMENT: _calls_the_number}.get(tactic)
+        own = {T.SECRECY: _happy_secret, T.PAYMENT: _calls_the_number, T.URGENCY: _own_promise}.get(tactic)
 
         def skip(text, m, own=own, tactic=tactic):
             return (_reported(text, m, ctx) or (own is not None and own(text, m))
@@ -345,6 +346,20 @@ _CALL_BEFORE = re.compile(r"\b(call|dial|phone|ring)( the| that)?\s*$", _I)
 
 def _calls_the_number(text: str, m: re.Match) -> bool:
     return bool(re.match(r"numbers?\b", m.group(0), _I) and _CALL_BEFORE.search(text[:m.start()]))
+
+
+# "I'll fax it right now" promises the speaker's own action; it doesn't rush the listener.
+# Only first person singular, never when the same sentence turns on the listener or threatens.
+_OWN_PROMISE = re.compile(r"\b(i'?ll|i will|let me|i'?m going to|i am going to)\b.{0,60}$", _I)
+_TURNS_ON_YOU = re.compile(r"\byou (need|have|must|got|gotta|should|better|can)\b|\byour (money|account|card|savings|bank)\b"
+                           r"|\bunless\b|\bor else\b", _I)
+
+
+def _own_promise(text: str, m: re.Match) -> bool:
+    start = _sentence_start(text, m.start())
+    rest = _SENTENCE_END.search(text, m.end())
+    sentence = text[start:rest.end() if rest else len(text)]
+    return bool(_OWN_PROMISE.search(text[start:m.start()])) and not _TURNS_ON_YOU.search(sentence)
 
 
 def _happy_secret(text: str, m: re.Match) -> bool:

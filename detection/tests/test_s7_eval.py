@@ -55,7 +55,7 @@ def test_heldout_refuses_shared_groups(tmp_path):
 
 def test_dev_set_runs_and_reports():
     m = run_set("dev", root=ROOT / "eval" / "calls")
-    assert m["n_scam"] == 13 and m["n_benign"] == 14
+    assert m["n_scam"] == 13 and m["n_benign"] == 15
     assert m["rejected"] == []
     assert m["latency_ms"]["n"] > 0
 
