@@ -5,9 +5,10 @@ audio, each replacing the last, then one `is_final` result for that stretch. The
 stretch starts. With diarize on, each word carries a `speaker` number.
 
 How that maps to captions:
-- One stretch of audio is split into lines: a new line when the speaker changes or a sentence
-  ends (., ?, !; not after titles like "Dr."). Each line is one caption with utterance_id
-  `u<stretch>-<line>`.
+- One stretch of audio is split into runs of words by the same speaker. While it's still being
+  heard, each run is one growing caption, `u<stretch>-<run>`. When it's final, the run is split
+  into sentences (., ?, !; not after titles like "Dr."): the first keeps the run's id and the
+  rest get `u<stretch>-<run>.<n>`, so no line is left empty or out of order.
 - `revision` counts results within the stretch, so every interim update has a higher revision.
 - When the final for a stretch comes, every run gets `is_final: true`. A run that existed in an
   interim but not in the final (Deepgram re-split the speakers) is closed with an empty final,
@@ -38,21 +39,25 @@ def _ends_sentence(word: dict) -> bool:
 
 
 def _runs(words: list[dict]) -> list[tuple[str | None, list[dict]]]:
-    """Split into caption lines: a new line on a speaker change or after a sentence ends.
-
-    Without speaker labels (the demo) one stretch of audio can hold several people's
-    sentences back to back, so cutting at sentence ends keeps lines short and readable.
-    """
+    """Split into runs of words by the same speaker."""
     runs: list[tuple[str | None, list[dict]]] = []
-    cut = False
     for w in words:
         spk = _speaker(w)
-        if runs and runs[-1][0] == spk and not cut:
+        if runs and runs[-1][0] == spk:
             runs[-1][1].append(w)
         else:
             runs.append((spk, [w]))
-        cut = _ends_sentence(w)
     return runs
+
+
+def _sentences(words: list[dict]) -> list[list[dict]]:
+    """Split one speaker's run into sentences (., ?, !; not after titles like "Dr.")."""
+    out: list[list[dict]] = [[]]
+    for w in words:
+        out[-1].append(w)
+        if _ends_sentence(w):
+            out.append([])
+    return [s for s in out if s]
 
 
 def _text(words: list[dict]) -> str:
@@ -82,13 +87,19 @@ class CaptionMaker:
         out: list[dict] = []
         seen: set[str] = set()
         for k, (spk, run) in enumerate(_runs(words)):
-            uid = f"u{self._stretch}-{k}"
-            seen.add(uid)
-            cap = self._caption(uid, spk, _text(run), run[0].get("start", 0.0),
-                                run[-1].get("end", 0.0), is_final)
-            out.append(cap)
-            if not is_final:
-                self._open[uid] = cap
+            # While someone is still talking, one growing line per speaker: Deepgram keeps
+            # moving the punctuation, so splitting interims would leave empty or shuffled
+            # lines. On the final, the first sentence takes over that line and any further
+            # sentences become new lines (u<stretch>-<run>.<n>).
+            pieces = _sentences(run) if is_final else [run]
+            for j, piece in enumerate(pieces):
+                uid = f"u{self._stretch}-{k}" + (f".{j}" if j else "")
+                seen.add(uid)
+                cap = self._caption(uid, spk, _text(piece), piece[0].get("start", 0.0),
+                                    piece[-1].get("end", 0.0), is_final)
+                out.append(cap)
+                if not is_final:
+                    self._open[uid] = cap
         if is_final:
             # Close lines from earlier interims that the final no longer has.
             for uid, old in self._open.items():
