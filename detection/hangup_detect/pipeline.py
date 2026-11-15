@@ -121,8 +121,8 @@ class Detector:
         utts = tuple((uid, seg.text) for uid, (seg, arrival) in self._finals.items()
                      if now - arrival < LLM_WINDOW_S
                      and (self._role(seg) != "elder" if mixed else self._role(seg) == "caller"))
-        if not utts:
-            return None
+        if not utts or sum(len(text.split()) for _, text in utts) < self.cfg.llm_min_words:
+            return None  # nothing yet, or only a greeting: keep the request for real words
         self._llm_dirty = False
         self._llm_last_s = now
         self._llm_seq += 1

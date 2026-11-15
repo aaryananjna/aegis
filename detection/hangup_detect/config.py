@@ -31,7 +31,8 @@ class Config:
     occasion_window_s: float = 20.0  # a birthday/surprise/holiday explains gift cards or secrecy this long
     report_window_s: float = 12.0  # after a retelling or warning, only direct asks count this long
     llm_fail_streak: int = 3  # AI failures in a row before the screens say rules only
-    llm_min_interval_s: float = 8.0  # at most one AI request per 8 s (free-tier token limits)
+    llm_min_interval_s: float = 6.0  # at most one AI request per 6 s (~10/min x ~750 tokens < Groq's 8,000/min)
+    llm_min_words: int = 4  # don't spend a request until the window has this many words (not on a bare "Hello?")
     llm_mixed_always: bool = True  # labels off: let the AI read both voices from the first line
     half_life_s: float = 120.0
     horizon_s: float = 600.0
