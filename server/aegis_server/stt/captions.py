@@ -5,8 +5,9 @@ audio, each replacing the last, then one `is_final` result for that stretch. The
 stretch starts. With diarize on, each word carries a `speaker` number.
 
 How that maps to captions:
-- One stretch of audio is split into runs of words by the same speaker. Each run is one caption
-  with utterance_id `u<stretch>-<run>`.
+- One stretch of audio is split into lines: a new line when the speaker changes or a sentence
+  ends (., ?, !; not after titles like "Dr."). Each line is one caption with utterance_id
+  `u<stretch>-<line>`.
 - `revision` counts results within the stretch, so every interim update has a higher revision.
 - When the final for a stretch comes, every run gets `is_final: true`. A run that existed in an
   interim but not in the final (Deepgram re-split the speakers) is closed with an empty final,
@@ -25,14 +26,32 @@ def _speaker(word: dict) -> str | None:
     return None if s is None else str(s)
 
 
+# Titles Deepgram writes with a dot that don't end a sentence.
+_TITLES = {"dr.", "mr.", "mrs.", "ms.", "st.", "jr.", "sr.", "mt.", "vs."}
+
+
+def _ends_sentence(word: dict) -> bool:
+    w = (word.get("punctuated_word") or "").strip()
+    if not w or w.lower() in _TITLES:
+        return False
+    return w[-1] in ".?!" or w.endswith(('."', '?"', '!"'))
+
+
 def _runs(words: list[dict]) -> list[tuple[str | None, list[dict]]]:
+    """Split into caption lines: a new line on a speaker change or after a sentence ends.
+
+    Without speaker labels (the demo) one stretch of audio can hold several people's
+    sentences back to back, so cutting at sentence ends keeps lines short and readable.
+    """
     runs: list[tuple[str | None, list[dict]]] = []
+    cut = False
     for w in words:
         spk = _speaker(w)
-        if runs and runs[-1][0] == spk:
+        if runs and runs[-1][0] == spk and not cut:
             runs[-1][1].append(w)
         else:
             runs.append((spk, [w]))
+        cut = _ends_sentence(w)
     return runs
 
 
