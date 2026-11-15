@@ -164,16 +164,16 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
   // bigger share of the screen. It moves once, when the card first shows, with no animation.
   const cardUp = state.card !== null
   return (
-    <main className={`grid h-dvh overflow-hidden ${cardUp ? 'grid-rows-[3fr_2fr]' : 'grid-rows-[58fr_42fr]'}`}>
+    <main className={`grid h-dvh overflow-hidden ${cardUp ? 'grid-rows-[2fr_3fr]' : 'grid-rows-[58fr_42fr]'}`}>
       <h1 className="sr-only">Aegis call captions</h1>
       <CaptionPane state={state} speakerLabel={speakerLabel} />
       <div
         data-band
         // No fade (#86): the band's ink switches at once, so the color must too, or the words
         // are briefly dark-on-dark mid-fade.
-        className={`flex min-h-0 flex-col ${cardUp ? 'order-first' : ''} ${TINT[state.level ?? 'none']}`}
+        className={`flex min-h-0 flex-col ${TINT[state.level ?? 'none']}`}
       >
-        <StatusBand level={state.level} notes={notes} hangup={state.card?.kind === 'hangup'} top={cardUp} brand={
+        <StatusBand level={state.level} notes={notes} hangup={state.card?.kind === 'hangup'} top={false} brand={
           <>
             {familyUrl && !state.ended && <FamilyLinkButton familyUrl={familyUrl} />}
             {!state.ended && <EndCall onEnd={endCall} hangupShowing={state.card?.kind === 'hangup'} />}
