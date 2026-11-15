@@ -1,0 +1,14 @@
+{
+ "0": {
+  "latency_s": 0.26,
+  "raw": "{\"tactics\": []}"
+ },
+ "3": {
+  "latency_s": 0.7,
+  "raw": "{\"tactics\": [{\"tactic\": \"distress\", \"utterance_id\": \"u1\", \"quote\": \"I got in an accident and I'm in trouble.\"}, {\"tactic\": \"secrecy\", \"utterance_id\": \"u3\", \"quote\": \"Please don't tell Mom, she'll be so upset.\"}]}"
+ },
+ "6": {
+  "latency_s": 0.69,
+  "raw": "{\"tactics\": [{\"tactic\": \"impersonation\", \"utterance_id\": \"u1\", \"quote\": \"Nana, it's me. I got in an accident and I'm in trouble.\"}, {\"tactic\": \"distress\", \"utterance_id\": \"u1\", \"quote\": \"I got in an accident and I'm in trouble.\"}, {\"tactic\": \"secrecy\", \"utterance_id\": \"u3\", \"quote\": \"Please don't tell Mom, she'll be so upset.\"}, {\"tactic\": \"urgency\", \"utterance_id\": \"u5\", \"quote\": \"I need bail money right now.\"}, {\"tactic\": \"payment\", \"utterance_id\": \"u5\", \"quote\": \"They only take Google Play gift cards.\"}]}"
+ }
+}
