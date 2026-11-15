@@ -247,3 +247,9 @@ body {
     animation-duration: 0s !important;
   }
 }
+
+/* The elder screen's caption history: a thin scrollbar in the theme's ink. */
+.caption-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklab, var(--color-paper) 30%, transparent) transparent;
+}

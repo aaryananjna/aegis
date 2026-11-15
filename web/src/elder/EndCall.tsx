@@ -1,4 +1,5 @@
 import { useRef, type KeyboardEvent, type MouseEvent } from 'react'
+import { PhoneDownIcon } from './Icons'
 import { focusRing } from './VoicePicker'
 
 /**
@@ -43,24 +44,34 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
         onKeyDown={trap}
         onClick={outside}
         aria-labelledby="end-title"
-        className="m-auto w-[min(90vw,44rem)] rounded-3xl border-2 border-paper/20 bg-dusk-raised p-0 text-paper
-                   backdrop:bg-black/60"
+        aria-describedby={hangupShowing ? 'end-note' : undefined}
+        className="m-auto w-[min(90vw,60rem)] overflow-hidden rounded-[2rem] border border-[var(--glass-border-hot)]
+                   bg-dusk-raised p-0 text-paper shadow-[0_30px_80px_-20px_rgba(0,0,0,0.6)]
+                   backdrop:bg-black/55 backdrop:backdrop-blur-sm"
       >
-        <div className="flex flex-col gap-6 p-[clamp(1.5rem,3vw,2.5rem)]">
-          <h2 id="end-title" className="font-display text-[length:clamp(32px,3vw,46px)] leading-tight font-bold">
-            Are you sure this call is over?
-          </h2>
-          {hangupShowing && (
-            <p className="font-display text-[length:clamp(24px,2vw,30px)] font-semibold text-paper-dim">Did you hang up on them? Good.</p>
-          )}
-          <div className="grid gap-4 sm:grid-cols-2">
+        <div className="flex flex-col items-center gap-8 px-[clamp(1.75rem,4.5vw,4rem)] pt-[clamp(2rem,4.5vw,3.5rem)] pb-[clamp(1.75rem,4vw,3.25rem)] text-center">
+          <span className="grid size-[clamp(72px,6.5vw,104px)] place-items-center rounded-full bg-accent/12
+                           text-[length:clamp(36px,3.4vw,52px)] text-heading ring-1 ring-accent/30">
+            <PhoneDownIcon />
+          </span>
+          <div className="flex flex-col gap-3">
+            <h2 id="end-title" className="font-display text-[length:clamp(40px,4.2vw,64px)] leading-[1.08] font-semibold tracking-[-0.01em] text-balance">
+              Are you sure this call is over?
+            </h2>
+            {hangupShowing && (
+              <p id="end-note" className="font-display text-[length:clamp(26px,2.5vw,36px)] text-paper-dim italic">
+                Did you hang up on them? Good.
+              </p>
+            )}
+          </div>
+          <div className="grid w-full gap-4 sm:grid-cols-2">
             <button
               ref={no}
               type="button"
               autoFocus
               onClick={close}
-              className={`min-h-[80px] rounded-2xl border-4 border-calm bg-calm/15 px-4
-                          font-display text-[length:clamp(24px,2.2vw,32px)] font-bold text-paper ${focusRing}`}
+              className={`btn-accent min-h-[clamp(80px,11vh,112px)] rounded-2xl px-5
+                          font-display text-[length:clamp(26px,2.6vw,38px)] font-semibold ${focusRing}`}
             >
               No, keep listening
             </button>
@@ -71,8 +82,9 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
                 close()
                 onEnd()
               }}
-              className={`min-h-[80px] rounded-2xl border-4 border-paper/40 px-4
-                          font-display text-[length:clamp(24px,2.2vw,32px)] font-bold text-paper ${focusRing}`}
+              className={`min-h-[clamp(80px,11vh,112px)] rounded-2xl border-2 border-paper/35 px-5
+                          font-display text-[length:clamp(26px,2.6vw,38px)] font-semibold text-paper
+                          hover:border-paper/70 hover:bg-paper/5 motion-safe:transition-colors ${focusRing}`}
             >
               Yes, the call is over
             </button>
