@@ -7,6 +7,7 @@ import { PairPage } from './accounts/PairPage'
 import { ElderScreen } from './elder/ElderScreen'
 import { EvidencePage } from './evidence/EvidencePage'
 import { FamilyPage } from './family/FamilyPage'
+import { WatchPage } from './family/WatchPage'
 import { LandingPage } from './landing/LandingPage'
 
 export function App() {
@@ -20,6 +21,8 @@ export function App() {
           {/* Sample calls (?fixture=) open without a login, so the offline fallback works (#78). */}
           <Route path="/evidence" element={<RequireAuth unlessSample><EvidencePage /></RequireAuth>} />
           <Route path="/home" element={<RequireAuth><HomePage /></RequireAuth>} />
+          {/* The family phone (#94): log in once, calls show up by themselves. */}
+          <Route path="/watch" element={<RequireAuth><WatchPage /></RequireAuth>} />
           <Route path="/wordmark" element={<RequireAuth><WordmarkPage /></RequireAuth>} /> {/* temporary: pick a split */}
           <Route path="/account" element={<AccountPage />} />
           {/* Never behind a login: Grandma's laptop is paired once, and the family phone opens the

@@ -22,8 +22,13 @@ export function FamilyPage() {
   return <FamilyWatch key={JSON.stringify(feed)} feed={feed} name={name} phone={phone} embedded={embedded} demo={demo} />
 }
 
-function FamilyWatch({ feed, name, phone, embedded, demo }: {
+/**
+ * The family's view of one call. `onOver` (used by /watch) hears when the call has ended or
+ * its link was refused, so the page can go back to waiting for the next call.
+ */
+export function FamilyWatch({ feed, name, phone, embedded, demo, onOver }: {
   feed: Feed; name: string; phone: string | null; embedded: boolean; demo: string | null
+  onOver?: () => void
 }) {
   const { events, receivedAt, connection, error, playLocally } = useEvents(feed)
   useDemoTaps(demo, (tap) => playLocally(eventsForTap(tap, 'sample'), { stop: true }))
@@ -33,6 +38,14 @@ function FamilyWatch({ feed, name, phone, embedded, demo }: {
   )
   useBuzzOnNewAlert(state.alerts.length)
   useKeepScreenOn()
+  const over = state.endedAt !== null || error !== null
+  const reportOver = useRef(onOver)
+  useEffect(() => {
+    reportOver.current = onOver
+  })
+  useEffect(() => {
+    if (over) reportOver.current?.()
+  }, [over])
 
   useEffect(() => {
     document.title = state.alerts.length ? `Alert: ${name} may be on a scam call` : 'Aegis'
@@ -206,7 +219,7 @@ function Connection({ feed, connection }: { feed: Feed; connection: string }) {
   return <>{words[connection] ?? 'Connecting…'}</>
 }
 
-function clock(ms: number): string {
+export function clock(ms: number): string {
   return new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
 }
 
@@ -226,7 +239,7 @@ function useBuzzOnNewAlert(count: number) {
 }
 
 /** Keep the phone awake while watching, so the page doesn't sleep and drop the connection. */
-function useKeepScreenOn() {
+export function useKeepScreenOn() {
   useEffect(() => {
     let lock: { release: () => Promise<void> } | null = null
     const request = async () => {
