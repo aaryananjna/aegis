@@ -29,6 +29,7 @@ import logging
 import os
 import re
 import secrets
+import time
 from collections import deque
 
 from fastapi import WebSocket
@@ -125,6 +126,8 @@ class Session:
         self.elder_pick: str | None = None
         # Call history in TigerDB, only for calls from a paired laptop (numbers only).
         self.recorder = None
+        self.elder_id = elder_id      # which grandparent (calls from a paired laptop only)
+        self.started_at = time.time()
         # Test transcripts (opt-in, staged calls only): a local .call file, never the database.
         self.transcript = TestTranscript(session_id) if save_transcript else None
         self.elder_raw: str | None = None
@@ -399,6 +402,12 @@ class SessionStore:
 
     def __len__(self) -> int:
         return len(self._sessions)
+
+    def live_for(self, elder_id) -> "Session | None":
+        """The newest call still running for this grandparent, if any."""
+        calls = [s for s in self._sessions.values()
+                 if s.elder_id == elder_id and not s.ended]
+        return max(calls, key=lambda s: s.started_at, default=None)
 
     def mic_calls(self) -> list[Session]:
         return [s for s in self._sessions.values() if s.mic_on and not s.ended]
