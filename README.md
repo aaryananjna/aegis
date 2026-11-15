@@ -33,9 +33,14 @@ Kolakaluri (detection) and Aaryan Anjna (screens and demo).
 - **An AI layer** (Groq, Gemini as backup) reads the caller's recent lines for tricks the
   rules don't know. It can only **add** risk: every quote it gives must match a real line, it's
   capped, and a caller saying "ignore your instructions" can't talk the score down. It's asked
-  at most every 8 seconds, so a long call stays within free-tier limits.
+  every few seconds at most so a long call stays within the free plan's limits. If Groq is slow or
+  down Gemini takes over and the grandparent never sees an error.
 - **A risk score** combines both, with decay over time and extra weight when tricks appear
-  together (pretending to be the bank plus asking to move money).
+  together (pretending to be the bank plus asking to move money). A bank claim plus a scare
+  like "someone just tried to take money from your account" counts as two tricks too.
+- **It knows talking about a scam from a scam.** A daughter warning her mom about gift card
+  calls stays calm and so does a friend retelling a call she beat. A surprise party, a real
+  bank that already blocked a charge and "I'll fax it right now" stay calm too.
 - **With one shared mic** the server runs without speaker labels, so every line is scored, and
   the AI reads both voices and works out which lines are the caller's. When it quotes two or
   more different tricks, it can raise the warning on its own.
@@ -49,7 +54,7 @@ Once, from the repo root:
 
 ```
 python3 -m venv .venv && source .venv/bin/activate
-pip install -e detection -e server
+pip install -e detection -e "server[mic]"   # [mic] adds sounddevice for the laptop mic
 cp server/.env.example server/.env        # fill in the keys (below)
 python -m aegis_server.seed               # optional: demo family accounts (needs DEMO_PASSWORD)
 (cd web && npm ci)
@@ -59,15 +64,16 @@ python -m aegis_server.seed               # optional: demo family accounts (need
 for the AI layer (Gemini is the backup), and `TIGER_DATABASE_URL` and `DEMO_PASSWORD` for
 family accounts and call history.
 
-Then three terminals, each from the repo root:
+Then two terminals, each from the repo root:
 
 ```
 uvicorn aegis_server.main:app --app-dir server --port 8000   # 1: server
 cd web && npm run dev                                         # 2: screens at http://localhost:5173
-server/scripts/start-call                                     # 3: starts a call, prints the elder and family links
 ```
 
-`server/scripts/end-call` ends it.
+Start a call with the "Start a call" button on the front page at `http://localhost:5173` or
+run `server/scripts/start-call` in a third terminal to print the elder and family links.
+`server/scripts/end-call` ends a call. Starting a new one also ends any call that still has the mic.
 
 No keys? The detector still runs on rules only, and the web app can replay sample calls:
 `http://localhost:5173/elder?fixture=scam-grandson`.
@@ -78,7 +84,7 @@ No keys? The detector still runs on rules only, and the web app can replay sampl
 |---|---|
 | `detection/` | The detector: rules, risk score, cards, AI layer, replay, test calls and tests |
 | `server/` | FastAPI server: sessions, Deepgram live captions, the event stream, family accounts and call history (TigerDB) |
-| `web/` | The grandparent screen (`/elder`), family page (`/family`), evidence page (`/evidence`) |
+| `web/` | The front page (start a live call), the grandparent screen (`/elder`), family page (`/family`), evidence page (`/evidence`) |
 | `tools/dev_server/` | A small fallback server with the same routes, plus typed captions |
 | `CONTRACTS.md` | The exact messages between the parts |
 | `docs/` | Demo runbook and design notes |
@@ -90,7 +96,9 @@ No keys? The detector still runs on rules only, and the web app can replay sampl
 - Caption text isn't logged. The database keeps only when calls happened and how risky they
   looked (scores and levels), never what was said.
 - Passwords are stored only as argon2 hashes. Login and pairing tokens are stored only as
-  hashes.
+  hashes in the database.
+- Saving a call's words is off by default. Only staged test calls, started on purpose with
+  `start-call --transcript`, are written to `server/recordings/` (gitignored).
 - The AI layer gets at most the last 60 seconds of text. With one shared mic it can't tell
   the voices apart, so both voices go to it, unlabeled.
 - The app never asks for or stores the family code word.
