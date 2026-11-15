@@ -17,7 +17,8 @@ export function App() {
           {/* Open to all: the demo when logged out, live calls once logged in. */}
           <Route path="/" element={<LandingPage />} />
           {/* Behind the login. */}
-          <Route path="/evidence" element={<RequireAuth><EvidencePage /></RequireAuth>} />
+          {/* Sample calls (?fixture=) open without a login, so the offline fallback works (#78). */}
+          <Route path="/evidence" element={<RequireAuth unlessSample><EvidencePage /></RequireAuth>} />
           <Route path="/home" element={<RequireAuth><HomePage /></RequireAuth>} />
           <Route path="/wordmark" element={<RequireAuth><WordmarkPage /></RequireAuth>} /> {/* temporary: pick a split */}
           <Route path="/account" element={<AccountPage />} />

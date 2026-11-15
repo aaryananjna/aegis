@@ -31,9 +31,12 @@ export function StatusBand({
         <span className={look ? look.text : 'text-mist'}>{look ? look.word : 'Listening'}</span>
       </p>
       {children}
-      <div className="flex items-center gap-6">
+      {/* The notes wrap beside the bigger red button instead of squeezing it. */}
+      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-x-6 gap-y-2">
         {notes.length > 0 && (
-          <p className="text-[length:clamp(18px,1.4vw,22px)] text-mist">{notes.join(' · ')}</p>
+          <p className="max-w-[28ch] text-right text-[length:clamp(17px,1.3vw,21px)] leading-snug text-mist">
+            {notes.join(' · ')}
+          </p>
         )}
         {brand}
       </div>

@@ -46,7 +46,8 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
   const [reply, setReply] = useState<Reply>('none')
   const [endNote, setEndNote] = useState<string | null>(null)
   // Started from the site on this laptop (#63): the family link, to show as a QR code.
-  const familyUrl = feed.kind === 'live' && !embedded ? savedFamilyUrl.get(feed.sessionId) : null
+  // Either kept by the front page, or after #family= in the URL (POST /sessions/start, #75).
+  const familyUrl = feed.kind === 'live' && !embedded ? savedFamilyUrl.get(feed.sessionId) ?? familyFromHash() : null
   const endCall = () => {
     if (feed.kind === 'fixture') {
       // A sample has no server: end it here, and on the family phone beside it.
@@ -125,7 +126,7 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
   if (picked?.speakerRaw === null) notes.push('Listening to everyone on the call')
   if (state.ended) notes.push('Call ended')
   else if (endNote) notes.push(endNote)
-  if (state.warning) notes.push(state.warning)
+  // Detector and server warnings are for us, not Grandma (#78): they stay off this screen.
   if (reply === 'sample') notes.push('Sample call: your answer was not sent')
   if (reply === 'not-sent') notes.push('Answer not sent: no connection. Tap again in a moment.')
 
@@ -194,4 +195,16 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
       </div>
     </main>
   )
+}
+
+/** The family link from "#family=<url>" (never sent to a server); only http(s) links. */
+function familyFromHash(): string | null {
+  const raw = new URLSearchParams(window.location.hash.slice(1)).get('family')
+  if (!raw) return null
+  try {
+    const u = new URL(raw)
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : null
+  } catch {
+    return null
+  }
 }

@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { ApiError, api, deviceToken, type ElderRef, type User } from '../accounts/api'
 import { useEvents } from '../events/useEvents'
+import { CallSides } from '../landing/CallSides'
 import { ScaledFrame } from '../landing/ScaledFrame'
-import { FamilyQr } from './FamilyQr'
 import { localPath, savedFamilyUrl } from './familyLink'
 
 type Started = { sessionId: string; elderUrl: string; familyUrl: string; recorded: boolean }
@@ -47,7 +47,7 @@ const startError = (e: unknown): string => {
 }
 
 /**
- * The logged-in front page (#63): start a live call from here, then watch Grandma's live
+ * The logged-in front page (#63): start a live call from here, then watch the grandparent's live
  * captions right on this page, with the family link as a QR code beside them. The server
  * listens on the laptop mic (`mic: true`) with speaker labels off, as in the demo setup.
  */
@@ -62,6 +62,10 @@ export function LiveCall() {
     savedCall.set(c)
     setCallState(c)
   }
+  const clearCall = useCallback(() => {
+    savedCall.set(null)
+    setCallState(null)
+  }, [])
 
   useEffect(() => {
     api<{ user: User; elders: ElderRef[] }>('GET', '/auth/me')
@@ -92,7 +96,7 @@ export function LiveCall() {
     }
   }
 
-  if (call) return <Running call={call} onDone={() => setCall(null)} onFullScreen={() => navigate(localPath(call.elderUrl))} />
+  if (call) return <Running call={call} onDone={clearCall} onFullScreen={() => navigate(localPath(call.elderUrl))} />
 
   return (
     <section aria-labelledby="start-h" className="glass flex flex-col gap-5 rounded-3xl p-[clamp(1.25rem,3vw,2rem)]">
@@ -148,59 +152,64 @@ export function LiveCall() {
 
 function Running({ call, onDone, onFullScreen }: { call: Started; onDone: () => void; onFullScreen: () => void }) {
   const elderPath = localPath(call.elderUrl)
-  const embedPath = `${elderPath}&embed=1`
-  // Listen as the family does, only to know when the call ends (Grandma's End call, or the server).
+  const familyPath = localPath(call.familyUrl)
+  // Listen as the family does, only to know when the call ends (the grandparent's button, or the server).
   const familyFeed = useMemo(() => {
     const q = new URL(call.familyUrl).searchParams
     return { kind: 'live' as const, sessionId: call.sessionId, role: 'family' as const, token: q.get('token') }
   }, [call])
   const { events, error } = useEvents(familyFeed)
-  // A refused link (error) means the server no longer has this call, e.g. it restarted.
   const ended = error !== null || events.some((e) => e.type === 'call_ended')
+  // Refused before hearing anything: a call kept from earlier in this tab that the server no
+  // longer has (it ended, or the server restarted). Drop it and offer a new call instead.
+  const stale = error !== null && events.length === 0
+  useEffect(() => {
+    if (stale) onDone()
+  }, [stale, onDone])
   const evidence = `/evidence?${new URL(call.elderUrl).searchParams}`
+  const big = 'min-h-[60px] rounded-2xl px-7 text-[19px] font-semibold focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent'
 
+  if (stale) return null
   return (
-    <section aria-labelledby="live-h" className="flex flex-col gap-4">
+    <section aria-labelledby="live-h" className="flex flex-col gap-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h2 id="live-h" className="subtitle text-[1.6rem]">{ended ? 'The call has ended' : 'Live call'}</h2>
+        <h2 id="live-h" className="subtitle text-[1.8rem]">{ended ? 'The call has ended' : 'Live call'}</h2>
         <p className="text-[16px] text-mist">
           {call.recorded ? 'Saved to the grandparent’s history.' : 'Not saved: this laptop isn’t paired.'}
         </p>
       </div>
-      <div className="grid items-start gap-5 lg:grid-cols-[1fr_300px]">
-        <ScaledFrame title="Grandma's screen, live call" src={embedPath} width={1280} height={800} className="w-full rounded-2xl" />
-        <aside aria-labelledby="fam-h" className="glass flex flex-col gap-4 rounded-2xl p-5">
-          <h3 id="fam-h" className="subtitle">Family phone</h3>
-          {ended ? (
-            <p className="text-[17px] text-paper-dim">The family link stopped working when the call ended.</p>
-          ) : (
-            <>
-              <p className="text-[16px] text-paper-dim">Scan to follow this call and get alerts.</p>
-              <FamilyQr familyUrl={call.familyUrl} />
-            </>
-          )}
-        </aside>
-      </div>
+      <CallSides
+        grandparent={
+          <ScaledFrame title="The grandparent's screen, live call" src={`${elderPath}&embed=1`}
+                       width={1280} height={800} className="w-full rounded-2xl" />
+        }
+        family={
+          <ScaledFrame title="The family's phone, live call" src={`${familyPath}&embed=1`}
+                       width={390} height={844} fit className="mx-auto w-full max-w-[380px] rounded-[2rem]" />
+        }
+      />
       <div className="flex flex-wrap gap-3">
         {ended ? (
-          <button type="button" onClick={onDone}
-                  className="btn-accent min-h-[52px] px-6 text-[18px] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
+          <button type="button" onClick={onDone} className={`btn-accent ${big}`}>
             Start another call
           </button>
         ) : (
-          <button type="button" onClick={onFullScreen}
-                  className="glass min-h-[52px] rounded-2xl px-6 text-[18px] font-semibold text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-            Open Grandma's screen full size
-          </button>
+          <>
+            <button type="button" onClick={onFullScreen} className={`btn-accent ${big}`}>
+              Open the grandparent’s screen full size
+            </button>
+            {/* The link's token stops working when the call ends, like the family link. */}
+            <Link to={evidence} className={`glass inline-flex items-center text-paper ${big}`}>
+              How Aegis judged this call <span aria-hidden className="ml-2">→</span>
+            </Link>
+          </>
         )}
-        {!ended && (
-  // The link's token stops working when the call ends, like the family link.
-        <Link to={evidence}
-              className="glass inline-flex min-h-[52px] items-center rounded-2xl px-6 text-[18px] font-semibold text-paper focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent">
-          How Aegis judged this call <span aria-hidden className="ml-2">→</span>
-        </Link>
-)}
       </div>
+      {!ended && (
+        <p className="text-[16px] text-mist">
+          For a real family phone: open the grandparent’s screen full size and use its “Family link” QR code.
+        </p>
+      )}
     </section>
   )
 }

@@ -141,8 +141,13 @@ export function useEvents(feed: Feed) {
         // A late close from an older socket (React StrictMode, reconnects) must not drop the new one.
         if (socket.current === ws) socket.current = null
         if (closedByUs) return
-        if (ev.code === BAD_TOKEN) {
-          setError('The server refused this link (bad or expired token).')
+        if (ev.code === BAD_TOKEN && seen.size > 0 && !ended) {
+          // The tokens die with the call. Refused after we'd already heard it means it ended
+          // while we were reconnecting (#78): show it as ended, not as a broken link.
+          add({ type: 'call_ended', session_id: f.sessionId, t: performance.now() / 1000 })
+          setConnection('ended')
+        } else if (ev.code === BAD_TOKEN && !ended) {
+          setError('This call has ended, or this link is no longer valid.')
           setConnection('error')
         } else if (ended) {
           setConnection('ended')
