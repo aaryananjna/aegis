@@ -21,7 +21,7 @@ laptop mic ─▶ server :8000 ─▶ /events ─▶ web (Vite) :5173 ─▶ /el
 brew install node cloudflared          # Node 26 LTS, cloudflared 2026.11.0 (both tested)
 python3 -m venv .venv && source .venv/bin/activate
 pip install -e detection fastapi "uvicorn[standard]"
-pip install -e server                  # only if using A's server/
+pip install -e "server[mic]"           # only if using A's server/; [mic] = sounddevice for the laptop mic
 cd web && npm ci && npm test && cd ..
 ```
 
@@ -124,9 +124,10 @@ End the call: `curl -s -X POST localhost:8000/sessions/<session>/end`. Both scre
 - [ ] The judge's phone on speaker about 10 cm from the laptop mic.
 
 **During**
-- [ ] Tap the judge's voice once the call connects (or Start protection).
+- [ ] Nothing to tap: speaker labels are off and every line is scored from the first one.
 - [ ] After the code word card, the grandparent taps "They knew it" or "They didn't".
-- [ ] Afterwards, turn the laptop to `/evidence` to show the exact words behind each step.
+- [ ] Open `/evidence` for this call before it ends (the call's links stop working when it
+  ends), then show the exact words behind each step.
 
 **Honesty rules (CLAUDE.md):** made-up names and numbers only, never present a sample as live,
 and judge-facing numbers come only from `detection/eval/calls/heldout/`, described as staged
