@@ -125,3 +125,20 @@ test('autovoice and labels-off fixtures carry elder_set and still reach hangup',
   assert.deepEqual(off.elderSet, { speakerRaw: null, by: 'server' })
   assert.equal(off.card?.kind, 'hangup')
 })
+
+test('call_ended clears the captions, highlights and card', () => {
+  const sid = 's'
+  const events = [
+    { type: 'caption', session_id: sid, t: 1, utterance_id: 'u1', revision: 0, speaker_raw: null,
+      text: 'I need bail money', start_s: 1, end_s: 2, is_final: true },
+    { type: 'intervention', session_id: sid, t: 2, seq: 1, kind: 'hangup', text: 'Hang up.', latched: true },
+    { type: 'call_ended', session_id: sid, t: 3 },
+    { type: 'caption', session_id: sid, t: 4, utterance_id: 'u2', revision: 0, speaker_raw: null,
+      text: 'late line', start_s: 4, end_s: 5, is_final: true },
+  ] as AegisEvent[]
+  const s = events.reduce(reduceElder, initialElderState)
+  assert.equal(s.ended, true)
+  assert.deepEqual(s.order, [])
+  assert.deepEqual(s.captions, {})
+  assert.equal(s.card, null)
+})

@@ -19,6 +19,8 @@ export default defineConfig({
       '/auth/': { target: server },
       '/elders': { target: server },
       '/device/': { target: server },
+      // Start a call from the site (#63). The server only accepts it from the laptop itself.
+      '/sessions': { target: server },
     },
   },
 })

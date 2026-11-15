@@ -35,9 +35,9 @@
   --color-ai: var(--t-ai);
   --color-combo: var(--t-combo);
 
-  /* Installed faces only, so nothing has to load from the internet on the demo hotspot. */
+  /* Two faces only. Sans (installed) for everything people read or press, Playfair Display
+     (bundled from @fontsource, weight 700 only) for headings. Nothing loads from the internet. */
   --font-read: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
-  /* Headings, the wordmark and the End call dialog. Body text and captions stay sans. */
   --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
 }
 
