@@ -285,7 +285,7 @@ def _strip_fillers(text: str) -> tuple[str, list[int]]:
 # to the listener ("you need to buy gift cards") is never inside such a frame, so it still counts.
 
 _WHO = (r"(someone|somebody|anyone|anybody|people|scammers?|crooks?|con (men|artists?)"
-        r"|(this|that|a|some) (young |nice |strange |old )?(man|guy|woman|lady|girl|boy|fellow|kid))")
+        r"|(this|that|a|some|the) (young |nice |strange |old )?(man|guy|woman|lady|girl|boy|fellow|kid))")
 # Always a frame: a stranger's words retold, a hypothetical caller, or "pretending to be".
 _STRONG_FRAME = re.compile(
     rf"\b{_WHO}\s+((\w+\s+){{0,2}}?)(said|says|say|told|tells|tell|wanted|asked|asks|ask"
