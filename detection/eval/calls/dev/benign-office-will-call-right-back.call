@@ -1,0 +1,13 @@
+# id: benign-office-will-call-right-back
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-office-will-call-right-back
+# note: Written by Claude for development. Not a real or recorded call. The caller promises their own quick action.
+[0.0-1.0] elder: Hello?
+[1.5-6.0] caller: Hi Mr. Greene, this is Dana from Dr. Lee's dental office about your cleaning on Friday.
+[6.5-8.0] elder: Oh yes. Is something wrong?
+[8.5-14.0] caller: Nothing wrong. Your plan changed, so the visit is a twenty dollar copay now. You pay at the front desk.
+[14.5-16.5] elder: Could you send me the new form?
+[17.0-22.0] caller: Sure, I'll email it right away, and let me check the time with Dr. Lee right now.
+[22.5-23.5] elder: Thank you, dear.
