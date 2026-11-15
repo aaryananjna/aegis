@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { CheckIcon } from '../elder/Icons'
+import { ReadyScreen } from '../elder/ReadyScreen'
 import { api, deviceToken, errorMessage, tokenFromHash } from './api'
 import { Page } from './ui'
 
@@ -41,20 +41,12 @@ export function PairPage() {
       )
   }, [])
 
+  // Paired: straight to the one-button Start screen (#107). Nothing else for her to find.
+  if (state.kind === 'paired') return <ReadyScreen name={state.name} />
+
   return (
     <Page>
       {state.kind === 'checking' && <p className="text-[22px] text-paper-dim">Checking this laptop…</p>}
-      {state.kind === 'paired' && (
-        <section className="flex flex-col gap-4">
-          <span className="text-[56px] text-calm">
-            <CheckIcon />
-          </span>
-          <h1 className="title">
-            This laptop is set up for {state.name}
-          </h1>
-          <p className="text-[20px] text-paper-dim">There's nothing else to do here.</p>
-        </section>
-      )}
       {state.kind === 'not-paired' && (
         <section className="flex flex-col gap-3">
           <h1 className="title">This laptop isn't set up yet</h1>

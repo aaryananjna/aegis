@@ -33,6 +33,9 @@ export interface ElderState {
   stt: StatusEvent['stt'] | null // where captions come from, when the server says
   elderSet: { speakerRaw: string | null; by: 'server' | 'tap' } | null // latest elder_set
   ended: boolean
+  // The call reached Warning or showed a card. Kept after call_ended (it holds no words), so the
+  // ended screen can offer help (#107).
+  warned: boolean
 }
 
 export const initialElderState: ElderState = {
@@ -47,6 +50,7 @@ export const initialElderState: ElderState = {
   stt: null,
   elderSet: null,
   ended: false,
+  warned: false,
 }
 
 // Cards only move forward: codeword or verify first, then hangup (CONTRACTS: latched).
@@ -89,11 +93,11 @@ export function reduceElder(s: ElderState, e: AegisEvent): ElderState {
       return { ...s, highlights }
     }
     case 'risk':
-      return s.ended ? s : { ...s, level: e.level }
+      return s.ended ? s : { ...s, level: e.level, warned: s.warned || e.level === 'high' }
     case 'intervention': {
       if (s.ended) return s
       if (s.card && CARD_RANK[e.kind] <= CARD_RANK[s.card.kind]) return s
-      return { ...s, card: { kind: e.kind, text: e.text } }
+      return { ...s, card: { kind: e.kind, text: e.text }, warned: true }
     }
     case 'codeword_ok':
       return { ...s, codewordOk: true }
@@ -107,6 +111,12 @@ export function reduceElder(s: ElderState, e: AegisEvent): ElderState {
     default:
       return s
   }
+}
+
+/** The one thing to do after a scam call: call family, by name when the app knows it (#107). */
+export function callFamilyLine(name: string | null | undefined): string {
+  const n = (name ?? '').trim()
+  return n && n.length <= 30 ? `Call ${n} now` : 'Call your family now'
 }
 
 /**

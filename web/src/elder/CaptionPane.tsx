@@ -16,7 +16,7 @@ export function CaptionPane({
   speakerLabel: (speakerRaw: string | null) => string | null
 }) {
   // A final caption with empty text closes a line the speech service took back (#83): never
-  // draw a block with only a time in it.
+  // draw an empty block.
   const shown = state.order.map((uid) => state.captions[uid]).filter((c) => c.text.trim() !== '')
   const scroller = useRef<HTMLDivElement>(null)
   const [following, setFollowing] = useState(true)
@@ -101,16 +101,18 @@ function CaptionLine({
     : 'rounded-md bg-glow/90 px-1.5 text-glow-ink [box-decoration-break:clone]'
 
   return (
-    // Each line is its own block: a faint time (and "You"/"Caller" when known) over the words.
+    // Each line is its own block: "You"/"Caller" (when known) over the words. No times: they
+    // mean nothing to her mid-call (#107).
     <li className={`flex flex-col gap-1 border-l-4 pl-[clamp(14px,1.4vw,22px)]
                     ${caption.isFinal ? 'border-paper/20' : 'border-transparent'}`}>
-      <span className="flex items-center gap-3 text-[length:clamp(17px,1.3vw,21px)] font-medium text-mist tabular-nums">
-        {clock(caption.startS)}
-        {label && <span className="font-semibold">{label}</span>}
-        {caption.typed && (
-          <span className="rounded-full border-2 border-mist px-3 text-[0.85em] leading-snug">typed</span>
-        )}
-      </span>
+      {(label || caption.typed) && (
+        <span className="flex items-center gap-3 text-[length:clamp(17px,1.3vw,21px)] font-medium text-mist">
+          {label && <span className="font-semibold">{label}</span>}
+          {caption.typed && (
+            <span className="rounded-full border-2 border-mist px-3 text-[0.85em] leading-snug">typed</span>
+          )}
+        </span>
+      )}
       <p
         className={[
           'leading-[1.25] font-medium text-balance',
@@ -132,10 +134,4 @@ function CaptionLine({
       </p>
     </li>
   )
-}
-
-/** Seconds into the call as "0:42" or "12:05". */
-function clock(seconds: number): string {
-  const s = Math.max(0, Math.floor(seconds))
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 }

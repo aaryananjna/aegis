@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+import { deviceToken } from '../accounts/api'
+import { useAuth } from '../accounts/auth'
+import { AfterCall } from './AfterCall'
 import { eventsForTap, tellDemo } from '../events/demoLink'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { CaptionPane } from './CaptionPane'
@@ -42,6 +45,7 @@ export function ElderScreen() {
 
 function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoices: boolean; embedded: boolean; demo: string | null }) {
   const { events, connection, error, send, playLocally } = useEvents(feed)
+  const { auth } = useAuth()
   const state = useMemo(() => events.reduce(reduceElder, initialElderState), [events])
   const [tapped, setTapped] = useState<{ speakerRaw: string | null } | null>(null)
   const [reply, setReply] = useState<Reply>('none')
@@ -124,7 +128,6 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
   if (feed.kind === 'fixture') notes.push('Sample call')
   if (connection === 'connecting') notes.push('Connecting…')
   if (connection === 'reconnecting') notes.push('Reconnecting…')
-  if (picked?.speakerRaw === null) notes.push('Listening to everyone on the call')
   if (state.ended) notes.push('Call ended')
   else if (endNote) notes.push(endNote)
   // Detector and server warnings are for us, not Grandma (#78): they stay off this screen.
@@ -136,28 +139,45 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
       ? 'No call connected. Open this screen from the link the server prints.'
       : error
 
+  const home = !embedded && (feed.kind !== 'live' || state.ended)
+    ? (feed.kind === 'live' && deviceToken.get() ? '/ready' : '/') // a paired laptop goes back to its Start screen
+    : null
+  const wordmark = home ? (
+    // The wordmark takes you home on sample calls and once a call is over. Never during
+    // a live call, so Grandma can't leave the call screen by accident.
+    <Link to={home} aria-label="Aegis home" className="rounded-lg focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-paper">
+      <AegisWordmark size="nav" />
+    </Link>
+  ) : (
+    <AegisWordmark size="nav" />
+  )
+
+  // After a scam call she is shaken: one clear next step instead of a blank screen (#107).
+  if (state.ended && state.warned) {
+    return (
+      <AfterCall familyName={auth.status === 'in' ? auth.user.display_name : null}
+                 brand={wordmark} sample={feed.kind === 'fixture'} />
+    )
+  }
+
+  // A card is the one thing to read (#107): the band moves above the captions and takes the
+  // bigger share of the screen. It moves once, when the card first shows, with no animation.
+  const cardUp = state.card !== null
   return (
-    <main className="grid h-dvh grid-rows-[58fr_42fr] overflow-hidden">
+    <main className={`grid h-dvh overflow-hidden ${cardUp ? 'grid-rows-[3fr_2fr]' : 'grid-rows-[58fr_42fr]'}`}>
       <h1 className="sr-only">Aegis call captions</h1>
       <CaptionPane state={state} speakerLabel={speakerLabel} />
       <div
+        data-band
         // No fade (#86): the band's ink switches at once, so the color must too, or the words
         // are briefly dark-on-dark mid-fade.
-        className={`flex min-h-0 flex-col ${TINT[state.level ?? 'none']}`}
+        className={`flex min-h-0 flex-col ${cardUp ? 'order-first' : ''} ${TINT[state.level ?? 'none']}`}
       >
-        <StatusBand level={state.level} notes={notes} hangup={state.card?.kind === 'hangup'} brand={
+        <StatusBand level={state.level} notes={notes} hangup={state.card?.kind === 'hangup'} top={cardUp} brand={
           <>
             {familyUrl && !state.ended && <FamilyLinkButton familyUrl={familyUrl} />}
             {!state.ended && <EndCall onEnd={endCall} hangupShowing={state.card?.kind === 'hangup'} />}
-            {!embedded && (feed.kind !== 'live' || state.ended) ? (
-              // The wordmark takes you home on sample calls and once a call is over. Never during
-              // a live call, so Grandma can't leave the call screen by accident.
-              <Link to="/" aria-label="Aegis home" className="rounded-lg focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-paper">
-                <AegisWordmark size="nav" />
-              </Link>
-            ) : (
-              <AegisWordmark size="nav" />
-            )}
+            {wordmark}
           </>
         }>
           {!picked && state.card && (guess !== null ? (

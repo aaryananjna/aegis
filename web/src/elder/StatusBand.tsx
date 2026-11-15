@@ -17,20 +17,22 @@ export function StatusBand({
   children,
   brand,
   hangup = false,
+  top = false,
 }: {
   level: ElderState['level']
   notes: string[]
   children?: ReactNode
   brand?: ReactNode
   hangup?: boolean
+  top?: boolean // above the captions (a card is showing): no dividing line at the screen's top edge
 }) {
   const look = level ? LEVEL[level] : null
   const word = hangup ? HANGUP_WORD : look?.word
 
   return (
     <div
-      className="flex shrink-0 flex-wrap items-center justify-between gap-x-8 gap-y-2
-                 border-t-2 border-paper/10 px-[clamp(1rem,3vw,3rem)] py-3"
+      className={`flex shrink-0 flex-wrap items-center justify-between gap-x-8 gap-y-2
+                  ${top ? 'border-t-2 border-transparent' : 'border-t-2 border-paper/10'} px-[clamp(1rem,3vw,3rem)] py-3`}
     >
       <p role="status" className="flex items-center gap-4 text-[length:clamp(26px,2.2vw,36px)] font-semibold">
         <span aria-hidden data-dot className={`size-[0.7em] rounded-full ${look ? look.dot : 'bg-mist'}`} />
