@@ -3,8 +3,9 @@ import { Link, useNavigate } from 'react-router'
 import { ApiError, api, deviceToken, type ElderRef, type User } from '../accounts/api'
 import { useEvents } from '../events/useEvents'
 import { CallSides } from '../landing/CallSides'
+import { FamilyQr } from './FamilyQr'
 import { ScaledFrame } from '../landing/ScaledFrame'
-import { localPath, savedFamilyUrl } from './familyLink'
+import { localPath } from './familyLink'
 
 type Started = { sessionId: string; elderUrl: string; familyUrl: string; recorded: boolean }
 
@@ -87,7 +88,6 @@ export function LiveCall() {
         { ...(who ? { name: who.slice(0, 40) } : {}), mic: true, labels: false },
         token ? { 'X-Device-Token': token } : {},
       )
-      savedFamilyUrl.set(r.session_id, r.family_url)
       setCall({ sessionId: r.session_id, elderUrl: r.elder_url, familyUrl: r.family_url, recorded: r.recorded })
     } catch (e) {
       setError(startError(e))
@@ -150,6 +150,34 @@ export function LiveCall() {
   )
 }
 
+/**
+ * The family link as a QR code, tucked away until asked for (#86): the grandparent never needs
+ * it, but a judge or a family member in the room can scan it from here.
+ */
+function ShowFamilyLink({ familyUrl }: { familyUrl: string }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="flex flex-col gap-4">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-controls="family-link"
+        className="self-start text-[17px] font-semibold text-paper underline underline-offset-4
+                   focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+      >
+        {open ? 'Hide family link' : 'Show family link'}
+      </button>
+      {open && (
+        <div id="family-link" className="glass max-w-sm rounded-2xl p-5">
+          <p className="mb-3 text-[16px] text-paper-dim">Scan with the family’s phone to follow this call.</p>
+          <FamilyQr familyUrl={familyUrl} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Running({ call, onDone, onFullScreen }: { call: Started; onDone: () => void; onFullScreen: () => void }) {
   const elderPath = localPath(call.elderUrl)
   const familyPath = localPath(call.familyUrl)
@@ -205,11 +233,7 @@ function Running({ call, onDone, onFullScreen }: { call: Started; onDone: () => 
           </>
         )}
       </div>
-      {!ended && (
-        <p className="text-[16px] text-mist">
-          For a real family phone: open the grandparent’s screen full size and use its “Family link” QR code.
-        </p>
-      )}
+      {!ended && <ShowFamilyLink familyUrl={call.familyUrl} />}
     </section>
   )
 }

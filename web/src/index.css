@@ -253,3 +253,37 @@ body {
   scrollbar-width: thin;
   scrollbar-color: color-mix(in oklab, var(--color-paper) 30%, transparent) transparent;
 }
+
+/* /elder's lower half when the call turns risky (#86): unmistakable, the same in both themes.
+   Be careful = solid amber with near-black ink; Warning = solid deep red with white.
+   Text inside takes the room's ink through the usual tokens; cards put the theme back. */
+.room-elevated {
+  background: var(--color-care);
+  --color-paper: #1b1406; /* 8.3:1 on the amber; the 80% mist is 5.7:1 */
+  --color-paper-dim: rgba(27, 20, 6, 0.85);
+  --color-mist: rgba(27, 20, 6, 0.8);
+  --color-care-text: #1b1406;
+  --wm-light: #1b1406;
+  --wm-blue: #1b1406;
+}
+.room-high {
+  background: var(--color-alarm-deep);
+  --color-paper: #ffffff; /* 8.9:1 on the deep red; the 85% mist is 6.8:1 */
+  --color-paper-dim: rgba(255, 255, 255, 0.88);
+  --color-mist: rgba(255, 255, 255, 0.85);
+  --color-alarm-text: #ffffff;
+  --wm-light: #ffffff;
+  --wm-blue: #ffffff;
+}
+.room-reset {
+  --color-paper: var(--t-text);
+  --color-paper-dim: var(--t-text-dim);
+  --color-mist: var(--t-muted);
+  --color-care-text: var(--t-care-text);
+  --color-alarm-text: var(--t-alarm-text);
+}
+/* The status dot takes the band's ink, so it doesn't vanish into a band of its own color. */
+.room-elevated [data-dot],
+.room-high [data-dot] {
+  background: var(--color-paper);
+}

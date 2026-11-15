@@ -36,7 +36,7 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
         type="button"
         onClick={open}
         // Red, so ending the call stands out: white on #B3261E is 6.5:1 in both themes.
-        className={`inline-flex min-h-[58px] items-center gap-3 rounded-2xl bg-[#b3261e] px-6
+        className={`inline-flex min-h-[58px] items-center gap-3 rounded-2xl border-2 border-white/80 bg-[#b3261e] px-6
                     text-[length:clamp(21px,1.7vw,27px)] font-bold text-white shadow-sm
                     hover:bg-[#8e1f19] motion-safe:transition-colors ${focusRing}`}
       >
@@ -49,7 +49,7 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
         onClick={outside}
         aria-labelledby="end-title"
         aria-describedby={hangupShowing ? 'end-note' : undefined}
-        className="m-auto w-[min(90vw,34rem)] rounded-3xl border border-[var(--glass-border-hot)]
+        className="room-reset m-auto w-[min(90vw,34rem)] rounded-3xl border border-[var(--glass-border-hot)]
                    bg-dusk-raised p-0 text-paper shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)]
                    backdrop:bg-black/55 backdrop:backdrop-blur-sm"
       >
