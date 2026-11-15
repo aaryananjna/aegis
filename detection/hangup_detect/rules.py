@@ -371,6 +371,13 @@ def context_of(texts) -> Context:
     return Context(scam_talk=talk, gift_occasion=gift)
 
 
+# Advice about the real thing, once the call is about scams: "The real IRS sends a letter, they
+# never call and ask for gift cards." (real-caption test 2026-11-15: a friend's retelling warned.)
+_ADVICE = re.compile(r"\b(the|a) real (\w+ ){0,2}?(irs|bank|police|medicare|social security|microsoft|amazon|company|one|ones)\b"
+                     r"|\b(they|he|she|it|banks?|the (\w+ ){0,2}?(irs|bank|police|government|company))( would| will| do| does)? "
+                     r"never (call|calls|ask|asks|phone|phones|text|texts|e-?mail|demand|demands|need|needs)\b", _I)
+
+
 def _sentence_start(text: str, at: int) -> int:
     ends = [m.end() for m in _SENTENCE_END.finditer(text, 0, at)]
     return ends[-1] if ends else 0
@@ -389,6 +396,8 @@ def _reported(text: str, m: re.Match, ctx: Context) -> bool:
     if _STRONG_FRAME.search(text[:start]) and not _YOU.search(sentence):
         return True
     if ctx.scam_talk and _TRAILING_FRAME.search(sentence):
+        return True
+    if ctx.scam_talk and _ADVICE.search(sentence):
         return True
     # Since captions come one sentence at a time, a retold quote ("A man said, Grandma, it's me.
     # I need bail money.") arrives in pieces. Right after a retelling, only a direct ask counts.
