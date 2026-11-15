@@ -13,7 +13,7 @@ from .config import Config
 from .counter import CounterMoves
 from .risk import RiskModel
 from .guard import parse_llm
-from .rules import Context, context_of, find_evidence
+from .rules import Context, context_of, find_evidence, reports_scam
 from .types import Evidence, LLMRequest, Segment, Tactic, speaker_id
 
 LLM_WINDOW_S = 60.0
@@ -33,7 +33,8 @@ class Detector:
         self._now = 0.0
         self._last_rev: dict[str, int] = {}
         self._finals: OrderedDict[str, tuple[Segment, float]] = OrderedDict()
-        self._ctx: dict[str, Context] = {}  # running call context after each final (rules.Context)
+        self._ctx: dict[str, Context] = {}
+        self._report_t: float | None = None  # end time of the last line that retold or warned about a scam  # running call context after each final (rules.Context)
         self._shown: dict[str, list[dict]] = {}  # utterance_id -> evidence C currently shows
         self._last_score: float | None = None
         self._last_level = "low"
@@ -237,7 +238,12 @@ class Detector:
             return self._ctx[uid]
         prev = self._ctx[next(reversed(self._ctx))] if self._ctx else Context()
         mine = context_of([seg.text])
-        ctx = Context(prev.scam_talk or mine.scam_talk, prev.gift_occasion or mine.gift_occasion)
+        # A retelling or warning opens a short window where only direct asks count (rules._reported).
+        if reports_scam(seg.text):
+            self._report_t = seg.end_s
+        reporting = self._report_t is not None and 0 <= seg.end_s - self._report_t <= self.cfg.report_window_s
+        ctx = Context(scam_talk=prev.scam_talk or mine.scam_talk, reporting=reporting,
+                      gift_occasion=prev.gift_occasion or mine.gift_occasion)
         if seg.is_final and uid in self._finals:
             self._ctx[uid] = ctx
         return ctx

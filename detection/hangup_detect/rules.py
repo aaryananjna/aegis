@@ -247,12 +247,20 @@ _STRONG_FRAME = re.compile(
     r"(calls?|says?|asks?|tells?|wants?|claims?)\b", _I)
 # A frame only once the call is clearly about scams: a friend's or family member's retelling.
 _WEAK_FRAME = re.compile(
-    r"\b(he|she|they|i)\s+((\w+\s+){0,1}?)(said|told (me|him|her|them|us)|wanted (me|us|him|her)"
-    r"|asked (me|us|him|her|for)|claimed|(was|were) pretending)\b", _I)
+    r"\b(he|she|they|people|i)\s+((\w+\s+){0,1}?)(said|says|say|told (me|him|her|them|us|you)"
+    r"|tells? (you|me|him|her|them|us)|wanted (me|us|him|her)|asks? (you|me|for)"
+    r"|asked (me|us|him|her|you|for)|claimed|(was|were) pretending)\b", _I)
 # The call is about scams: someone names one (not "this is not a scam") or retells a call.
 _SCAM_TOPIC = re.compile(r"\b(scams?|scammers?|scammed|fraudsters?)\b|\bone of (those|these) calls\b"
                          r"|\b(it was|that'?s|it'?s) (a )?fake\b", _I)
-_TOPIC_NEGATED = re.compile(r"(\bnot|n'?t|\bno)\s+(\w+\s+){0,2}$", _I)
+# "This is not a scam" and "I know this sounds like a scam" are what scammers say to get ahead
+# of doubt; neither makes the call about scams.
+_TOPIC_NEGATED = re.compile(r"((\bnot|n'?t|\bno)\s+(\w+\s+){0,2}|\b(sounds?|seems?|looks?) like (a |an )?)$", _I)
+# A frame after the words: "Don't tell your family, they say."
+_TRAILING_FRAME = re.compile(r",\s*(they|he|she|people)\s+(say|says|said|told me|tell you)\b\W*$", _I)
+# Inside a retelling, only a sentence that asks something of the listener counts.
+_DIRECT_ASK = re.compile(r"\b(you|your|ya)\b|\b(send|give|wire|pay|transfer|bring) (me|us)\b"
+                         r"|^\W*(please\s+)?(send|buy|go|wire|give|transfer|pay|read|get|bring|meet|don'?t|do not|keep)\b", _I)
 # "Who pays a bill with gift cards?" asks about it, it doesn't ask for it.
 _WHO_QUESTION = re.compile(r"\bwho\s+(\w+\s+){0,4}$", _I)
 # Gift cards as a present ("the boys want gift cards for Christmas").
@@ -268,18 +276,24 @@ _SENTENCE_END = re.compile(r"(?<!\bDr)(?<!\bMr)(?<!\bMrs)(?<!\bMs)(?<!\bSt)(?<!\
 class Context:
     """What the call so far is about. Built from every final line, both voices."""
     scam_talk: bool = False      # someone is warning about or retelling a scam
+    reporting: bool = False      # within a few seconds of a retelling or warning ("a man said...")
     gift_occasion: bool = False  # a birthday, surprise or holiday came up: gift cards may be
                                  # presents and keeping it quiet may be a happy secret
+
+
+def reports_scam(raw: str) -> bool:
+    """This line retells or warns about a scam ("a man said...", "there's a scam going around")."""
+    text = raw.translate(_APOSTROPHES)
+    return bool(_STRONG_FRAME.search(text)) or any(
+        not _TOPIC_NEGATED.search(text[:m.start()]) for m in _SCAM_TOPIC.finditer(text))
 
 
 def context_of(texts) -> Context:
     talk = gift = False
     for raw in texts:
-        text = raw.translate(_APOSTROPHES)
-        talk = talk or bool(_STRONG_FRAME.search(text)) or any(
-            not _TOPIC_NEGATED.search(text[:m.start()]) for m in _SCAM_TOPIC.finditer(text))
-        gift = gift or bool(_OCCASION.search(text))
-    return Context(talk, gift)
+        talk = talk or reports_scam(raw)
+        gift = gift or bool(_OCCASION.search(raw))
+    return Context(scam_talk=talk, gift_occasion=gift)
 
 
 def _sentence_start(text: str, at: int) -> int:
@@ -298,6 +312,12 @@ def _reported(text: str, m: re.Match, ctx: Context) -> bool:
     sentence = text[start:rest.end() if rest else len(text)]
     # A quote retold over several sentences: "A man said Grandma, it's me. I need bail money."
     if _STRONG_FRAME.search(text[:start]) and not _YOU.search(sentence):
+        return True
+    if ctx.scam_talk and _TRAILING_FRAME.search(sentence):
+        return True
+    # Since captions come one sentence at a time, a retold quote ("A man said, Grandma, it's me.
+    # I need bail money.") arrives in pieces. Right after a retelling, only a direct ask counts.
+    if ctx.reporting and not _DIRECT_ASK.search(sentence):
         return True
     # An echo while talking about scams: "Gift cards?"
     if ctx.scam_talk and sentence.strip().endswith("?") and len(sentence.split()) <= 4:
