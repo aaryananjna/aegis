@@ -7,7 +7,7 @@ import type { ReactNode } from 'react'
  */
 export function CallSides({ grandparent, family }: { grandparent: ReactNode; family: ReactNode }) {
   return (
-    <div className="grid items-start gap-6 lg:grid-cols-[1fr_380px]">
+    <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
           <h3 className="subtitle text-[1.4rem]">The grandparent’s screen</h3>

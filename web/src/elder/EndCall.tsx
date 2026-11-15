@@ -36,8 +36,8 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
         type="button"
         onClick={open}
         // Red, so ending the call stands out: white on #B3261E is 6.5:1 in both themes.
-        className={`inline-flex min-h-[58px] items-center gap-3 rounded-2xl bg-[#b3261e] px-6
-                    text-[length:clamp(21px,1.7vw,27px)] font-bold text-white shadow-sm
+        className={`inline-flex min-h-[76px] items-center gap-3 rounded-2xl border-2 border-white/80 bg-[#b3261e] px-8
+                    text-[length:clamp(26px,2.2vw,34px)] font-bold text-white shadow-sm
                     hover:bg-[#8e1f19] motion-safe:transition-colors ${focusRing}`}
       >
         <span aria-hidden className="text-[1.1em]"><PhoneDownIcon /></span>
@@ -49,31 +49,31 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
         onClick={outside}
         aria-labelledby="end-title"
         aria-describedby={hangupShowing ? 'end-note' : undefined}
-        className="m-auto w-[min(90vw,34rem)] rounded-3xl border border-[var(--glass-border-hot)]
+        className="room-reset m-auto w-[min(92vw,46rem)] rounded-3xl border border-[var(--glass-border-hot)]
                    bg-dusk-raised p-0 text-paper shadow-[0_24px_60px_-20px_rgba(0,0,0,0.6)]
                    backdrop:bg-black/55 backdrop:backdrop-blur-sm"
       >
-        <div className="flex flex-col items-center gap-5 px-8 pt-8 pb-7 text-center">
-          <span className="grid size-14 place-items-center rounded-full bg-accent/12 text-[28px] text-heading ring-1 ring-accent/30">
+        <div className="flex flex-col items-center gap-7 px-10 pt-10 pb-9 text-center">
+          <span className="grid size-20 place-items-center rounded-full bg-accent/12 text-[40px] text-heading ring-1 ring-accent/30">
             <PhoneDownIcon />
           </span>
           <div className="flex flex-col gap-2">
-            <h2 id="end-title" className="font-display text-[length:clamp(26px,2.2vw,32px)] leading-tight font-bold text-balance">
+            <h2 id="end-title" className="font-display text-[length:clamp(36px,3.4vw,48px)] leading-tight font-bold text-balance">
               Are you sure this call is over?
             </h2>
             {hangupShowing && (
-              <p id="end-note" className="text-[length:clamp(19px,1.5vw,22px)] text-paper-dim">
+              <p id="end-note" className="text-[length:clamp(24px,2vw,30px)] text-paper-dim">
                 Did you hang up on them? Good.
               </p>
             )}
           </div>
-          <div className="grid w-full gap-3 sm:grid-cols-2">
+          <div className="grid w-full gap-4 sm:grid-cols-2">
             <button
               ref={no}
               type="button"
               autoFocus
               onClick={close}
-              className={`btn-accent min-h-[60px] rounded-2xl px-4 text-[length:clamp(19px,1.5vw,22px)] font-semibold ${focusRing}`}
+              className={`btn-accent min-h-[84px] rounded-2xl px-5 text-[length:clamp(24px,2.1vw,30px)] font-semibold ${focusRing}`}
             >
               No, keep listening
             </button>
@@ -84,7 +84,7 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
                 close()
                 onEnd()
               }}
-              className={`min-h-[60px] rounded-2xl border-2 border-paper/35 px-4 text-[length:clamp(19px,1.5vw,22px)]
+              className={`min-h-[84px] rounded-2xl border-2 border-paper/35 px-5 text-[length:clamp(24px,2.1vw,30px)]
                           font-semibold text-paper hover:border-paper/70 hover:bg-paper/5 motion-safe:transition-colors ${focusRing}`}
             >
               Yes, the call is over

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { ApiError, api, deviceToken, type ElderRef, type User } from '../accounts/api'
 import { useEvents } from '../events/useEvents'
 import { CallSides } from '../landing/CallSides'
+import { FamilyQr } from './FamilyQr'
 import { ScaledFrame } from '../landing/ScaledFrame'
 import { localPath, savedFamilyUrl } from './familyLink'
 
@@ -52,7 +53,6 @@ const startError = (e: unknown): string => {
  * listens on the laptop mic (`mic: true`) with speaker labels off, as in the demo setup.
  */
 export function LiveCall() {
-  const navigate = useNavigate()
   const [elders, setElders] = useState<ElderRef[]>([])
   const [who, setWho] = useState('')
   const [busy, setBusy] = useState(false)
@@ -96,7 +96,7 @@ export function LiveCall() {
     }
   }
 
-  if (call) return <Running call={call} onDone={clearCall} onFullScreen={() => navigate(localPath(call.elderUrl))} />
+  if (call) return <Running call={call} onDone={clearCall} />
 
   return (
     <section aria-labelledby="start-h" className="glass flex flex-col gap-5 rounded-3xl p-[clamp(1.25rem,3vw,2rem)]">
@@ -150,7 +150,7 @@ export function LiveCall() {
   )
 }
 
-function Running({ call, onDone, onFullScreen }: { call: Started; onDone: () => void; onFullScreen: () => void }) {
+function Running({ call, onDone }: { call: Started; onDone: () => void }) {
   const elderPath = localPath(call.elderUrl)
   const familyPath = localPath(call.familyUrl)
   // Listen as the family does, only to know when the call ends (the grandparent's button, or the server).
@@ -171,7 +171,9 @@ function Running({ call, onDone, onFullScreen }: { call: Started; onDone: () => 
 
   if (stale) return null
   return (
-    <section aria-labelledby="live-h" className="flex flex-col gap-5">
+    // Breaks out of the page column, so the grandparent's screen is as big as the window allows.
+    <section aria-labelledby="live-h"
+             className="relative left-1/2 flex w-[min(94vw,1560px)] -translate-x-1/2 flex-col gap-5">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h2 id="live-h" className="subtitle text-[1.8rem]">{ended ? 'The call has ended' : 'Live call'}</h2>
         <p className="text-[16px] text-mist">
@@ -180,12 +182,22 @@ function Running({ call, onDone, onFullScreen }: { call: Started; onDone: () => 
       </div>
       <CallSides
         grandparent={
+          // A smaller page than the real 1280 x 800 laptop, so at this size everything on it
+          // (captions, the red button, the End call box) shows bigger.
           <ScaledFrame title="The grandparent's screen, live call" src={`${elderPath}&embed=1`}
-                       width={1280} height={800} className="w-full rounded-2xl" />
+                       width={1040} height={680} className="w-full rounded-2xl" />
         }
         family={
-          <ScaledFrame title="The family's phone, live call" src={`${familyPath}&embed=1`}
-                       width={390} height={844} fit className="mx-auto w-full max-w-[380px] rounded-[2rem]" />
+          <div className="flex flex-col gap-5">
+            <ScaledFrame title="The family's phone, live call" src={`${familyPath}&embed=1`}
+                         width={390} height={844} fit className="mx-auto w-full max-w-[360px] rounded-[2rem]" />
+            {!ended && (
+              <div className="glass rounded-2xl p-5">
+                <p className="mb-3 text-[16px] text-paper-dim">Scan with the family’s phone to follow this call.</p>
+                <FamilyQr familyUrl={call.familyUrl} />
+              </div>
+            )}
+          </div>
         }
       />
       <div className="flex flex-wrap gap-3">
@@ -194,22 +206,12 @@ function Running({ call, onDone, onFullScreen }: { call: Started; onDone: () => 
             Start another call
           </button>
         ) : (
-          <>
-            <button type="button" onClick={onFullScreen} className={`btn-accent ${big}`}>
-              Open the grandparent’s screen full size
-            </button>
-            {/* The link's token stops working when the call ends, like the family link. */}
-            <Link to={evidence} className={`glass inline-flex items-center text-paper ${big}`}>
-              How Aegis judged this call <span aria-hidden className="ml-2">→</span>
-            </Link>
-          </>
+          // The link's token stops working when the call ends, like the family link.
+          <Link to={evidence} className={`glass inline-flex items-center text-paper ${big}`}>
+            How Aegis judged this call <span aria-hidden className="ml-2">→</span>
+          </Link>
         )}
       </div>
-      {!ended && (
-        <p className="text-[16px] text-mist">
-          For a real family phone: open the grandparent’s screen full size and use its “Family link” QR code.
-        </p>
-      )}
     </section>
   )
 }

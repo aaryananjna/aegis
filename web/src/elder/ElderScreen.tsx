@@ -13,12 +13,13 @@ import { AegisWordmark } from '../brand/AegisWordmark'
 import { StatusBand } from './StatusBand'
 import { GuessedVoice, VoicePicker } from './VoicePicker'
 
-// The room's light: the lower part of the screen takes on the status color.
+// The room's light: the lower part of the screen takes on the status color. Be careful and
+// Warning are solid colors so nobody can miss them (#86; see .room-* in index.css).
 const TINT = {
   none: 'bg-dusk',
   low: 'bg-[color-mix(in_oklab,var(--color-calm)_10%,var(--color-dusk))]',
-  elevated: 'bg-[color-mix(in_oklab,var(--color-care)_14%,var(--color-dusk))]',
-  high: 'bg-[color-mix(in_oklab,var(--color-alarm)_20%,var(--color-dusk))]',
+  elevated: 'room-elevated',
+  high: 'room-high',
 } as const
 
 const idleText = 'text-[length:clamp(28px,2.4vw,36px)] text-mist'
@@ -140,8 +141,9 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
       <h1 className="sr-only">Aegis call captions</h1>
       <CaptionPane state={state} speakerLabel={speakerLabel} />
       <div
-        className={`flex min-h-0 flex-col motion-safe:transition-colors motion-safe:duration-[1500ms]
-                    ${TINT[state.level ?? 'none']}`}
+        // No fade (#86): the band's ink switches at once, so the color must too, or the words
+        // are briefly dark-on-dark mid-fade.
+        className={`flex min-h-0 flex-col ${TINT[state.level ?? 'none']}`}
       >
         <StatusBand level={state.level} notes={notes} brand={
           <>

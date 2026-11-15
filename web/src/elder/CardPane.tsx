@@ -39,9 +39,10 @@ export function CardPane({
 }
 
 const CARD_LOOK = {
-  codeword: { icon: <KeyIcon />, box: 'bg-dusk-raised text-paper', iconColor: 'text-care-text' },
-  verify: { icon: <ShieldIcon />, box: 'bg-dusk-raised text-paper', iconColor: 'text-care-text' },
-  hangup: { icon: <PhoneDownIcon />, box: 'bg-alarm-deep text-white', iconColor: 'text-white' },
+  codeword: { icon: <KeyIcon />, box: 'room-reset bg-dusk-raised text-paper', iconColor: 'text-care-text' },
+  verify: { icon: <ShieldIcon />, box: 'room-reset bg-dusk-raised text-paper', iconColor: 'text-care-text' },
+  // White edge: on the Warning red the card is the same red, so the border marks it out.
+  hangup: { icon: <PhoneDownIcon />, box: 'bg-alarm-deep text-white border-4 border-white/90', iconColor: 'text-white' },
 } as const
 
 function Card({
