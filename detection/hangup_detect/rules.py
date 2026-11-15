@@ -371,6 +371,10 @@ def context_of(texts) -> Context:
     return Context(scam_talk=talk, gift_occasion=gift)
 
 
+_AIMED_AT_LISTENER = re.compile(r"\byou (need|have|must|gotta|got|'ve got|ve got) to\b|\b(read|give|send) me\b", _I)
+_HYPOTHETICAL = re.compile(r"\b(if|when|whenever|in case)\b", _I)
+
+
 def _sentence_start(text: str, at: int) -> int:
     ends = [m.end() for m in _SENTENCE_END.finditer(text, 0, at)]
     return ends[-1] if ends else 0
@@ -379,12 +383,17 @@ def _sentence_start(text: str, at: int) -> int:
 def _reported(text: str, m: re.Match, ctx: Context) -> bool:
     start = _sentence_start(text, m.start())
     before = text[start:m.start()]
-    if (_STRONG_FRAME.search(before) and not _COACHING.search(text[start:m.start()])) or _WHO_QUESTION.search(before):
-        return True
-    if ctx.scam_talk and _WEAK_FRAME.search(before):
-        return True
     rest = _SENTENCE_END.search(text, m.end())
     sentence = text[start:rest.end() if rest else len(text)]
+    # "Someone said you need to move your money" said to the listener is still an ask: a caller
+    # can't switch the rules off by framing every line (security review 2026-11-15). A warning
+    # ("if someone says you need to...") stays a frame.
+    aimed = _AIMED_AT_LISTENER.search(sentence) and not _HYPOTHETICAL.search(before)
+    if not aimed and ((_STRONG_FRAME.search(before) and not _COACHING.search(text[start:m.start()]))
+                      or _WHO_QUESTION.search(before)):
+        return True
+    if not aimed and ctx.scam_talk and _WEAK_FRAME.search(before):
+        return True
     # A quote retold over several sentences: "A man said Grandma, it's me. I need bail money."
     if _STRONG_FRAME.search(text[:start]) and not _YOU.search(sentence):
         return True
