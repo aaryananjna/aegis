@@ -220,7 +220,7 @@ _FAMILY_PATTERNS = 2
 _APOSTROPHES = str.maketrans({"\u2019": "'", "\u2018": "'", "\u02bc": "'"})
 
 # Skip a single match when "not/never/no" sits within two words before it.
-_NEGATED = re.compile(r"\b(not|never|no)\s+(\w+\s+){0,2}$", _I)
+_NEGATED = re.compile(r"\b(not|never|no)\s+(?!(a )?(worry|worried|panic|joke|joking|kidding|lying|problem|rush|drill)\b)(\w+\s+){0,2}$", _I)
 # Skip the whole utterance when it describes a scam rather than runs one.
 # Narrow on purpose: scammers say "I know this sounds like a scam" to get ahead of doubt.
 _DESCRIBES_SCAM = re.compile(r"\b(that'?s|it'?s) a scam\b|\bscammers? (said|told|asked)\b", _I)
@@ -261,7 +261,7 @@ _WHO = (r"(someone|somebody|anyone|anybody|people|scammers?|crooks?|con (men|art
         r"|(this|that|a|some) (young |nice |strange |old )?(man|guy|woman|lady|girl|boy|fellow|kid))")
 # Always a frame: a stranger's words retold, a hypothetical caller, or "pretending to be".
 _STRONG_FRAME = re.compile(
-    rf"\b{_WHO}\s+((\w+\s+){{0,2}}?)(said|says|say|told|tells|tell|wanted|wants|want|asked|asks|ask"
+    rf"\b{_WHO}\s+((\w+\s+){{0,2}}?)(said|says|say|told|tells|tell|wanted|asked|asks|ask"
     rf"|claimed|claims|claiming|pretend\w*|call(s|ed)?)\b"
     r"|\b(letters?|e-?mails?|texts?|messages?|notices?|pop-?ups?|voicemails?) (said|says|saying|claimed|claiming|told me)\b"
     r"|\bpretending to be\b"
@@ -278,7 +278,8 @@ _SCAM_TOPIC = re.compile(r"\b(scams?|scammers?|scammed|fraudsters?)\b"
                          r"|\b(it was|that'?s|it'?s) (a )?fake\b", _I)
 # "This is not a scam" and "I know this sounds like a scam" are what scammers say to get ahead
 # of doubt; neither makes the call about scams.
-_TOPIC_NEGATED = re.compile(r"((\bnot|n'?t|\bno)\s+(\w+\s+){0,2}|\b(sounds?|seems?|looks?) like (a |an )?)$", _I)
+_TOPIC_NEGATED = re.compile(r"((\bnot|n'?t|\bno)\s+(\w+\s+){0,2}|\b(sounds?|seems?|looks?) like (a |an )?"
+                            r"|\b(might|may|probably|will) think (it'?s |this is |that'?s )?(a |an )?)$", _I)
 # A frame after the words: "Don't tell your family, they say."
 _TRAILING_FRAME = re.compile(r",\s*(they|he|she|people)\s+(say|says|said|told me|tell you)\b\W*$", _I)
 # Inside a retelling, only a sentence that asks something of the listener counts.
@@ -292,6 +293,9 @@ _OCCASION = re.compile(r"\b(birthday|surprise|christmas|hanukkah|holiday|graduat
 _PAYS_WITH_CARD = re.compile(r"\b(numbers?|codes?|scratch|pin|back of)\b", _I)
 _YOU = re.compile(r"\b(you|your|ya)\b", _I)
 # A sentence ends at . ! or ?, but not at the dot of a title ("Dr. Lee").
+# "If anyone asks, say the gift cards are for your grandson" coaches the victim; it isn't a warning.
+_COACHING = re.compile(r"\bif (anyone|anybody|someone|somebody|they|the (teller|bank|cashier|clerk)) "
+                       r"(\w+ ){0,2}(asks?|calls?)\b[^.!?]{0,10}\b(just )?(say|tell (them|him|her))\b", _I)
 _QUESTIONS_CALLER = re.compile(
     r"^\W*(are you (really |actually )?(from|with|calling from|the)|is this (really )?(the|my|a)\b"
     r"|is there (a|an) [^?]{0,40}\bfor you\b|do you want (gift cards|money|my|me to)|did you (just )?say"
@@ -309,10 +313,27 @@ class Context:
 
 
 def reports_scam(raw: str) -> bool:
-    """This line retells or warns about a scam ("a man said...", "there's a scam going around")."""
+    """This line retells or warns about a scam ("a man said...", "there's a scam going around").
+
+    Questions don't count: a grandparent asking "Is this a scam?" must not switch the rules off
+    for the caller's next lines (review 2026-11-14)."""
     text = raw.translate(_APOSTROPHES)
-    return bool(_STRONG_FRAME.search(text)) or any(
-        not _TOPIC_NEGATED.search(text[:m.start()]) for m in _SCAM_TOPIC.finditer(text))
+    for s in _sentences(text):
+        if s.rstrip().endswith("?"):
+            continue
+        if _STRONG_FRAME.search(s) or any(not _TOPIC_NEGATED.search(s[:m.start()]) for m in _SCAM_TOPIC.finditer(s)):
+            return True
+    return False
+
+
+def _sentences(text: str) -> list[str]:
+    out, last = [], 0
+    for m in _SENTENCE_END.finditer(text):
+        out.append(text[last:m.end()])
+        last = m.end()
+    if text[last:].strip():
+        out.append(text[last:])
+    return out
 
 
 def context_of(texts) -> Context:
@@ -331,7 +352,7 @@ def _sentence_start(text: str, at: int) -> int:
 def _reported(text: str, m: re.Match, ctx: Context) -> bool:
     start = _sentence_start(text, m.start())
     before = text[start:m.start()]
-    if _STRONG_FRAME.search(before) or _WHO_QUESTION.search(before):
+    if (_STRONG_FRAME.search(before) and not _COACHING.search(text[start:m.start()])) or _WHO_QUESTION.search(before):
         return True
     if ctx.scam_talk and _WEAK_FRAME.search(before):
         return True
@@ -371,7 +392,10 @@ def find_evidence(text: str, utterance_id: str, t_s: float,
     """
     ctx = context or Context()
     norm, pos = _strip_fillers(text.translate(_APOSTROPHES))
-    if _DESCRIBES_SCAM.search(norm):
+    # "That's a scam" describes one, unless a scammer says "you might think it's a scam, but
+    # go buy..." to get ahead of doubt: then the rest of the caption still counts.
+    d = _DESCRIBES_SCAM.search(norm)
+    if d and not _TOPIC_NEGATED.search(norm[:d.start()]) and not _DIRECT_ASK.search(norm[d.end():]):
         return []
     out: list[Evidence] = []
     for tactic, patterns in COMPILED.items():
@@ -396,7 +420,19 @@ _CALL_BEFORE = re.compile(r"\b(call|dial|phone|ring)( the| that)?\s*$", _I)
 
 
 def _calls_the_number(text: str, m: re.Match) -> bool:
-    return bool(re.match(r"numbers?\b", m.group(0), _I) and _CALL_BEFORE.search(text[:m.start()]))
+    return bool(re.match(r"numbers?\b", m.group(0), _I) and _CALL_BEFORE.search(text[:m.start()])) \
+        or _OWN_OR_IN_PERSON.search(_sentence_of(text, m))
+
+
+# Setting your own PIN, or bringing a card to the branch, isn't handing a number to the caller.
+_OWN_OR_IN_PERSON = re.compile(r"\b(set|reset|change|create|choose|pick|update) (up )?(a |your )?(new )?(pin|password|passcode)\b"
+                               r"|\b(when|if) you come in\b|\bat the (branch|bank|office|front desk)\b|\bin person\b|\bbring your\b", _I)
+
+
+def _sentence_of(text: str, m: re.Match) -> str:
+    start = _sentence_start(text, m.start())
+    rest = _SENTENCE_END.search(text, m.end())
+    return text[start:rest.end() if rest else len(text)]
 
 
 # "I'll fax it right now" promises the speaker's own action; it doesn't rush the listener.

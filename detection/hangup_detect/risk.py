@@ -71,12 +71,18 @@ class RiskModel:
             if strong:  # enough different quoted tactics: count them like rule evidence
                 raw = {t: v / self.cfg.llm_factor for t, v in raw.items()}
             llm = {t: max(0.0, v - rule.get(t, 0.0)) for t, v in raw.items()}
+            unscaled = dict(llm)
             total = sum(llm.values())
             cap = self.cfg.ai_alarm_cap if strong else self.cfg.llm_cap
             if total > cap:
                 k = cap / total
                 llm = {t: v * k for t, v in llm.items()}
-        combined = {t: rule.get(t, 0.0) + llm.get(t, 0.0) for t in set(rule) | set(llm)}
+        else:
+            unscaled = {}
+        # Combo strength uses the AI evidence before the cap: the cap limits how many points the
+        # AI adds by itself, but scaling every tactic down first meant a third AI flag lowered
+        # the score (review 2026-11-14). The AI can only add risk.
+        combined = {t: rule.get(t, 0.0) + unscaled.get(t, 0.0) for t in set(rule) | set(unscaled)}
 
         def strength(t):
             w = self.cfg.weights[t]

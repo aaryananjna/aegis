@@ -55,3 +55,16 @@ def test_questioning_the_caller_is_not_evidence(text):
 ])
 def test_a_scammers_questions_still_count(text):
     assert find_evidence(text, "u", 0.0) != []
+
+
+@pytest.mark.parametrize("text", [
+    "You'll need to set a new pin when you come in.",
+    "Please reset your password at the branch.",
+    "Bring your social security card when you come in.",
+])
+def test_setting_your_own_pin_or_doing_it_in_person_is_not_an_ask(text):
+    assert [e for e in find_evidence(text, "u", 0.0) if e.tactic.value == "payment"] == []
+
+
+def test_giving_the_pin_to_the_caller_still_counts():
+    assert find_evidence("I just need you to tell me your new pin.", "u", 0.0) != []

@@ -34,7 +34,8 @@ class Detector:
         self._last_rev: dict[str, int] = {}
         self._finals: OrderedDict[str, tuple[Segment, float]] = OrderedDict()
         self._ctx: dict[str, Context] = {}
-        self._report_t: float | None = None  # end time of the last line that retold or warned about a scam  # running call context after each final (rules.Context)
+        self._report_t: float | None = None  # end time of the last line that retold or warned about a scam
+        self._occasion_t: float | None = None  # end time of the last line naming a birthday, surprise or holiday  # running call context after each final (rules.Context)
         self._shown: dict[str, list[dict]] = {}  # utterance_id -> evidence C currently shows
         self._last_score: float | None = None
         self._last_level = "low"
@@ -187,6 +188,8 @@ class Detector:
         """
         self._clock(now_s)
         self._llm_failures = 0 if mode == "full" else self._llm_failures + 1
+        if mode == "rules_only":
+            self._llm_dirty = True  # no answer came back: ask again at the next chance
         if mode == "rules_only" and self._mode == "full" and self._llm_failures < self.cfg.llm_fail_streak:
             return []
         if mode == self._mode:
@@ -242,8 +245,12 @@ class Detector:
         if reports_scam(seg.text):
             self._report_t = seg.end_s
         reporting = self._report_t is not None and 0 <= seg.end_s - self._report_t <= self.cfg.report_window_s
-        ctx = Context(scam_talk=prev.scam_talk or mine.scam_talk, reporting=reporting,
-                      gift_occasion=prev.gift_occasion or mine.gift_occasion)
+        # A birthday or holiday only explains gift cards or secrecy said around the same time:
+        # "Hope you had a nice holiday" must not hide "buy Target gift cards" minutes later.
+        if mine.gift_occasion:
+            self._occasion_t = seg.end_s
+        occasion = self._occasion_t is not None and 0 <= seg.end_s - self._occasion_t <= self.cfg.occasion_window_s
+        ctx = Context(scam_talk=prev.scam_talk or mine.scam_talk, reporting=reporting, gift_occasion=occasion)
         if seg.is_final and uid in self._finals:
             self._ctx[uid] = ctx
         return ctx
