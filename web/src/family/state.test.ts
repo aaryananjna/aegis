@@ -31,6 +31,16 @@ test('end summary for a quiet call and a hang up call', () => {
                /^2 alerts\. Rose was told to hang up/)
 })
 
+test('the end summary matches the hang up card that was shown', () => {
+  const verify = { ...alert('codeword', 1), kind: 'verify', alert_id: 's1:verify' } as AegisEvent
+  // A fake grandson: "Hang up. Call back on the saved number."
+  assert.match(endSummary(run([alert('codeword', 1), alert('hangup', 2)]), 'Rose'), /saved number/)
+  // A fake bank: "Hang up. Call the number on your card or their official website." No saved number.
+  const bank = endSummary(run([verify, alert('hangup', 2)]), 'Rose')
+  assert.doesNotMatch(bank, /saved number/)
+  assert.match(bank, /^2 alerts\. Rose was told to hang up and call the real number/)
+})
+
 test('scam fixture gives a codeword then a hangup alert', () => {
   const events = readFileSync(new URL('../../public/fixtures/events-scam-grandson.jsonl', import.meta.url), 'utf8')
     .split('\n').filter(Boolean).map((l) => JSON.parse(l) as AegisEvent)

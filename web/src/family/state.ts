@@ -44,7 +44,14 @@ export function endSummary(s: FamilyState, name: string): string {
   const last = s.alerts[s.alerts.length - 1]
   if (!last) return `No warning signs on this call.`
   const count = s.alerts.length === 1 ? '1 alert' : `${s.alerts.length} alerts`
-  if (last.kind === 'hangup') return `${count}. ${name} was told to hang up and call back on a saved number.`
+  if (last.kind === 'hangup') {
+    // The hang-up card follows the first card: after the code word card it says "call back on
+    // the saved number"; after a fake bank or company it says to call the number on the card.
+    const family = s.alerts.some((a) => a.kind === 'codeword')
+    return family
+      ? `${count}. ${name} was told to hang up and call back on a saved number.`
+      : `${count}. ${name} was told to hang up and call the real number themselves.`
+  }
   if (s.codewordOk) return `${count}. The caller passed the family code word.`
   return `${count}. ${name} was told to check who was calling.`
 }

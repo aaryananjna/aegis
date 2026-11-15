@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { AccountPage } from './accounts/AccountPage'
 import { AuthProvider, RequireAuth } from './accounts/auth'
 import { WordmarkPage } from './brand/WordmarkPage'
@@ -31,6 +31,8 @@ export function App() {
           <Route path="/elder" element={<ElderScreen />} />
           <Route path="/family" element={<FamilyPage />} />
           <Route path="/pair" element={<PairPage />} />
+          {/* A mistyped address used to show a blank page: go to the front page instead. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

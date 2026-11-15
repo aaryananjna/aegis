@@ -100,6 +100,18 @@ export function breakdown(p: RiskPoint): Breakdown {
   return { totals: { rule: sum(rule), ai: sum(llm), combination: sum(combos) }, tactics, combos: comboRows }
 }
 
+/** The live connection in plain words for judges ("open" is the socket's word, not theirs). */
+export function connectionWords(connection: string): string {
+  const words: Record<string, string> = {
+    connecting: 'connecting…',
+    open: 'connected',
+    reconnecting: 'reconnecting…',
+    ended: 'call ended',
+    error: 'not connected',
+  }
+  return words[connection] ?? 'connecting…'
+}
+
 // Plain names for judges; the contract's id is shown next to it.
 export const TACTIC_LABEL: Record<string, string> = {
   impersonation: 'Pretending to be someone',
