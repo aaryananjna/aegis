@@ -70,3 +70,29 @@ def test_reconnect_offset_and_close_open():
     m.offset_s = 30.0
     out = m.feed(res([("again", 0.2, 0.5, 0)], True))
     assert out[0]["utterance_id"] == "u1-0" and out[0]["start_s"] == 30.2
+
+
+def test_new_line_at_each_sentence_end():
+    m = CaptionMaker("s1")
+    out = m.feed(res([("Oh,", 0.0, 0.3, None), ("no.", 0.3, 0.5, None),
+                      ("Who", 0.8, 1.0, None), ("is", 1.0, 1.1, None), ("this?", 1.1, 1.4, None),
+                      ("Restart", 1.6, 1.9, None), ("the", 1.9, 2.0, None)], True))
+    assert [(c["utterance_id"], c["text"]) for c in out] == [
+        ("u0-0", "Oh, no."), ("u0-1", "Who is this?"), ("u0-2", "Restart the")]
+    assert out[1]["start_s"] == 0.8 and out[1]["end_s"] == 1.4
+
+
+def test_titles_dont_end_a_sentence():
+    m = CaptionMaker("s1")
+    out = m.feed(res([("Doctor", 0, 0.2, 0), ("Patel", 0.2, 0.4, 0), ("and", 0.4, 0.5, 0),
+                      ("Dr.", 0.5, 0.6, 0), ("Lee", 0.6, 0.8, 0), ("called.", 0.8, 1.0, 0)], True))
+    assert [c["text"] for c in out] == ["Doctor Patel and Dr. Lee called."]
+
+
+def test_interim_lines_settle_into_finals():
+    m = CaptionMaker("s1")
+    m.feed(res([("Hello", 0, 0.3, None), ("there", 0.3, 0.6, None)]))
+    out = m.feed(res([("Hello.", 0, 0.3, None), ("There", 0.4, 0.6, None), ("you", 0.6, 0.7, None),
+                      ("are.", 0.7, 0.9, None)], True))
+    assert [(c["utterance_id"], c["text"], c["is_final"]) for c in out] == [
+        ("u0-0", "Hello.", True), ("u0-1", "There you are.", True)]
