@@ -8,18 +8,24 @@ export const LEVEL = {
   high: { word: 'Warning', dot: 'bg-alarm', text: 'text-alarm-text' },
 } as const
 
+// Once the hang-up card is up it's no longer "a warning": say what it is.
+const HANGUP_WORD = 'Scam call'
+
 export function StatusBand({
   level,
   notes,
   children,
   brand,
+  hangup = false,
 }: {
   level: ElderState['level']
   notes: string[]
   children?: ReactNode
   brand?: ReactNode
+  hangup?: boolean
 }) {
   const look = level ? LEVEL[level] : null
+  const word = hangup ? HANGUP_WORD : look?.word
 
   return (
     <div
@@ -28,7 +34,7 @@ export function StatusBand({
     >
       <p role="status" className="flex items-center gap-4 text-[length:clamp(26px,2.2vw,36px)] font-semibold">
         <span aria-hidden data-dot className={`size-[0.7em] rounded-full ${look ? look.dot : 'bg-mist'}`} />
-        <span className={look ? look.text : 'text-mist'}>{look ? look.word : 'Listening'}</span>
+        <span className={look ? look.text : 'text-mist'}>{word ?? 'Listening'}</span>
       </p>
       {children}
       {/* The notes wrap beside the bigger red button instead of squeezing it. */}
