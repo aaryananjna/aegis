@@ -9,16 +9,16 @@ import { ScaledFrame } from './ScaledFrame'
 
 const STEPS = [
   {
-    title: 'Captions they can read',
-    body: 'Every word of the call shows up on the laptop in large type as it’s spoken, so a quiet or fast caller is easy to follow.',
+    title: 'Every word, big enough to read',
+    body: 'The call shows up on screen in large print as it happens. A fast talker or a bad line stops being a problem.',
   },
   {
-    title: 'Listens for the script, not the voice',
-    body: 'Scammers follow the same playbook: pretend to be family or the bank, invent an emergency, ask for secrecy, then gift cards or a transfer. Aegis flags those moves, so a cloned voice doesn’t get past it.',
+    title: 'It knows the script, not just the voice',
+    body: 'Scams run on the same moves: a fake emergency, a rush, “don’t tell anyone,” then gift cards or a wire transfer. Aegis watches for those moves, so it doesn’t matter how real the voice sounds.',
   },
   {
-    title: 'One step for them, an alert for you',
-    body: 'The grandparent gets a single instruction, like asking for the family code word or hanging up. The family’s phone gets an alert quoting what the caller said.',
+    title: 'One clear step, and a heads-up for family',
+    body: 'Your loved one sees one simple instruction, like “ask for the family code word” or “hang up.” Your phone gets an alert with the caller’s exact words.',
   },
 ]
 
@@ -64,10 +64,10 @@ export function LandingPage() {
           Real-time scam alerts for every call.
         </p>
         <p className="max-w-2xl text-[21px] leading-relaxed text-paper-dim">
-          Aegis sits next to a grandparent’s phone while it’s on speaker. It turns the call into
-          big captions and listens for the moves scammers use: a family emergency, a rush, a
-          secret, a gift card. When it hears them, it tells the grandparent what to do and alerts
-          the family.
+          Scammers don’t sound like scammers. They sound like a grandson in trouble, or the bank
+          calling about a problem with the account. Aegis follows the call on speakerphone and puts
+          every word on screen. The moment the caller starts rushing, pushing for secrecy or asking
+          for gift cards, it tells your loved one exactly what to do, and lets the family know.
         </p>
         {!loggedIn && (
         <div className="flex flex-wrap items-center gap-4">
@@ -96,7 +96,7 @@ export function LandingPage() {
             grandparent={
               <ScaledFrame
                 key={`elder-${run}`}
-                title="The grandparent's screen, demo call"
+                title="Your loved one's screen, demo call"
                 src={`/elder?fixture=scam-grandson-ai&embed=1&demo=${demoId}-${run}`}
                 width={1280}
                 height={800}

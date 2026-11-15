@@ -44,7 +44,7 @@ export function AccountPage() {
         {mode === 'login' ? 'Log in' : 'Create your account'}
       </h1>
       <p className="text-[18px] text-paper-dim">
-        For family members who watch over a grandparent. The grandparent never needs an account.
+        For family looking out for someone they love. The person you protect never needs an account.
       </p>
       <form onSubmit={submit} className="flex flex-col gap-4" noValidate={false}>
         {mode === 'signup' && (

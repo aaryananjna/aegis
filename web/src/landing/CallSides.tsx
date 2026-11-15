@@ -10,7 +10,7 @@ export function CallSides({ grandparent, family }: { grandparent: ReactNode; fam
     <div className="grid items-start gap-6 lg:grid-cols-[1fr_360px]">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <h3 className="subtitle text-[1.4rem]">The grandparent’s screen</h3>
+          <h3 className="subtitle text-[1.4rem]">Your loved one’s screen</h3>
           <p className="text-[16px] text-mist">On the laptop next to the phone. This is all they see.</p>
         </div>
         {grandparent}
@@ -19,7 +19,7 @@ export function CallSides({ grandparent, family }: { grandparent: ReactNode; fam
         <div className="flex flex-col gap-1">
           <h3 className="subtitle text-[1.4rem]">The family’s phone</h3>
           <p className="text-[16px] text-mist">
-            <span className="font-semibold text-paper">The grandparent can’t see this.</span> It runs in the
+            <span className="font-semibold text-paper">They can’t see this.</span> It runs in the
             background, and when Aegis spots a scam it sends an alert to their phone.
           </p>
         </div>
