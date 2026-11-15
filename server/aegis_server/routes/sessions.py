@@ -91,7 +91,8 @@ async def _start_call(body: NewSession, x_device_token: str | None) -> dict:
         if not settings.deepgram_api_key:
             raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY is not set")
         from ..stt.deepgram import SttError, check_mic
-        device = int(body.device) if body.device and body.device.isdigit() else body.device
+        name = body.device or settings.mic_device or None
+        device = int(name) if name and name.isdigit() else name
         try:
             check_mic(device)  # a missing library or a wrong mic name fails here, not silently
         except SttError as e:
