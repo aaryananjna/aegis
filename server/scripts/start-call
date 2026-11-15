@@ -43,9 +43,23 @@ if DEVICE.exists() and not a.no_history:
     headers["X-Device-Token"] = DEVICE.read_text().strip()
 req = urllib.request.Request(f"{SERVER}/sessions", json.dumps(body).encode(), headers,
                              method="POST")
-try:
+def post(req):
     with urllib.request.urlopen(req, timeout=10) as r:
-        d = json.load(r)
+        return json.load(r)
+
+
+try:
+    try:
+        d = post(req)
+    except urllib.error.HTTPError as e:
+        if e.code != 401 or "X-Device-Token" not in headers:
+            raise
+        # A stale server/.device_token (the laptop was unpaired or the database was reset).
+        print("This laptop's pairing token isn't valid any more: starting the call without "
+              "saving it to history. Run `python -m aegis_server.seed` to pair again.")
+        headers.pop("X-Device-Token")
+        d = post(urllib.request.Request(f"{SERVER}/sessions", json.dumps(body).encode(),
+                                        headers, method="POST"))
 except urllib.error.HTTPError as e:
     sys.exit(f"server said {e.code}: {e.read().decode(errors='replace')}")
 except OSError:

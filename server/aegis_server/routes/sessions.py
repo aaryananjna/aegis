@@ -75,8 +75,20 @@ async def create_session(request: Request, response: Response,
 
 async def _start_call(body: NewSession, x_device_token: str | None) -> dict:
     """Start a call: tokens, mic, history. Shared by POST /sessions and /sessions/start."""
-    if body.mic and not settings.deepgram_api_key:
-        raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY is not set")
+    device = None
+    if body.mic:
+        if not settings.deepgram_api_key:
+            raise HTTPException(status_code=400, detail="DEEPGRAM_API_KEY is not set")
+        from ..stt.deepgram import SttError, check_mic
+        device = int(body.device) if body.device and body.device.isdigit() else body.device
+        try:
+            check_mic(device)  # a missing library or a wrong mic name fails here, not silently
+        except SttError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+        # There's one laptop mic: a new mic call ends any old one (a closed tab or a second
+        # start-call would otherwise keep listening and using AI quota).
+        for old in store.mic_calls():
+            await old.put(("end", None))
     # A paired laptop says which grandparent this is, so the call goes in her history.
     elder_id = None
     if x_device_token and db.is_open():
@@ -93,7 +105,6 @@ async def _start_call(body: NewSession, x_device_token: str | None) -> dict:
     except TooManySessions:
         raise HTTPException(status_code=429, detail="too many calls at once; end one first")
     if body.mic:
-        device = int(body.device) if body.device and body.device.isdigit() else body.device
         s.start_mic(device, labels=body.labels)
     extra = {k: v for k, v in (("name", body.name), ("phone", body.phone)) if v}
     urls = {role: f"{settings.web_base_url}/{role}?" + urlencode(

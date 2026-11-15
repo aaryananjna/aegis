@@ -73,6 +73,19 @@ def _check_url(url: str) -> None:
     raise SttError(f"refusing to send audio to {u.scheme}://{u.hostname}")
 
 
+def check_mic(device: int | str | None) -> None:
+    """Fail now, with a clear message, if the mic can't be opened (no sounddevice, wrong
+    --device name, no input device). Otherwise a call would start fine and show no captions."""
+    try:
+        import sounddevice as sd
+    except ImportError as e:
+        raise SttError('the mic needs sounddevice: pip install -e "server[mic]"') from e
+    try:
+        sd.check_input_settings(device=device, channels=1, samplerate=RATE, dtype="int16")
+    except Exception as e:
+        raise SttError(f"can't use mic {device!r}: {e}") from e
+
+
 # ---- audio sources: each yields 100 ms chunks of 16 kHz mono 16-bit PCM ------------------
 
 async def mic_chunks(device: int | str | None, stop: asyncio.Event) -> AsyncIterator[bytes]:
@@ -140,7 +153,8 @@ class Stats:
 async def transcribe(session_id: str, source: AsyncIterator[bytes], sink: Sink, *,
                      api_key: str, model: str = "nova-3", diarize: bool = True,
                      stop: asyncio.Event | None = None, deepgram_url: str = DEEPGRAM_URL,
-                     on_connect: Callable[[], Awaitable[None]] | None = None) -> Stats:
+                     on_connect: Callable[[], Awaitable[None]] | None = None,
+                     on_trouble: Callable[[], Awaitable[None]] | None = None) -> Stats:
     """Stream `source` to Deepgram and hand each caption to `sink`, until the audio ends,
     `stop` is set or the task is cancelled. Reconnects when Deepgram drops."""
     if not api_key:
@@ -234,6 +248,8 @@ async def transcribe(session_id: str, source: AsyncIterator[bytes], sink: Sink, 
                 log.warning("Deepgram dropped (%s); reconnecting", type(e).__name__)
             for cap in maker.close_open():
                 await emit(cap)
+            if failures == 2 and on_trouble:  # once per streak: tell the screens
+                await on_trouble()
             await asyncio.sleep(min(5.0, 0.5 * 2 ** min(failures, 4)))  # back off, max 5 s
         for cap in maker.close_open():
             await emit(cap)

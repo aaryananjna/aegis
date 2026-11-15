@@ -128,6 +128,7 @@ class Session:
         # Test transcripts (opt-in, staged calls only): a local .call file, never the database.
         self.transcript = TestTranscript(session_id) if save_transcript else None
         self.elder_raw: str | None = None
+        self.mic_on = False  # this call owns the laptop mic
         if elder_id is not None and db.is_open():
             self.recorder = CallRecorder(session_id, elder_id)
         self.loop = asyncio.get_running_loop()
@@ -168,10 +169,12 @@ class Session:
             try:
                 if kind == "caption":
                     seg, source = payload
-                    # C1: the caption goes out before the detector's events for it.
-                    out = [self._caption_event(seg, source, now)] + d.feed(seg, now)
+                    # C1: the caption goes out before the detector's events for it, and on
+                    # its own, so a detector error can't swallow the caption too.
+                    self.broadcast([self._caption_event(seg, source, now)])
                     if self.transcript:
                         self.transcript.add(seg)
+                    out = d.feed(seg, now)
                     out += self._maybe_guess_elder(seg, source, now)
                 elif kind == "set_elder":  # a tap (or the laptop) always wins
                     self.elder_pick = "tap"
@@ -194,8 +197,14 @@ class Session:
                     out = [{"type": "status", "session_id": self.session_id,
                             "t": round(now, 3), **payload}]
                 else:  # "end" (C5)
-                    out = d.end(now) + [{"type": "call_ended", "session_id": self.session_id,
-                                         "t": round(now, 3)}]
+                    try:
+                        final = d.end(now)
+                    except Exception as e:  # call_ended must go out no matter what
+                        log.error("session %s: %s in detector end", self.session_id,
+                                  type(e).__name__)
+                        final = []
+                    out = final + [{"type": "call_ended", "session_id": self.session_id,
+                                    "t": round(now, 3)}]
                     if self.recorder:
                         self.recorder.observe(out)
                         self.recorder.finish()
@@ -313,6 +322,7 @@ class Session:
         scored from the start (set_elder(None) now), and the server never guesses a voice."""
         from .stt import deepgram
 
+        self.mic_on = True
         if not labels:
             self.elder_pick = "server"
             self.queue.put_nowait(("no_labels", None))
@@ -325,12 +335,16 @@ class Session:
         async def on_connect() -> None:
             await self.put(("status", {"stt": "deepgram", "warning": None}))
 
+        async def on_trouble() -> None:  # Deepgram or the Wi-Fi dropped twice in a row
+            await self.put(("status", {"stt": "deepgram",
+                                       "warning": "live captions reconnecting"}))
+
         async def run() -> None:
             try:
                 await deepgram.transcribe(
                     self.session_id, deepgram.mic_chunks(device, self.stt_stop), sink,
                     api_key=settings.deepgram_api_key, stop=self.stt_stop,
-                    on_connect=on_connect, diarize=labels)
+                    on_connect=on_connect, on_trouble=on_trouble, diarize=labels)
             except asyncio.CancelledError:
                 raise
             except Exception as e:
@@ -385,6 +399,9 @@ class SessionStore:
 
     def __len__(self) -> int:
         return len(self._sessions)
+
+    def mic_calls(self) -> list[Session]:
+        return [s for s in self._sessions.values() if s.mic_on and not s.ended]
 
     async def close_all(self) -> None:
         for s in list(self._sessions.values()):
