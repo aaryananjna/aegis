@@ -145,7 +145,7 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
         // are briefly dark-on-dark mid-fade.
         className={`flex min-h-0 flex-col ${TINT[state.level ?? 'none']}`}
       >
-        <StatusBand level={state.level} notes={notes} brand={
+        <StatusBand level={state.level} notes={notes} hangup={state.card?.kind === 'hangup'} brand={
           <>
             {familyUrl && !state.ended && <FamilyLinkButton familyUrl={familyUrl} />}
             {!state.ended && <EndCall onEnd={endCall} hangupShowing={state.card?.kind === 'hangup'} />}
