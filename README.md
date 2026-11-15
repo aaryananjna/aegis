@@ -78,18 +78,22 @@ actually does with those exact lines.
 
 ## How well it works
 
-These are our own tests on written and staged practice calls, not real victims.
+These numbers come from a held-out set: 16 staged role-play calls (8 scams and 8 tricky normal
+calls) that the team wrote and never tuned the detector on. They are not real victims.
 
-| Test | Result |
+| Test, rules only (AI off) | Result |
 |---|---|
-| Scam calls in our test set that reach a Warning | 26 of 30 |
-| Normal calls in our test set that get a false Warning | 0 of 30 |
-| Scams improvised by an outside review, rules alone | 10 of 10 |
+| Scam calls that reach a Warning | 5 of 8 |
+| Normal calls that get a false Warning | 0 of 8 |
 | Time to score one caption | about 0.2 ms |
 
-The test set mixes tricky normal calls (a real bank alert, a real grandson calling, a surprise
-party) with scams. Run it yourself with `python -m hangup_detect.eval --set all` from
-`detection/`.
+The normal calls include a real bank fraud alert, a real grandkid asking for help, a surprise
+party and a pharmacy copay. The three scams the rules miss (a Medicare back brace offer, a
+laptop refund and a roof deposit) are the kind the AI layer is there for. Run it yourself with
+`python -m hangup_detect.eval --set heldout` from `detection/`.
+
+We also have 44 practice calls (22 scams, 22 normal) and 10 scams improvised by an outside review. We changed rules
+after seeing those, so they aren't counted above.
 
 ## Run it
 
