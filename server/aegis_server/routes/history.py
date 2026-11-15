@@ -1,5 +1,9 @@
 """Call history for the family dashboard (#44). Logged-in family only; numbers only.
 
+GET /elders/{elder_id}/live
+    -> {"live": null} or {"live": {session_id, family_token, started_at}}
+       The grandparent's call happening right now, for the family dashboard on the phone: it
+       checks every few seconds and connects to /events?role=family with this token.
 GET /elders/{elder_id}/calls?limit=20
     -> {"calls": [{id, started_at, ended_at, max_score, max_level, flagged_at, card}]}, newest first
 GET /elders/{elder_id}/calls/{call_id}/risk?bucket=1
@@ -15,7 +19,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
 
+from datetime import datetime, timezone
+
 from .. import db
+from ..sessions import store
 from .auth import CurrentUser, User
 
 router = APIRouter(tags=["history"])
@@ -35,6 +42,18 @@ def _call(r) -> dict:
     return {"id": r["id"], "started_at": r["started_at"], "ended_at": r["ended_at"],
             "max_score": None if ms is None else round(ms, 4), "max_level": r["max_level"],
             "flagged_at": r["flagged_at"], "card": r["card"]}
+
+
+@router.get("/elders/{elder_id}/live")
+async def live_call(elder_id: UUID, user: CurrentUser) -> dict:
+    """Logged-in family only (owner or viewer). Hands out the call's family token, which only
+    opens the read-only family view and dies when the call ends."""
+    await _require_member(elder_id, user)
+    s = store.live_for(elder_id)
+    if s is None:
+        return {"live": None}
+    return {"live": {"session_id": s.session_id, "family_token": s.tokens["family"],
+                     "started_at": datetime.fromtimestamp(s.started_at, timezone.utc)}}
 
 
 @router.get("/elders/{elder_id}/calls")
