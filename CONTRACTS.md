@@ -35,7 +35,7 @@ Everything between the three parts travels as JSON over A's WebSockets.
 | C16 | The server can send `set_elder` itself: from the grandparent's first "Hello?", or at once with labels off (#40) | ADDITIVE |
 | C17 | New server event `elder_set` to elder listeners: whose voice is the grandparent's, and who decided (#40) | ADDITIVE |
 | C18 | The elder screen may send `end` (its "End call" button, behind an "are you sure" box) (#42) | ADDITIVE |
-| C19 | With labels off, the AI layer may see both voices after a rule fires (#47, #49) | DATA HANDLING |
+| C19 | With labels off, the AI layer sees the last 60 s of both voices from the first line (#47, #55, #49) | DATA HANDLING |
 
 ## Envelope
 

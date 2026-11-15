@@ -179,10 +179,11 @@ catch the practice scams. Twilio texts (open question 4) are out; keep the famil
 3. Can each of us merge our own PR once tests pass, or does someone review first?
 4. **Family phone buzz:** keep the `/family` page open on the phone (no work), or add a Twilio
    text that links to it (new event, needs a `CONTRACTS.md` change OK'd by all three)?
-5. **What goes to the AI layer before the tap:** `CONTRACTS.md` says only caller text goes to
-   Groq or Gemini, but before the grandparent tap (or with no speaker labels) we can't tell
-   who the caller is. Proposal for B: the AI layer stays off until the tap names a
-   grandparent; with no speaker labels it stays rules only.
+5. **What goes to the AI layer before the tap:** decided in #49. With a named grandparent,
+   only caller text goes. With labels off (the demo), the last 60 s of both voices go to
+   Groq or Gemini from the first line, unlabeled, add-only and never stored (`CONTRACTS.md`
+   C19). Pitch line: "Audio is never stored. Only the last minute of call text goes to the AI
+   to spot scams, and it's never saved."
 6. Who plays the cloned "grandson" off stage in the demo?
 7. Which prizes we're going for (the table in "Goal for the hackathon" is a proposal).
 8. **User accounts:** who logs in (family members, the grandparent or both), and what else a
