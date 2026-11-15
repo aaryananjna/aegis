@@ -137,7 +137,7 @@ function ElderCall({ feed, pickVoices, embedded, demo }: { feed: Feed; pickVoice
       : error
 
   return (
-    <main className="grid h-dvh grid-rows-[60fr_40fr] overflow-hidden">
+    <main className="grid h-dvh grid-rows-[58fr_42fr] overflow-hidden">
       <h1 className="sr-only">Aegis call captions</h1>
       <CaptionPane state={state} speakerLabel={speakerLabel} />
       <div
