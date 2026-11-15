@@ -189,7 +189,7 @@ function WatchQrSection() {
         Scan this once with your phone and log in. Keep the page open, and each call shows up there
         by itself, with alerts if it looks like a scam.
       </p>
-      <div className="max-w-sm">
+      <div className="mx-auto w-full max-w-sm">
         <FamilyQr familyUrl={`${origin ?? window.location.origin}/watch`} />
       </div>
     </section>
