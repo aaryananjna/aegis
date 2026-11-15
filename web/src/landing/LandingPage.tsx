@@ -26,6 +26,8 @@ const linkClass =
 export function LandingPage() {
   // The demo plays right here: nothing loads until "Watch a demo call", and Restart replays it.
   const [run, setRun] = useState(0)
+  // Ties this run's two screens together (a tap on Grandma's reaches the phone), per page load.
+  const [demoId] = useState(() => Math.random().toString(36).slice(2, 10))
   const demo = useRef<HTMLElement>(null)
   const start = () => {
     setRun((n) => n + 1)
@@ -72,7 +74,7 @@ export function LandingPage() {
             <ScaledFrame
               key={`elder-${run}`}
               title="Grandma's screen, demo call"
-              src="/elder?fixture=scam-grandson&embed=1"
+              src={`/elder?fixture=scam-grandson&embed=1&demo=${demoId}-${run}`}
               width={1280}
               height={800}
               className="w-full rounded-2xl"
@@ -80,9 +82,10 @@ export function LandingPage() {
             <ScaledFrame
               key={`family-${run}`}
               title="Family phone, demo call"
-              src="/family?fixture=scam-grandson&embed=1"
+              src={`/family?fixture=scam-grandson&embed=1&demo=${demoId}-${run}`}
               width={390}
               height={844}
+              fit
               className="mx-auto w-full max-w-[360px] rounded-[2rem]"
             />
           </div>

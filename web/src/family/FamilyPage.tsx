@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router'
 import { SiteNav } from '../brand/SiteNav'
 import { CheckIcon, KeyIcon, PhoneDownIcon, PhoneIcon, ShieldIcon } from '../elder/Icons'
+import { eventsForTap, useDemoTaps } from '../events/demoLink'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { endSummary, initialFamilyState, reduceFamily, type FamilyAlert } from './state'
 
@@ -17,11 +18,15 @@ export function FamilyPage() {
   const name = search.get('name') || (sample ? SAMPLE.name : 'your family member')
   const phone = search.get('phone') || (sample ? SAMPLE.phone : null)
   const embedded = search.get('embed') === '1' // inside the landing page's demo: no nav
-  return <FamilyWatch key={JSON.stringify(feed)} feed={feed} name={name} phone={phone} embedded={embedded} />
+  const demo = sample ? search.get('demo') : null // taps on Grandma's screen beside it reach here
+  return <FamilyWatch key={JSON.stringify(feed)} feed={feed} name={name} phone={phone} embedded={embedded} demo={demo} />
 }
 
-function FamilyWatch({ feed, name, phone, embedded }: { feed: Feed; name: string; phone: string | null; embedded: boolean }) {
-  const { events, receivedAt, connection, error } = useEvents(feed)
+function FamilyWatch({ feed, name, phone, embedded, demo }: {
+  feed: Feed; name: string; phone: string | null; embedded: boolean; demo: string | null
+}) {
+  const { events, receivedAt, connection, error, playLocally } = useEvents(feed)
+  useDemoTaps(demo, (tap) => playLocally(eventsForTap(tap, 'sample'), { stop: true }))
   const state = useMemo(
     () => events.reduce((s, e, i) => reduceFamily(s, e, receivedAt[i]), initialFamilyState),
     [events, receivedAt],
@@ -39,8 +44,9 @@ function FamilyWatch({ feed, name, phone, embedded }: { feed: Feed; name: string
     feed.kind === 'none' ? 'This link is missing its call. Open the family link the laptop shows.' : error
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 px-5
-                     pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+    // Embedded in the landing demo the page is only as tall as what's on it; the frame grows with it.
+    <main className={`mx-auto flex ${embedded ? '' : 'min-h-dvh'} max-w-xl flex-col gap-5 px-5
+                     pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]`}>
       <header className="flex flex-col gap-1">
         {!embedded && <SiteNav section="Family" />}
         <h1 className="title mt-3">Watching over {name}</h1>
