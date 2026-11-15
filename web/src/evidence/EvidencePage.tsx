@@ -4,7 +4,7 @@ import { SiteNav } from '../brand/SiteNav'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { BreakdownPanel } from './Breakdown'
 import { RiskChart } from './RiskChart'
-import { evidenceRows, initialEvidenceState, reduceEvidence, riskAt, TACTIC_LABEL } from './state'
+import { connectionWords, evidenceRows, initialEvidenceState, reduceEvidence, riskAt, TACTIC_LABEL } from './state'
 
 /** For judges: why Aegis decided what it did on this call, with the caller's exact words. */
 export function EvidencePage() {
@@ -35,7 +35,7 @@ function Evidence({ feed }: { feed: Feed }) {
             {feed.kind === 'fixture'
               ? `Sample call "${feed.name}", not live`
               : feed.kind === 'live'
-                ? `Live call · ${connection}`
+                ? `Live call · ${connectionWords(connection)}`
                 : 'No call connected'}
             {error ? ` · ${error}` : ''}
           </span>

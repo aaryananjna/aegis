@@ -52,6 +52,9 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(grand )?prize winner\b",
         r"\b(fraud|security|card services) (desk|team|department|line|unit|center|centre|office) (at|of|from|with|for) "
         r"(the |your )?(\w+ ){0,3}(bank|credit union|savings|federal)\b",
+        # Plain wording (end-to-end test, 2026-11-15): "I'm calling from your bank". A real bank
+        # names itself ("this is Dana from First Valley Bank"); alone this stays Normal.
+        r"\bcalling (you )?from (your|the) (bank|credit union|credit card company|card company)\b",
     ],
     T.URGENCY: [
         r"\b(right now|right away|immediately|as soon as possible|asap|before it'?s too late)\b",
@@ -118,6 +121,15 @@ PATTERNS: dict[T, list[str]] = {
         r"|\b(do|initiate|make|send|start) (a |the )?(reverse|reversal) (transfer|transaction|wire|payment)\b",
         r"\b(send|pay|wire|bring|transfer)\b.{0,40}\b(dollars|bucks|grand)\b.{0,15}\bor (you'?ll|you will|else|she'?ll|he'?ll|they'?ll)\b",
         r"\b(taxes|fees?) first\b|\bbefore (we|i) (can )?(deliver|release|send|ship|mail) (the |your )?(check|prize|money|winnings)\b",
+        # Plain wording (end-to-end test, 2026-11-15). Each one alone stays Normal; it takes a
+        # second trick (a claim to be someone, a threat, secrecy) to warn.
+        # "send that money back to us with Zelle", "send me two thousand through Western Union"
+        r"\b(send|pay|transfer|move|wire)\b.{0,40}\b(with|through|by|using|via|on|over) (zelle|venmo|cash ?app|paypal|western union|moneygram)\b",
+        # A fee before the money comes: "before we send it, you just pay a small fee"
+        r"\bbefore (we|i) (can )?(deliver|release|send|ship|mail) (it|them)\b.{0,30}\bpay\b",
+        r"\bpay (us |me )?(a|the|one) (small|little|tiny|one[- ]time|up ?front|advance|refundable|processing|handling|release) fee\b",
+        # A stranger's ask for thousands: "I need three thousand dollars", "can you send me two grand"
+        r"\b(i need|send me|wire me|lend me|loan me|can you send( me)?)\b.{0,20}\b(thousand (dollars|bucks)|grand)\b",
     ],
     T.THREAT: [
         r"\bwarrant (is )?out (for|on) (you|your)\b",
@@ -145,6 +157,16 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(someone|somebody|a (man|woman|person)|a scammer|hackers?)\b.{0,30}\b(tried|attempted|is trying|was trying) to "
         r"(send|take|withdraw|transfer|move|wire|charge|use|access|empty|steal)\b.{0,50}\b(your|the) "
         r"(checking|savings|account|bank account|card|debit card|credit card|funds|money)\b",
+        # Plain wording (end-to-end test, 2026-11-15)
+        # "the police will come to your house", "the police arrested me"
+        r"\b(police|sheriff|cops|officers|marshals|deputies) (will|are going to|are gonna) (come|be (sent|coming)|show up|arrest|pick you up)\b",
+        r"\b(police|cops|they) (have |just )?arrested (me|him|her)\b",
+        # A shutoff with a deadline: "your power will be turned off in thirty minutes". A planned
+        # outage ("the power will be off Tuesday from nine to noon") has no countdown.
+        r"\b(power|electricity|service|water|gas|lights) (will|is going to|are going to) (be|get) (turned|shut|cut|switched) off\b"
+        r".{0,20}\b((in|within) (the next )?(\w+ ){1,2}(minutes?|hours?)|today|tonight)\b",
+        # Tech support opener: "your computer has been sending us error messages"
+        r"\b(computer|laptop|pc|device) (is|has been|keeps) sending (us |out )?(\w+ )?(errors?|messages|alerts|warnings|signals)\b",
     ],
     T.VERIFICATION_AVOIDANCE: [
         r"\bno time (for|to) (that|explain|questions)\b",
@@ -168,6 +190,11 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(install|download) (the |this |an? |my )?(app|program|software|tool)\b.{0,30}\bso (i|we) can (fix|clean|remove|access|see|get into|connect|scan)\b",
         r"\bread (that|the|this|your) .{0,20}\bcode\b.{0,15}\b(back|to me|to us)\b",
         r"\b(texted|sent|text|send) you (a|an) (\w+ ){0,3}code\b",
+        # Plain wording (end-to-end test, 2026-11-15): "I just sent a code to your phone",
+        # "read me that code", "go to your computer and turn it on"
+        r"\b(texted|sent) (a|an) (\w+ ){0,3}code to your (phone|cell|cell phone|email|number)\b",
+        r"\b(read|give|tell|send) me (that|this) (verification |security |one[- ]time )?(code|pin|password)\b",
+        r"\b(go|get) (over )?to your computer\b",
     ],
     T.DISTRESS: [
         r"\bi'?m (so )?(scared|terrified|in trouble|in big trouble|hurt|bleeding|crying)\b",
@@ -176,6 +203,9 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(i'?m|he'?s|she'?s) in the hospital\b",
         r"\bbroke my (nose|arm|leg|wrist)\b",
         r"\bpregnant woman\b",  # AARP grandparent scam
+        # Stranded traveler (end-to-end test, 2026-11-15): "somebody stole my wallet", "I'm stuck at the airport"
+        r"\b(stole|took) my (wallet|purse|passport)\b|\bmy (wallet|purse|passport) (was|got) stolen\b",
+        r"\bi'?m (stuck|stranded) (at|in) (the|a)\b",
     ],
 }
 
@@ -449,7 +479,17 @@ _CALL_BEFORE = re.compile(r"\b(call|dial|phone|ring)( the| that)?\s*$", _I)
 
 def _calls_the_number(text: str, m: re.Match) -> bool:
     return bool(re.match(r"numbers?\b", m.group(0), _I) and _CALL_BEFORE.search(text[:m.start()])) \
-        or _OWN_OR_IN_PERSON.search(_sentence_of(text, m))
+        or bool(_OWN_OR_IN_PERSON.search(_sentence_of(text, m))) or _sends_to_you(text, m)
+
+
+# "I'm going to send you the money with Zelle" is the speaker paying the listener, not an ask.
+_PAY_APP = re.compile(r"\b(zelle|venmo|cash ?app|paypal|western union|moneygram)$", _I)
+_I_DO_IT = re.compile(r"\b(i|i'?ll|i will|i'?m going to|i am going to|i'?m gonna|let me|i can|i just|i already)\s+$", _I)
+
+
+def _sends_to_you(text: str, m: re.Match) -> bool:
+    return bool(_PAY_APP.search(m.group(0)) and _I_DO_IT.search(text[:m.start()])
+                and re.match(r"\w+ (you|it to you)\b", m.group(0), _I))
 
 
 # Setting your own PIN, or bringing a card to the branch, isn't handing a number to the caller.
