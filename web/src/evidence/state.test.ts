@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import type { AegisEvent } from '../events/types.ts'
-import { breakdown, evidenceRows, initialEvidenceState, reduceEvidence, riskAt } from './state.ts'
+import { breakdown, connectionWords, evidenceRows, initialEvidenceState, reduceEvidence, riskAt } from './state.ts'
 
 const fixture = (name: string) =>
   readFileSync(new URL(`../../public/fixtures/events-${name}.jsonl`, import.meta.url), 'utf8')
@@ -49,4 +49,10 @@ test('breakdown splits rule, AI and combination', () => {
 test('status.mode full means the AI layer is on', () => {
   const s = run([{ type: 'status', session_id: 's', t: 1, seq: 1, mode: 'full', warning: null } as AegisEvent])
   assert.equal(s.mode, 'full')
+})
+
+test('the live connection is shown in plain words, never the socket state', () => {
+  assert.equal(connectionWords('open'), 'connected')
+  assert.equal(connectionWords('ended'), 'call ended')
+  assert.equal(connectionWords('something-new'), 'connecting…')
 })

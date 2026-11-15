@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router'
 import { AccountPage } from './accounts/AccountPage'
 import { AuthProvider, RequireAuth } from './accounts/auth'
 import { WordmarkPage } from './brand/WordmarkPage'
@@ -33,6 +33,8 @@ export function App() {
           <Route path="/pair" element={<PairPage />} />
           {/* Grandma's laptop opens straight to one big Start button (#107). */}
           <Route path="/ready" element={<ReadyScreen />} />
+          {/* A mistyped address used to show a blank page: go to the front page instead. */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>
