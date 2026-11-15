@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { test } from 'node:test'
 import type { AegisEvent } from '../events/types.ts'
-import { highlightPieces, initialElderState, noVoiceLabels, reduceElder } from './state.ts'
+import { callFamilyLine, highlightPieces, initialElderState, noVoiceLabels, reduceElder } from './state.ts'
 
 const base = { session_id: 's1', t: 1 }
 const cap = (uid: string, revision: number, text: string, is_final: boolean, speaker = '1') =>
@@ -141,4 +141,29 @@ test('call_ended clears the captions, highlights and card', () => {
   assert.deepEqual(s.order, [])
   assert.deepEqual(s.captions, {})
   assert.equal(s.card, null)
+})
+
+const risk = (level: 'low' | 'elevated' | 'high', seq: number) =>
+  ({ ...base, seq, type: 'risk', score: 0.5, level, contributions: {} }) as AegisEvent
+const ended = { ...base, type: 'call_ended' } as AegisEvent
+
+test('warned is set by a card or a Warning and survives the end of the call (#107)', () => {
+  assert.equal(run([risk('elevated', 1), ended]).warned, false)
+  const byLevel = run([risk('high', 1), risk('low', 2), ended])
+  assert.equal(byLevel.warned, true)
+  assert.equal(byLevel.card, null) // the card and words are still dropped
+  assert.deepEqual(byLevel.order, [])
+  assert.equal(run([card('verify', 1), ended]).warned, true)
+  assert.equal(run([ended, risk('high', 2)]).warned, false) // nothing counts after the end
+})
+
+test('the scam sample ends warned', () => {
+  assert.equal(run([...fixture('scam-grandson'), ended]).warned, true)
+})
+
+test('callFamilyLine uses a known name, else plain words', () => {
+  assert.equal(callFamilyLine('Anna'), 'Call Anna now')
+  assert.equal(callFamilyLine('  '), 'Call your family now')
+  assert.equal(callFamilyLine(null), 'Call your family now')
+  assert.equal(callFamilyLine('x'.repeat(31)), 'Call your family now')
 })

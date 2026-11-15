@@ -77,8 +77,9 @@ function Card({
           {look.icon}
         </span>
         {/* Bigger than any caption (#78): the instruction is the one thing to read. "Hang up." most of all. */}
-        {/* Sized by height too, so it fits the 40% band on wide, short screens and keeps equal padding. */}
-        <span className={`${kind === 'hangup' ? 'text-[length:clamp(36px,min(5vw,6vh),76px)] font-bold' : 'text-[length:clamp(30px,min(3.6vw,4.8vh),56px)] font-semibold'}
+        {/* Sized by height too, so it fits the band on wide, short screens and keeps equal padding.
+            The band sits on top with 60% of the screen while a card shows (#107), so it can be big. */}
+        <span className={`${kind === 'hangup' ? 'text-[length:clamp(40px,min(5.6vw,8vh),96px)] font-bold' : 'text-[length:clamp(32px,min(4vw,6vh),72px)] font-semibold'}
                           leading-[1.12] text-balance`}>
           {text}
         </span>
