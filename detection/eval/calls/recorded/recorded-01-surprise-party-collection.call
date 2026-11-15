@@ -1,0 +1,19 @@
+# id: recorded-01-surprise-party-collection
+# label: benign
+# source: team-staged
+# set: recorded
+# group: benign-surprise-party
+# note: Deepgram transcript of a staged role-play, made-up names. Not held-out: a dev call already uses the surprise-party idea.
+# note: Speakers set by hand (Deepgram heard one voice). Two mixed lines split at an estimated time. Chatter after the call (from 50.8 s) removed. Words kept as Deepgram heard them.
+[8.4-9.0] elder: Hello?
+[9.0-12.0] caller: Hi, Antavlin. It's Marcus.
+[12.2-15.2] caller: Are you alone right now? Make sure uncle Frank can't hear me.
+[16.4-19.9] elder: Marcus, why are whispering? Is everything alright with the family?
+[20.6-23.4] caller: Not Friday. Everything's fine. I just need you to keep this at
+[23.4-26.8] caller: total secret because we're planning mom's sixtieth birthday surprise.
+[28.1-29.5] elder: Oh, you gave me a scare.
+[30.2-31.2] elder: Are you having it?
+[31.2-33.3] caller: At the Italian place at Oak Street,
+[33.5-36.5] caller: Saturday, and we're collecting $20 per person for the gig.
+[37.1-39.0] elder: Do you need me to send the money right away?
+[40.3-45.2] caller: No rush at all. I'll just bring cash or check when you come to the party next week.
