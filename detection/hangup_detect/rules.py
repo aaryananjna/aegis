@@ -27,14 +27,18 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(irs|internal revenue service|social security administration)\b",
         r"\b(calling from|this is) (medicare|social security)\b",
         r"\b(microsoft|apple|amazon|windows|geek squad|norton|mcafee) (support|security|technical|tech|fraud|billing)\b",
-        r"\b((your|the) )?bank'?s? (fraud|security) (department|team|division)\b",
+        r"\b((your|the) )?bank'?s? (fraud|security) (department|team|division|line|desk|center|office)\b",
         r"\b(public defender|your (grandson'?s|lawyer|attorney))\b",
         # FTC: prize and lottery callers, fake FTC/FBI agents with badge numbers
-        r"\byou('ve| have) (just )?won\b(?=.{0,40}\b(lottery|sweepstakes|prize|million|grant)\b)",
+        r"\byou('ve| have)? (just )?won\b(?=.{0,40}\b(lottery|sweepstakes|prize|million|grant)\b)",
         r"\b(federally supervised lottery|publishers clearing house)\b",
         r"\b(agent|investigator|officer) (with|from) the (federal trade commission|ftc|fbi)\b",
         r"\bbadge number\b",
         r"\b(bank|card|account)('?s)? (fraud|security) (prevention|protection|unit|center|centre)\b",
+        # Plain wording (classic asks, 2026-11-14): a brand or bank named as the caller
+        r"\b(this is|i'?m (with|from)|calling (from|on behalf of)|i work (for|at)) (the )?(microsoft|apple|amazon|windows|geek squad|norton|mcafee|paypal|chase|wells fargo|bank of america|citi(bank)?|capital one)\b",
+        r"\b(technician|tech|agent|specialist|representative|rep) (with|from|at) (microsoft|apple|amazon|windows|geek squad|norton|mcafee|paypal|chase|wells fargo|bank of america|citi(bank)?|capital one)\b",
+        r"\b(grand )?prize winner\b",
     ],
     T.URGENCY: [
         r"\b(right now|right away|immediately|as soon as possible|asap|before it'?s too late)\b",
@@ -53,6 +57,7 @@ PATTERNS: dict[T, list[str]] = {
         r"\btell (the teller|the bank|them) (it'?s|that it'?s) for\b",
         r"\blie to (the )?(bank|teller)\b",
         r"\bdon'?t (talk|speak) to (your )?(family|friends|kids|anyone)\b",
+        r"\b(don'?t|do not)( you dare)? (call|contact|tell|go to) (the )?(police|cops|bank|authorities|sheriff)\b",
     ],
     T.PAYMENT: [
         r"\b((itunes|google play|apple|steam|target|walmart|amazon|visa|ebay) )?gift ?cards?\b",
@@ -81,6 +86,15 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(need|pay|send|requires?|have to pay) .{0,40}\b(withholding|processing|release|insurance|transfer|customs) (fee|tax|stamp)",
         r"\b(post|pay) (a |the )?(compliance |cash |surety )?bond\b",
         r"\b(bail money|bail bond|(pay|post|make) (my |the |his |her )?bail|bail is set)\b",
+        # Asking for card, bank or identity numbers (bank "we'll never ask" lists)
+        r"\b(give|read|tell|verify|confirm|need|provide|share|say|what'?s|what is)\b.{0,30}\b(your|the) (full |long |whole |16[- ]digit )?"
+        r"(credit card|debit card|card|visa|mastercard|amex|bank account|checking account|savings account|account|routing|social security|medicare|atm) (number|numbers|digits)\b",
+        r"\b(give|read|tell|verify|confirm|need|provide|share|say|what'?s|what is|do you have|have you got|grab)\b.{0,60}\b(social security number|ssn|pin( number)?|passcode|password|security code|cvv|expiration date)\b",
+        r"\b(give|read|tell|verify|confirm|need|provide|share|what'?s|what is)\b.{0,30}\bnumbers? on (your|the) (visa|card|credit card|debit card|mastercard|amex)\b",
+        r"\b(three|3|four|4) digits on the back\b",
+        r"\b(money|pay|cash|paying) for (a|an|the|my) (lawyer|attorney)\b",
+        r"\b(send|pay|wire|bring|transfer)\b.{0,40}\b(dollars|bucks|grand)\b.{0,15}\bor (you'?ll|you will|else|she'?ll|he'?ll|they'?ll)\b",
+        r"\b(taxes|fees?) first\b|\bbefore (we|i) (can )?(deliver|release|send|ship|mail) (the |your )?(check|prize|money|winnings)\b",
     ],
     T.THREAT: [
         r"\bwarrant (is )?out (for|on) (you|your)\b",
@@ -100,6 +114,10 @@ PATTERNS: dict[T, list[str]] = {
         r"\bsomeone is (using|trying to (use|access|empty)) your (account|card|bank account|credit card)\b",
         r"\b(account|benefits|coverage|card) (will|is going to) be (frozen|suspended|cancell?ed|closed)\b",
         r"\blose (your )?(coverage|benefits|account)\b",
+        r"\b(computer|laptop|pc|phone|device) (is|has been|got|was) (infected|hacked|compromised)\b|\b(computer|laptop|pc) has (a )?virus\b"
+        r"|\b(it'?s|you'?re|you are) infected\b",
+        r"\b(we('ve)?|i('ve)?) (got|have) your (daughter|son|grandson|granddaughter|husband|wife|kid|child|grandkid)\b",
+        r"\b(never see (her|him|them) again|if you want (her|him|them) back)\b",
     ],
     T.VERIFICATION_AVOIDANCE: [
         r"\bno time (for|to) (that|explain|questions)\b",
@@ -120,6 +138,9 @@ PATTERNS: dict[T, list[str]] = {
         r"\bpress (the )?windows (key|and r)\b",
         # Bank "never" lists: asking for a code or credentials
         r"\b(read|give|tell) me (the|your) (verification |security |one[- ]time )?(code|pin|password)\b",
+        r"\b(install|download) (the |this |an? |my )?(app|program|software|tool)\b.{0,30}\bso (i|we) can (fix|clean|remove|access|see|get into|connect|scan)\b",
+        r"\bread (that|the|this|your) .{0,20}\bcode\b.{0,15}\b(back|to me|to us)\b",
+        r"\b(texted|sent|text|send) you (a|an) (\w+ ){0,3}code\b",
     ],
     T.DISTRESS: [
         r"\bi'?m (so )?(scared|terrified|in trouble|in big trouble|hurt|bleeding|crying)\b",
@@ -199,7 +220,7 @@ _FAMILY_PATTERNS = 2
 _APOSTROPHES = str.maketrans({"\u2019": "'", "\u2018": "'", "\u02bc": "'"})
 
 # Skip a single match when "not/never/no" sits within two words before it.
-_NEGATED = re.compile(r"\b(not|never|no)\s+(\w+\s+){0,2}$", _I)
+_NEGATED = re.compile(r"\b(not|never|no)\s+(?!(a )?(worry|worried|panic|joke|joking|kidding|lying|problem|rush|drill)\b)(\w+\s+){0,2}$", _I)
 # Skip the whole utterance when it describes a scam rather than runs one.
 # Narrow on purpose: scammers say "I know this sounds like a scam" to get ahead of doubt.
 _DESCRIBES_SCAM = re.compile(r"\b(that'?s|it'?s) a scam\b|\bscammers? (said|told|asked)\b", _I)
@@ -240,22 +261,25 @@ _WHO = (r"(someone|somebody|anyone|anybody|people|scammers?|crooks?|con (men|art
         r"|(this|that|a|some) (young |nice |strange |old )?(man|guy|woman|lady|girl|boy|fellow|kid))")
 # Always a frame: a stranger's words retold, a hypothetical caller, or "pretending to be".
 _STRONG_FRAME = re.compile(
-    rf"\b{_WHO}\s+((\w+\s+){{0,2}}?)(said|says|say|told|tells|tell|wanted|wants|want|asked|asks|ask"
+    rf"\b{_WHO}\s+((\w+\s+){{0,2}}?)(said|says|say|told|tells|tell|wanted|asked|asks|ask"
     rf"|claimed|claims|claiming|pretend\w*|call(s|ed)?)\b"
+    r"|\b(letters?|e-?mails?|texts?|messages?|notices?|pop-?ups?|voicemails?) (said|says|saying|claimed|claiming|told me)\b"
     r"|\bpretending to be\b"
     r"|\bif (anyone|anybody|someone|somebody|a caller|the caller|a stranger)\s+((\w+\s+){0,2}?)"
     r"(calls?|says?|asks?|tells?|wants?|claims?)\b", _I)
 # A frame only once the call is clearly about scams: a friend's or family member's retelling.
 _WEAK_FRAME = re.compile(
-    r"\b(he|she|they|people|i)\s+((\w+\s+){0,1}?)(said|says|say|told (me|him|her|them|us|you)"
+    r"\b(he|she|they|people|it|i)\s+((\w+\s+){0,1}?)(said|says|say|told (me|him|her|them|us|you)"
     r"|tells? (you|me|him|her|them|us)|wanted (me|us|him|her)|asks? (you|me|for)"
     r"|asked (me|us|him|her|you|for)|claimed|(was|were) pretending)\b", _I)
 # The call is about scams: someone names one (not "this is not a scam") or retells a call.
-_SCAM_TOPIC = re.compile(r"\b(scams?|scammers?|scammed|fraudsters?)\b|\bone of (those|these) calls\b"
+_SCAM_TOPIC = re.compile(r"\b(scams?|scammers?|scammed|fraudsters?)\b"
+                         r"|\bone of (those|these) (calls|letters|e-?mails|texts|messages|pop-?ups)\b"
                          r"|\b(it was|that'?s|it'?s) (a )?fake\b", _I)
 # "This is not a scam" and "I know this sounds like a scam" are what scammers say to get ahead
 # of doubt; neither makes the call about scams.
-_TOPIC_NEGATED = re.compile(r"((\bnot|n'?t|\bno)\s+(\w+\s+){0,2}|\b(sounds?|seems?|looks?) like (a |an )?)$", _I)
+_TOPIC_NEGATED = re.compile(r"((\bnot|n'?t|\bno)\s+(\w+\s+){0,2}|\b(sounds?|seems?|looks?) like (a |an )?"
+                            r"|\b(might|may|probably|will) think (it'?s |this is |that'?s )?(a |an )?)$", _I)
 # A frame after the words: "Don't tell your family, they say."
 _TRAILING_FRAME = re.compile(r",\s*(they|he|she|people)\s+(say|says|said|told me|tell you)\b\W*$", _I)
 # Inside a retelling, only a sentence that asks something of the listener counts.
@@ -269,6 +293,13 @@ _OCCASION = re.compile(r"\b(birthday|surprise|christmas|hanukkah|holiday|graduat
 _PAYS_WITH_CARD = re.compile(r"\b(numbers?|codes?|scratch|pin|back of)\b", _I)
 _YOU = re.compile(r"\b(you|your|ya)\b", _I)
 # A sentence ends at . ! or ?, but not at the dot of a title ("Dr. Lee").
+# "If anyone asks, say the gift cards are for your grandson" coaches the victim; it isn't a warning.
+_COACHING = re.compile(r"\bif (anyone|anybody|someone|somebody|they|the (teller|bank|cashier|clerk)) "
+                       r"(\w+ ){0,2}(asks?|calls?)\b[^.!?]{0,10}\b(just )?(say|tell (them|him|her))\b", _I)
+_QUESTIONS_CALLER = re.compile(
+    r"^\W*(are you (really |actually )?(from|with|calling from|the)|is this (really )?(the|my|a)\b"
+    r"|is there (a|an) [^?]{0,40}\bfor you\b|do you want (gift cards|money|my|me to)|did you (just )?say"
+    r"|you want me to)\b[^?]*\?\s*$", _I)
 _SENTENCE_END = re.compile(r"(?<!\bDr)(?<!\bMr)(?<!\bMrs)(?<!\bMs)(?<!\bSt)(?<!\bJr)(?<!\bSr)[.!?]")
 
 
@@ -282,10 +313,27 @@ class Context:
 
 
 def reports_scam(raw: str) -> bool:
-    """This line retells or warns about a scam ("a man said...", "there's a scam going around")."""
+    """This line retells or warns about a scam ("a man said...", "there's a scam going around").
+
+    Questions don't count: a grandparent asking "Is this a scam?" must not switch the rules off
+    for the caller's next lines (review 2026-11-14)."""
     text = raw.translate(_APOSTROPHES)
-    return bool(_STRONG_FRAME.search(text)) or any(
-        not _TOPIC_NEGATED.search(text[:m.start()]) for m in _SCAM_TOPIC.finditer(text))
+    for s in _sentences(text):
+        if s.rstrip().endswith("?"):
+            continue
+        if _STRONG_FRAME.search(s) or any(not _TOPIC_NEGATED.search(s[:m.start()]) for m in _SCAM_TOPIC.finditer(s)):
+            return True
+    return False
+
+
+def _sentences(text: str) -> list[str]:
+    out, last = [], 0
+    for m in _SENTENCE_END.finditer(text):
+        out.append(text[last:m.end()])
+        last = m.end()
+    if text[last:].strip():
+        out.append(text[last:])
+    return out
 
 
 def context_of(texts) -> Context:
@@ -304,7 +352,7 @@ def _sentence_start(text: str, at: int) -> int:
 def _reported(text: str, m: re.Match, ctx: Context) -> bool:
     start = _sentence_start(text, m.start())
     before = text[start:m.start()]
-    if _STRONG_FRAME.search(before) or _WHO_QUESTION.search(before):
+    if (_STRONG_FRAME.search(before) and not _COACHING.search(text[start:m.start()])) or _WHO_QUESTION.search(before):
         return True
     if ctx.scam_talk and _WEAK_FRAME.search(before):
         return True
@@ -318,6 +366,10 @@ def _reported(text: str, m: re.Match, ctx: Context) -> bool:
     # Since captions come one sentence at a time, a retold quote ("A man said, Grandma, it's me.
     # I need bail money.") arrives in pieces. Right after a retelling, only a direct ask counts.
     if ctx.reporting and not _DIRECT_ASK.search(sentence):
+        return True
+    # The grandparent questioning the caller ("Are you from the bank?", "Do you want gift cards?",
+    # "Is there a warrant out for you?"). With labels off these lines are scored too.
+    if _QUESTIONS_CALLER.search(sentence):
         return True
     # An echo while talking about scams: "Gift cards?"
     if ctx.scam_talk and sentence.strip().endswith("?") and len(sentence.split()) <= 4:
@@ -340,7 +392,10 @@ def find_evidence(text: str, utterance_id: str, t_s: float,
     """
     ctx = context or Context()
     norm, pos = _strip_fillers(text.translate(_APOSTROPHES))
-    if _DESCRIBES_SCAM.search(norm):
+    # "That's a scam" describes one, unless a scammer says "you might think it's a scam, but
+    # go buy..." to get ahead of doubt: then the rest of the caption still counts.
+    d = _DESCRIBES_SCAM.search(norm)
+    if d and not _TOPIC_NEGATED.search(norm[:d.start()]) and not _DIRECT_ASK.search(norm[d.end():]):
         return []
     out: list[Evidence] = []
     for tactic, patterns in COMPILED.items():
@@ -365,7 +420,19 @@ _CALL_BEFORE = re.compile(r"\b(call|dial|phone|ring)( the| that)?\s*$", _I)
 
 
 def _calls_the_number(text: str, m: re.Match) -> bool:
-    return bool(re.match(r"numbers?\b", m.group(0), _I) and _CALL_BEFORE.search(text[:m.start()]))
+    return bool(re.match(r"numbers?\b", m.group(0), _I) and _CALL_BEFORE.search(text[:m.start()])) \
+        or _OWN_OR_IN_PERSON.search(_sentence_of(text, m))
+
+
+# Setting your own PIN, or bringing a card to the branch, isn't handing a number to the caller.
+_OWN_OR_IN_PERSON = re.compile(r"\b(set|reset|change|create|choose|pick|update) (up )?(a |your )?(new )?(pin|password|passcode)\b"
+                               r"|\b(when|if) you come in\b|\bat the (branch|bank|office|front desk)\b|\bin person\b|\bbring your\b", _I)
+
+
+def _sentence_of(text: str, m: re.Match) -> str:
+    start = _sentence_start(text, m.start())
+    rest = _SENTENCE_END.search(text, m.end())
+    return text[start:rest.end() if rest else len(text)]
 
 
 # "I'll fax it right now" promises the speaker's own action; it doesn't rush the listener.

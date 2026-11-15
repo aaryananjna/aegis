@@ -1,0 +1,11 @@
+# id: benign-church-raffle-quilt
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-church-raffle-quilt
+# note: Written by Claude for development. Not a real or recorded call. One sentence per caption, labels-off style.
+[0.0-3.0] elder: Hello?
+[4.0-7.0] caller: Hi Martha, it's Joan from church.
+[8.0-11.0] caller: You won the quilt in the raffle!
+[12.0-15.0] caller: Come pick it up after service on Sunday.
+[16.0-19.0] elder: How wonderful.

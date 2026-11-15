@@ -1,0 +1,12 @@
+# id: benign-elder-questions-caller
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-elder-questions-caller
+# note: Written by Claude for development. Not a real or recorded call. One sentence per caption, labels-off style.
+[0.0-3.0] elder: Hello?
+[4.0-7.0] caller: Hi, how are you doing today?
+[8.0-11.0] elder: Who is this? Are you from the bank's fraud department?
+[12.0-15.0] elder: Do you want gift cards?
+[16.0-19.0] elder: Is there a warrant out for you or something?
+[20.0-23.0] caller: No no, it's Pete from next door, your mail came to my house.

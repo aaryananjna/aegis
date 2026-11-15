@@ -1,0 +1,11 @@
+# id: benign-doctor-bring-cards
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-doctor-bring-cards
+# note: Written by Claude for development. Not a real or recorded call. One sentence per caption, labels-off style.
+[0.0-3.0] elder: Hello?
+[4.0-7.0] caller: Hi, this is Dr. Shah's office confirming your visit Tuesday.
+[8.0-11.0] caller: Please bring your Medicare card and your insurance card.
+[12.0-15.0] caller: And your list of medications.
+[16.0-19.0] elder: I will, thank you.

@@ -93,10 +93,11 @@ def test_llm_proportional_cap_example():
 
 
 def test_llm_alone_cannot_reach_high():
-    # every tactic twice from the LLM: the +1.5 cap also shrinks each tactic's
-    # strength, so combos shrink too. Upper bound is sig(-3 + 1.5 + 2.0).
+    # every tactic twice from the LLM. The +1.5 cap limits the AI's own points; combos use the
+    # evidence before the cap (a third AI flag must never lower the score) but stay under
+    # combo_cap. Upper bound is sig(-3 + 1.5 + 2.0), and without a rule hit it can't be HIGH.
     m = model(*[ev(t, source="llm", uid=f"{t.value}{k}") for t in T for k in range(2)], cfg=OLD_CFG)
-    assert m.score(0.0) < sig(0.5) < CFG.enter_high
+    assert m.score(0.0) <= sig(0.5) + 1e-9 and sig(0.5) < CFG.enter_high
     assert m.update_level(0.0) != "high"
 
 
