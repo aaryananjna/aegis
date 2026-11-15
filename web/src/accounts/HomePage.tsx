@@ -4,6 +4,7 @@ import { ApiError, api, errorMessage, type ElderRef, type User } from './api'
 import { Button, Field, Notice, Page } from './ui'
 import { useAuth } from './auth'
 import { FamilyQr } from '../live/FamilyQr'
+import { fetchTunnelOrigin } from '../live/familyLink'
 
 /** /home: the logged-in family member's grandparents, adding one, and pairing a laptop. */
 export function HomePage() {
@@ -169,6 +170,18 @@ function AddElder({ onAdded, onError }: { onAdded: () => void; onError: (e: unkn
  * call after that shows up there by itself. No new code per call.
  */
 function WatchQrSection() {
+  // The server knows the tunnel's address (#96): use it, so nobody has to type it in.
+  const [origin, setOrigin] = useState<string | null>(null)
+  useEffect(() => {
+    let live = true
+    const check = () => fetchTunnelOrigin().then((o) => live && setOrigin(o))
+    check()
+    const id = window.setInterval(check, 15_000)
+    return () => {
+      live = false
+      window.clearInterval(id)
+    }
+  }, [])
   return (
     <section aria-labelledby="watch-h" className="flex flex-col gap-3">
       <h2 id="watch-h" className="subtitle">Follow calls on your phone</h2>
@@ -177,7 +190,7 @@ function WatchQrSection() {
         by itself, with alerts if it looks like a scam.
       </p>
       <div className="max-w-sm">
-        <FamilyQr familyUrl={`${window.location.origin}/watch`} />
+        <FamilyQr familyUrl={`${origin ?? window.location.origin}/watch`} />
       </div>
     </section>
   )

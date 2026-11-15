@@ -74,3 +74,18 @@ export function localPath(url: string): string {
   const u = new URL(url)
   return u.pathname + u.search
 }
+
+/**
+ * The tunnel's public address as the server sees it (GET /tunnel, #96), checked every 15 s so
+ * a restarted tunnel is picked up. null when there's no tunnel or the server can't say.
+ */
+export async function fetchTunnelOrigin(): Promise<string | null> {
+  try {
+    const r = await fetch('/tunnel', { credentials: 'include' })
+    if (!r.ok) return null
+    const data = (await r.json()) as { origin?: unknown }
+    return typeof data.origin === 'string' ? cleanTunnel(data.origin) : null
+  } catch {
+    return null
+  }
+}

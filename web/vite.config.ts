@@ -21,6 +21,8 @@ export default defineConfig({
       '/device/': { target: server },
       // Start a call from the site (#63). The server only accepts it from the laptop itself.
       '/sessions': { target: server },
+      // The tunnel's public address, so the /watch QR code on /home follows it (#96).
+      '/tunnel': { target: server },
     },
   },
 })
