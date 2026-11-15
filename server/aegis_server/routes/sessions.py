@@ -28,6 +28,7 @@ from ..config import settings
 from ..history import elder_for_device
 from ..netguard import is_laptop
 from ..roles import ROLES
+from ..tunnel import public_origin
 from ..sessions import AI_ANSWERS, TooManySessions, store
 
 router = APIRouter()
@@ -107,9 +108,13 @@ async def _start_call(body: NewSession, x_device_token: str | None) -> dict:
     if body.mic:
         s.start_mic(device, labels=body.labels)
     extra = {k: v for k, v in (("name", body.name), ("phone", body.phone)) if v}
-    urls = {role: f"{settings.web_base_url}/{role}?" + urlencode(
-        {"session": s.session_id, "token": s.tokens[role], **(extra if role == "family" else {})})
-        for role in ROLES}
+    # The family link goes to a phone: use the Cloudflare tunnel's address when one is running.
+    # The elder link stays on this laptop.
+    family_origin = await public_origin() or settings.web_base_url
+    urls = {role: f"{family_origin if role == 'family' else settings.web_base_url}/{role}?"
+            + urlencode({"session": s.session_id, "token": s.tokens[role],
+                         **(extra if role == "family" else {})})
+            for role in ROLES}
     # Printed to the laptop's own terminal only (the server's logs never hold tokens).
     print(f"\n  Aegis call {s.session_id}{' (live mic)' if body.mic else ''}"
           f"{' (saved to history)' if s.recorder else ''}\n"
