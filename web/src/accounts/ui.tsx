@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, InputHTMLAttributes, ReactNode } from 'react'
+import { SiteNav } from '../brand/SiteNav'
 
 // Shared pieces for the account pages: phone-first, same Aegis palette as /family.
 
@@ -7,10 +8,10 @@ export const focusRing =
 
 export function Page({ children }: { children: ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-6 bg-dusk px-5
+    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-6 px-5
                      pt-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
-      <p className="text-[17px] font-semibold tracking-wide text-mist">Aegis</p>
-      {children}
+      <SiteNav login={false} />
+      <div className="glass flex flex-col gap-6 rounded-2xl p-6">{children}</div>
     </main>
   )
 }
@@ -25,7 +26,7 @@ export function Field({
       <span className="text-[17px] font-semibold text-paper">{label}</span>
       <input
         {...input}
-        className={`min-h-[52px] rounded-xl border-2 border-white/20 bg-dusk-raised px-4 text-[19px]
+        className={`min-h-[52px] rounded-xl border-2 border-paper/20 bg-dusk-raised px-4 text-[19px]
                     text-paper placeholder:text-mist focus:border-paper/70 ${focusRing}`}
       />
       {hint && <span className="text-[15px] text-mist">{hint}</span>}
@@ -41,7 +42,7 @@ export function Button({
   const look =
     kind === 'primary'
       ? 'bg-paper text-dusk disabled:opacity-60'
-      : 'border-2 border-white/25 text-paper hover:border-white/50'
+      : 'border-2 border-paper/25 text-paper hover:border-paper/50'
   return (
     <button
       {...rest}

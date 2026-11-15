@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, type CSSProperties } from 'react'
 import { useSearchParams } from 'react-router'
+import { SiteNav } from '../brand/SiteNav'
 import { CheckIcon, KeyIcon, PhoneDownIcon, PhoneIcon, ShieldIcon } from '../elder/Icons'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { endSummary, initialFamilyState, reduceFamily, type FamilyAlert } from './state'
@@ -15,10 +16,11 @@ export function FamilyPage() {
   const sample = feed.kind === 'fixture'
   const name = search.get('name') || (sample ? SAMPLE.name : 'your family member')
   const phone = search.get('phone') || (sample ? SAMPLE.phone : null)
-  return <FamilyWatch key={JSON.stringify(feed)} feed={feed} name={name} phone={phone} />
+  const embedded = search.get('embed') === '1' // inside the landing page's demo: no nav
+  return <FamilyWatch key={JSON.stringify(feed)} feed={feed} name={name} phone={phone} embedded={embedded} />
 }
 
-function FamilyWatch({ feed, name, phone }: { feed: Feed; name: string; phone: string | null }) {
+function FamilyWatch({ feed, name, phone, embedded }: { feed: Feed; name: string; phone: string | null; embedded: boolean }) {
   const { events, receivedAt, connection, error } = useEvents(feed)
   const state = useMemo(
     () => events.reduce((s, e, i) => reduceFamily(s, e, receivedAt[i]), initialFamilyState),
@@ -37,11 +39,11 @@ function FamilyWatch({ feed, name, phone }: { feed: Feed; name: string; phone: s
     feed.kind === 'none' ? 'This link is missing its call. Open the family link the laptop shows.' : error
 
   return (
-    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 bg-dusk px-5
+    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 px-5
                      pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
       <header className="flex flex-col gap-1">
-        <p className="text-[17px] font-semibold tracking-wide text-mist">Aegis</p>
-        <h1 className="text-[32px] leading-tight font-semibold text-paper">Watching over {name}</h1>
+        {!embedded && <SiteNav section="Family" />}
+        <h1 className="title mt-3">Watching over {name}</h1>
         <p className="text-[17px] text-mist">
           <Connection feed={feed} connection={connection} />
         </p>
@@ -49,11 +51,11 @@ function FamilyWatch({ feed, name, phone }: { feed: Feed; name: string; phone: s
 
       <section aria-live="assertive" aria-label="Alerts" className="flex flex-col gap-4">
         {linkProblem ? (
-          <p className="rounded-2xl bg-dusk-raised p-5 text-[20px] text-paper">{linkProblem}</p>
+          <p className="glass rounded-2xl p-5 text-[20px] text-paper">{linkProblem}</p>
         ) : null}
         {state.endedAt !== null && (
-          <div className="rounded-2xl border-2 border-white/15 p-5">
-            <h2 className="text-[24px] font-semibold text-paper">Call ended</h2>
+          <div className="glass rounded-2xl p-5">
+            <h2 className="subtitle">Call ended</h2>
             <p className="mt-1 text-[19px] text-paper-dim">{endSummary(state, name)}</p>
             <p className="mt-2 text-[16px] text-mist">{clock(state.endedAt)}</p>
           </div>
@@ -83,14 +85,14 @@ const KIND = {
     told: (name: string) => `${name} was asked to check the family code word.`,
     box: 'bg-[color-mix(in_oklab,var(--color-care)_18%,var(--color-dusk))] border-care',
     icon: <KeyIcon />,
-    iconColor: 'text-care',
+    iconColor: 'text-care-text',
   },
   verify: {
     title: 'Possible scam call',
     told: (name: string) => `${name} was told not to pay or share any numbers.`,
     box: 'bg-[color-mix(in_oklab,var(--color-care)_18%,var(--color-dusk))] border-care',
     icon: <ShieldIcon />,
-    iconColor: 'text-care',
+    iconColor: 'text-care-text',
   },
   hangup: {
     title: 'Likely scam call',
@@ -118,7 +120,11 @@ function AlertCard({
   const passed = alert.kind === 'codeword' && codewordOk
   const Heading = big ? 'h2' : 'h3' // cards under "Earlier" sit one level below it
   return (
-    <article className={`flex flex-col gap-3 rounded-2xl border-2 ${big ? 'p-5' : 'p-4 opacity-90'} ${k.box}`}>
+    <article
+      className={`flex flex-col gap-3 rounded-2xl border-2 ${big ? 'p-5' : 'p-4 opacity-90'} ${k.box}`}
+      // The red card keeps white text in both themes (8.9:1 on red; 6.8:1 for the 85% lines).
+      style={alert.kind === 'hangup' ? ({ '--color-paper': '#ffffff', '--color-paper-dim': 'rgba(255,255,255,0.85)' } as CSSProperties) : undefined}
+    >
       <div className="flex items-start gap-3">
         <span className={`mt-1 shrink-0 ${big ? 'text-[34px]' : 'text-[26px]'} ${k.iconColor}`}>{k.icon}</span>
         <div className="flex flex-col gap-1">
@@ -132,7 +138,7 @@ function AlertCard({
       </div>
       {passed && (
         <p className="flex items-center gap-2 rounded-xl bg-calm/20 px-3 py-2 text-[20px] font-semibold text-paper">
-          <span className="text-calm">
+          <span className="text-calm-text">
             <CheckIcon />
           </span>
           They passed the code word
@@ -154,8 +160,7 @@ function AlertCard({
           {phone && (
             <a
               href={`tel:${phone}`}
-              className={`mt-1 flex min-h-[64px] items-center justify-center gap-3 rounded-2xl bg-paper
-                          text-[22px] font-semibold text-dusk ${focusRing}`}
+              className={`btn-accent mt-1 flex min-h-[64px] items-center justify-center gap-3 text-[22px] ${focusRing}`}
             >
               <PhoneIcon />
               Call {name}
@@ -169,11 +174,11 @@ function AlertCard({
 
 function AllQuiet({ name }: { name: string }) {
   return (
-    <div className="flex flex-col items-start gap-3 rounded-2xl bg-dusk-raised p-6">
-      <span className="text-[44px] text-calm">
+    <div className="glass flex flex-col items-start gap-3 rounded-2xl p-6">
+      <span className="text-[44px] text-calm-text">
         <CheckIcon />
       </span>
-      <h2 className="text-[26px] font-semibold text-paper">All quiet</h2>
+      <h2 className="subtitle text-[1.5rem]">All quiet</h2>
       <p className="text-[19px] text-paper-dim">
         If a call to {name} looks like a scam, you'll see it here with the caller's exact words.
         Keep this page open.

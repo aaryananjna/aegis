@@ -1,39 +1,32 @@
-import { BrowserRouter, Link, Route, Routes } from 'react-router'
+import { BrowserRouter, Route, Routes } from 'react-router'
 import { AccountPage } from './accounts/AccountPage'
+import { AuthProvider, RequireAuth } from './accounts/auth'
+import { WordmarkPage } from './brand/WordmarkPage'
 import { HomePage } from './accounts/HomePage'
 import { PairPage } from './accounts/PairPage'
 import { ElderScreen } from './elder/ElderScreen'
 import { EvidencePage } from './evidence/EvidencePage'
 import { FamilyPage } from './family/FamilyPage'
-
-function Home() {
-  return (
-    <main>
-      <h1>Aegis</h1>
-      <ul>
-        <li><Link to="/elder?fixture=scam-grandson">/elder</Link> (scam sample)</li>
-        <li><Link to="/elder?fixture=benign-party">/elder</Link> (normal call sample)</li>
-        <li><Link to="/elder?fixture=demo-bank">/elder</Link> (fake bank sample)</li>
-        <li><Link to="/family?fixture=scam-grandson">/family</Link> (scam sample)</li>
-        <li><Link to="/evidence?fixture=scam-grandson">/evidence</Link> (scam sample)</li>
-        <li><Link to="/account">/account</Link> (family log in / sign up)</li>
-      </ul>
-    </main>
-  )
-}
+import { LandingPage } from './landing/LandingPage'
 
 export function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/elder" element={<ElderScreen />} />
-        <Route path="/family" element={<FamilyPage />} />
-        <Route path="/evidence" element={<EvidencePage />} />
-        <Route path="/account" element={<AccountPage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/pair" element={<PairPage />} />
-      </Routes>
+      <AuthProvider>
+        <Routes>
+          {/* Behind the login: log in first, then the site. */}
+          <Route path="/" element={<RequireAuth><LandingPage /></RequireAuth>} />
+          <Route path="/evidence" element={<RequireAuth><EvidencePage /></RequireAuth>} />
+          <Route path="/home" element={<RequireAuth><HomePage /></RequireAuth>} />
+          <Route path="/wordmark" element={<RequireAuth><WordmarkPage /></RequireAuth>} /> {/* temporary: pick a split */}
+          <Route path="/account" element={<AccountPage />} />
+          {/* Never behind a login: Grandma's laptop is paired once, and the family phone opens the
+              per-call alert link, which carries its own token. */}
+          <Route path="/elder" element={<ElderScreen />} />
+          <Route path="/family" element={<FamilyPage />} />
+          <Route path="/pair" element={<PairPage />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   )
 }

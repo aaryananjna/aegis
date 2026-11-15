@@ -1,41 +1,242 @@
 @import "tailwindcss";
 
-/* Aegis tokens. The elder screen is read from about 2 m away in a lamp-lit room:
-   a dark, low-glare surface with warm white text, and status colors that light the room. */
+/* Aegis design system, dark and light.
+   Every color utility reads a theme variable (--t-*), set below per theme. Dark is the
+   default; light follows prefers-color-scheme unless the nav toggle chose (data-theme).
+   /elder is the exception: same background, but SOLID panels and high-contrast captions,
+   because it's read from about 2 m away (readability beats style there).
+   All text pairs are >= 4.5:1 in both themes (computed; see PR #48). */
 @theme {
-  --color-dusk: #14202e;
-  --color-dusk-raised: #1d2b3c;
-  --color-paper: #f4efe6;
-  --color-paper-dim: #c3cad3;
-  --color-mist: #93a0ae; /* >= 4.8:1 on every surface and tint we use (a11y pass) */
+  --color-dusk: var(--t-base); /* elder status tints mix from this */
+  --color-dusk-raised: var(--t-panel); /* solid panel: never translucent */
+  --color-ink: var(--t-on-accent); /* text on the accent */
+  --color-paper: var(--t-text);
+  --color-paper-dim: var(--t-text-dim);
+  --color-mist: var(--t-muted);
+  --color-heading: var(--t-heading);
+  --color-caption: var(--t-caption); /* elder captions */
+  --color-accent: var(--t-accent);
+
+  /* Status marks (dots, borders, cards): the same in both themes. */
   --color-glow: #f3c969;
   --color-glow-ink: #1b1406;
   --color-calm: #3e9e6a;
   --color-care: #e3a33b;
   --color-alarm: #d2483f;
   --color-alarm-deep: #8e1f19;
-  --color-alarm-text: #e8675d; /* "Warning" as text: 4.1:1 on the red tint; marks keep --color-alarm */
+  /* Status words as text: darker on light so they pass on their tints. */
+  --color-calm-text: var(--t-calm-text);
+  --color-care-text: var(--t-care-text);
+  --color-alarm-text: var(--t-alarm-text);
 
-  /* Evidence page: where the risk comes from. Dark-mode categorical slots 1-3, validated on
-     --color-dusk with the dataviz validator (worst adjacent CVD dE 9.4, contrast >= 3:1). */
-  --color-rule: #3987e5;
-  --color-ai: #d95926;
-  --color-combo: #199e70;
+  /* /evidence categorical slots 1-3 (dataviz validator, per theme surface). */
+  --color-mark: var(--t-mark); /* chart dots: words flagged */
+  --color-rule: var(--t-rule);
+  --color-ai: var(--t-ai);
+  --color-combo: var(--t-combo);
 
   /* Installed faces only, so nothing has to load from the internet on the demo hotspot. */
   --font-read: "Avenir Next", Avenir, "Segoe UI", "Helvetica Neue", system-ui, sans-serif;
+  /* Headings, the wordmark and the End call dialog. Body text and captions stay sans. */
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+}
+
+/* ---- Dark (default) ---------------------------------------------------------------------- */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --t-bg: radial-gradient(circle at 85% 45%, #080d1e 0%, #050811 45%, #020307 100%);
+  --t-bg-solid: #020307;
+  --t-base: #050811;
+  --t-panel: #0b1226;
+  --t-text: #f0f6fc;
+  --t-text-dim: #c5d0df;
+  --t-muted: #8b9bb4;
+  --t-heading: #f0f6fc;
+  --t-caption: #ffffff;
+  --t-accent: #00d4ff;
+  --t-on-accent: #020307;
+  --t-calm-text: #3e9e6a;
+  --t-care-text: #e3a33b;
+  --t-alarm-text: #e8675d;
+  --t-mark: #f3c969;
+  --t-rule: #3987e5;
+  --t-ai: #d95926;
+  --t-combo: #199e70;
+  --t-line: rgba(240, 246, 252, 0.15); /* hairlines and grid */
+  --glass-bg: rgba(8, 13, 30, 0.65);
+  --glass-border: rgba(0, 212, 255, 0.18);
+  --glass-border-hot: rgba(0, 212, 255, 0.45);
+  --glass-glow: 0 0 20px rgba(0, 180, 255, 0.12);
+  --wm-light: #ffffff; /* wordmark: "Ae" and the upper-left of the split */
+  --wm-blue: #00d4ff; /* wordmark: "is" and the lower-right of the split */
+}
+
+/* ---- Light ------------------------------------------------------------------------------- */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --t-bg: none;
+    --t-bg-solid: #faf7f0;
+    --t-base: #faf7f0;
+    --t-panel: #ffffff;
+    --t-text: #0b1220;
+    --t-text-dim: #2d3748;
+    --t-muted: #4a5568;
+    --t-heading: #0a3fb8;
+    --t-caption: #0b1220;
+    --t-accent: #0a3fb8; /* never #00D4FF as text on light: 1.65:1 */
+    --t-on-accent: #ffffff;
+    --t-calm-text: #1f6b45;
+    --t-care-text: #8a5a00;
+    --t-alarm-text: #b3261e;
+    --t-mark: #8a5a00; /* 5.9:1 on white; the yellow is 1.6:1 */
+  --t-rule: #2a78d6;
+    --t-ai: #eb6834;
+    --t-combo: #1baf7a;
+    --t-line: rgba(11, 18, 32, 0.14);
+    --glass-bg: rgba(255, 255, 255, 0.72);
+    --glass-border: rgba(10, 42, 102, 0.14);
+    --glass-border-hot: rgba(10, 63, 184, 0.4);
+    --glass-glow: 0 0 20px rgba(10, 63, 184, 0.1);
+    --wm-light: #0b1220;
+    --wm-blue: #0a3fb8;
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --t-bg: none;
+  --t-bg-solid: #faf7f0;
+  --t-base: #faf7f0;
+  --t-panel: #ffffff;
+  --t-text: #0b1220;
+  --t-text-dim: #2d3748;
+  --t-muted: #4a5568;
+  --t-heading: #0a3fb8;
+  --t-caption: #0b1220;
+  --t-accent: #0a3fb8;
+  --t-on-accent: #ffffff;
+  --t-calm-text: #1f6b45;
+  --t-care-text: #8a5a00;
+  --t-alarm-text: #b3261e;
+  --t-mark: #8a5a00; /* 5.9:1 on white; the yellow is 1.6:1 */
+  --t-rule: #2a78d6;
+  --t-ai: #eb6834;
+  --t-combo: #1baf7a;
+  --t-line: rgba(11, 18, 32, 0.14);
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-border: rgba(10, 42, 102, 0.14);
+  --glass-border-hot: rgba(10, 63, 184, 0.4);
+  --glass-glow: 0 0 20px rgba(10, 63, 184, 0.1);
+  --wm-light: #0b1220;
+  --wm-blue: #0a3fb8;
 }
 
 html,
 body,
 #root {
-  height: 100%;
+  min-height: 100%;
+}
+
+/* The gradient covers the whole page, not just the first screen (no fixed attachment:
+   iPhone Safari ignores it and long pages showed a seam). */
+html {
+  background: var(--t-bg) no-repeat, var(--t-bg-solid);
+  background-size: 100% 100%;
 }
 
 body {
-  background: var(--color-dusk);
   color: var(--color-paper);
   font-family: var(--font-read);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Glass panel: landing, /family, /evidence. Not used on /elder. */
+@utility glass {
+  background: var(--glass-bg);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  transition: border-color 200ms, box-shadow 200ms;
+  &:hover,
+  &:focus-within {
+    border-color: var(--glass-border-hot);
+    box-shadow: var(--glass-glow);
+  }
+}
+
+/* Page titles: always smaller than the nav wordmark (2.5rem), so the brand leads. */
+@utility title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 2.6vw, 2.1rem);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--color-heading);
+}
+
+/* Section headings on landing, /family, /evidence. */
+@utility subtitle {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--color-heading);
+}
+
+/* The accent button: cyan with near-black text (dark), dark blue with white text (light). */
+@utility btn-accent {
+  background: var(--color-accent);
+  color: var(--color-ink);
+  font-weight: 700;
+  border-radius: 0.875rem;
+  transition: box-shadow 200ms;
+  &:hover {
+    box-shadow: var(--glass-glow), 0 0 0 1px var(--glass-border-hot);
+  }
+}
+
+/* ---- Wordmark ----------------------------------------------------------------------------
+   The split part is drawn twice: the element itself in blue, and a ::before copy (from
+   data-text) in the light color clipped to the upper-left triangle. Hard diagonal edge, no
+   background-clip. Sizes: hero, nav, card. */
+.wm {
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--font-read); /* the original bold sans; Playfair is for other headings */
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+.wm-hero {
+  font-size: clamp(4.5rem, 13vw, 10rem);
+}
+.wm-nav {
+  font-size: 2.5rem;
+}
+.wm-card {
+  font-size: 2.75rem;
+}
+.wm-light {
+  color: var(--wm-light);
+}
+.wm-blue {
+  color: var(--wm-blue);
+}
+.wm-split {
+  position: relative;
+  display: inline-block;
+  color: var(--wm-blue);
+}
+.wm-split::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: var(--wm-light);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

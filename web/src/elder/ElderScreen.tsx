@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { feedFromSearch, useEvents, type Feed } from '../events/useEvents'
 import { CaptionPane } from './CaptionPane'
 import { CardPane, type Reply } from './CardPane'
+import { EndCall } from './EndCall'
 import { StartProtection } from './StartProtection'
 import { initialElderState, noVoiceLabels, reduceElder, type Voice } from './state'
+import { AegisWordmark } from '../brand/AegisWordmark'
 import { StatusBand } from './StatusBand'
 import { GuessedVoice, VoicePicker } from './VoicePicker'
 
@@ -24,22 +26,33 @@ const AUTO_START_MS = 10_000
 export function ElderScreen() {
   const [search] = useSearchParams()
   const feed = feedFromSearch(search, 'elder')
+  // Default: listen to everyone (no speaker labels). On one shared laptop mic the labels drift,
+  // and tapping the wrong "Voice 1" would mark the caller as Grandma (#40). ?voices=pick brings
+  // back the voice picker for setups where labels are reliable.
+  const pickVoices = search.get('voices') === 'pick'
+  const embedded = search.get('embed') === '1' // inside the landing page's demo
   // A new call (or sample) starts the screen fresh, including the voice choice.
-  return <ElderCall key={JSON.stringify(feed)} feed={feed} />
+  return <ElderCall key={JSON.stringify(feed) + pickVoices} feed={feed} pickVoices={pickVoices} embedded={embedded} />
 }
 
-function ElderCall({ feed }: { feed: Feed }) {
+function ElderCall({ feed, pickVoices, embedded }: { feed: Feed; pickVoices: boolean; embedded: boolean }) {
   const { events, connection, error, send } = useEvents(feed)
   const state = useMemo(() => events.reduce(reduceElder, initialElderState), [events])
   const [tapped, setTapped] = useState<{ speakerRaw: string | null } | null>(null)
   const [reply, setReply] = useState<Reply>('none')
+  const [endNote, setEndNote] = useState<string | null>(null)
+  const endCall = () => {
+    if (feed.kind !== 'live') return setEndNote('Sample call: nothing to end')
+    setEndNote(send({ type: 'end' }) ? 'Ending the call…' : 'Not ended: no connection. Try again in a moment.')
+  }
 
   // Who the grandparent is. Settled by a tap here, by elder_set "tap" (a tap that reached the
   // detector), or by elder_set null (labels off: everyone is scored, #40). A server guess for a
   // named voice ("Hello?" first) is used for labels but stays correctable with a tap.
   const es = state.elderSet
-  const picked =
-    tapped ?? (es && (es.by === 'tap' || es.speakerRaw === null) ? { speakerRaw: es.speakerRaw } : null)
+  const picked = !pickVoices
+    ? { speakerRaw: null }
+    : tapped ?? (es && (es.by === 'tap' || es.speakerRaw === null) ? { speakerRaw: es.speakerRaw } : null)
   const guess = !picked && es?.by === 'server' ? es.speakerRaw : null
   const elder = picked ?? (guess !== null ? { speakerRaw: guess } : null)
 
@@ -72,6 +85,13 @@ function ElderCall({ feed }: { feed: Feed }) {
   }, [picked, guess, unlabeled, heardSomething, send])
   const startProtection = () => pickVoice(null)
 
+  // Listen-to-everyone mode tells the server once, so cards fire even if it runs with labels on.
+  const toldServer = useRef(false)
+  useEffect(() => {
+    if (pickVoices || connection !== 'open' || toldServer.current) return
+    toldServer.current = send({ type: 'set_elder', speaker_raw: null })
+  }, [pickVoices, connection, send])
+
   const answerCodeword = (ok: boolean) => {
     if (feed.kind !== 'live') return setReply('sample')
     setReply(send({ type: 'codeword_result', ok }) ? (ok ? 'sent-yes' : 'sent-no') : 'not-sent')
@@ -81,8 +101,9 @@ function ElderCall({ feed }: { feed: Feed }) {
   if (feed.kind === 'fixture') notes.push('Sample call')
   if (connection === 'connecting') notes.push('Connecting…')
   if (connection === 'reconnecting') notes.push('Reconnecting…')
-  if (picked?.speakerRaw === null) notes.push("Can't tell voices apart: listening to everyone")
+  if (picked?.speakerRaw === null) notes.push('Listening to everyone on the call')
   if (state.ended) notes.push('Call ended')
+  else if (endNote) notes.push(endNote)
   if (state.warning) notes.push(state.warning)
   if (reply === 'sample') notes.push('Sample call: your answer was not sent')
   if (reply === 'not-sent') notes.push('Answer not sent: no connection. Tap again in a moment.')
@@ -93,14 +114,27 @@ function ElderCall({ feed }: { feed: Feed }) {
       : error
 
   return (
-    <main className="grid h-dvh grid-rows-[60fr_40fr] overflow-hidden bg-dusk">
+    <main className="grid h-dvh grid-rows-[60fr_40fr] overflow-hidden">
       <h1 className="sr-only">Aegis call captions</h1>
       <CaptionPane state={state} speakerLabel={speakerLabel} />
       <div
         className={`flex min-h-0 flex-col motion-safe:transition-colors motion-safe:duration-[1500ms]
                     ${TINT[state.level ?? 'none']}`}
       >
-        <StatusBand level={state.level} notes={notes}>
+        <StatusBand level={state.level} notes={notes} brand={
+          <>
+            {!state.ended && <EndCall onEnd={endCall} hangupShowing={state.card?.kind === 'hangup'} />}
+            {feed.kind !== 'live' && !embedded ? (
+              // Sample calls: the wordmark takes you home. Never during a live call, so Grandma
+              // can't leave the call screen by accident.
+              <Link to="/" aria-label="Aegis home" className="rounded-lg focus-visible:outline-4 focus-visible:outline-offset-4 focus-visible:outline-paper">
+                <AegisWordmark size="nav" />
+              </Link>
+            ) : (
+              <AegisWordmark size="nav" />
+            )}
+          </>
+        }>
           {!picked && state.card && (guess !== null ? (
             <VoicePicker voices={state.voices.filter((v) => v.speakerRaw !== guess)}
                          label={(v) => voiceLabel(v, state.voices.indexOf(v))}

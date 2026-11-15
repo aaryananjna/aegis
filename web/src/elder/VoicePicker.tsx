@@ -100,7 +100,7 @@ export function GuessedVoice({
   return (
     <section aria-labelledby="guess-heading" className="flex flex-col gap-4">
       <h2 id="guess-heading" className="flex items-center gap-3 text-[length:clamp(26px,2.2vw,34px)] font-semibold text-paper">
-        <span className="text-calm">
+        <span className="text-calm-text">
           <CheckIcon />
         </span>
         We think this voice is you

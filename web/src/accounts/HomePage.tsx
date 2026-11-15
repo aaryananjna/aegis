@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { ApiError, api, errorMessage, type ElderRef, type User } from './api'
 import { Button, Field, Notice, Page } from './ui'
+import { useAuth } from './auth'
 
 /** /home: the logged-in family member's grandparents, adding one, and pairing a laptop. */
 export function HomePage() {
@@ -30,18 +31,16 @@ export function HomePage() {
     load()
   }, [load])
 
+  const { logout: endLogin } = useAuth()
   const logout = async () => {
-    try {
-      await api('POST', '/auth/logout')
-    } finally {
-      navigate('/account', { replace: true })
-    }
+    await endLogin()
+    navigate('/account', { replace: true })
   }
 
   return (
     <Page>
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <h1 className="text-[32px] leading-tight font-semibold text-paper">
+        <h1 className="title">
           {me ? `Hi, ${me.user.display_name}` : 'Your family'}
         </h1>
         <Button kind="plain" onClick={logout}>
@@ -52,7 +51,7 @@ export function HomePage() {
       {me && (
         <>
           <section aria-labelledby="elders-h" className="flex flex-col gap-4">
-            <h2 id="elders-h" className="text-[22px] font-semibold text-paper">
+            <h2 id="elders-h" className="subtitle">
               Who you watch over
             </h2>
             {me.elders.length === 0 ? (
@@ -101,8 +100,8 @@ function ElderCard({ elder, onError }: { elder: ElderRef; onError: (e: unknown) 
   return (
     <article className="flex flex-col gap-3 rounded-2xl bg-dusk-raised p-5">
       <div className="flex items-baseline justify-between gap-3">
-        <h3 className="text-[24px] font-semibold text-paper">{elder.display_name}</h3>
-        <span className="shrink-0 whitespace-nowrap rounded-full border border-white/25 px-3 py-0.5 text-[15px] text-paper-dim">
+        <h3 className="subtitle text-[1.4rem]">{elder.display_name}</h3>
+        <span className="shrink-0 whitespace-nowrap rounded-full border border-paper/25 px-3 py-0.5 text-[15px] text-paper-dim">
           {owner ? 'You added them' : 'You can view'}
         </span>
       </div>
@@ -152,7 +151,7 @@ function AddElder({ onAdded, onError }: { onAdded: () => void; onError: (e: unkn
   }
   return (
     <section aria-labelledby="add-h" className="flex flex-col gap-3">
-      <h2 id="add-h" className="text-[22px] font-semibold text-paper">Add a grandparent</h2>
+      <h2 id="add-h" className="subtitle">Add a grandparent</h2>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <Field label="Their name" name="name" required maxLength={80} placeholder="Grandma Rose" />
         <Button type="submit" disabled={busy}>

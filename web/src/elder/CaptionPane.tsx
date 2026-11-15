@@ -68,7 +68,7 @@ function CaptionLine({
         className={[
           'leading-[1.22] font-medium text-balance',
           own ? 'text-[length:clamp(44px,3.6vw,56px)]' : 'text-[length:clamp(48px,4.4vw,68px)]',
-          caption.isFinal ? (own ? 'text-paper-dim' : 'text-paper') : 'text-mist',
+          caption.isFinal ? 'text-caption' : 'text-mist', // final captions: white (dark) / #0B1220 (light)
         ].join(' ')}
       >
         {pieces.map((p, i) =>
