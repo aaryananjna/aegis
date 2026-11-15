@@ -7,6 +7,13 @@ import { FamilyQr } from './FamilyQr'
 import { ScaledFrame } from '../landing/ScaledFrame'
 import { localPath, savedFamilyUrl } from './familyLink'
 
+/**
+ * For the recorded demo only: show the family's phone view beside the grandparent's screen,
+ * because a Mac screen recording can't capture the real phone. Set to false for the final
+ * submission; the QR code alone is enough there.
+ */
+const SHOW_FAMILY_PHONE = true
+
 type Started = { sessionId: string; elderUrl: string; familyUrl: string; recorded: boolean }
 
 // The running call survives a trip to /evidence and back in this tab (the server keeps running it).
@@ -187,16 +194,20 @@ function Running({ call, onDone }: { call: Started; onDone: () => void }) {
                        width={1040} height={680} className="w-full rounded-2xl" />
         }
         family={
-          // Just the QR code: it opens the family's view on their phone, so the site doesn't
-          // repeat that view here.
-          !ended ? (
-            <div className="glass rounded-2xl p-5">
-              <p className="mb-3 text-[16px] text-paper-dim">Scan with the family’s phone to follow this call.</p>
-              <FamilyQr familyUrl={call.familyUrl} />
-            </div>
-          ) : (
-            <p className="glass rounded-2xl p-5 text-[17px] text-paper-dim">The family link stopped working when the call ended.</p>
-          )
+          <div className="flex flex-col gap-5">
+            {SHOW_FAMILY_PHONE && (
+              <ScaledFrame title="The family's phone, live call" src={`${localPath(call.familyUrl)}&embed=1`}
+                           width={390} height={844} fit className="mx-auto w-full max-w-[360px] rounded-[2rem]" />
+            )}
+            {!ended ? (
+              <div className="glass rounded-2xl p-5">
+                <p className="mb-3 text-[16px] text-paper-dim">Scan with the family’s phone to follow this call.</p>
+                <FamilyQr familyUrl={call.familyUrl} />
+              </div>
+            ) : (
+              <p className="glass rounded-2xl p-5 text-[17px] text-paper-dim">The family link stopped working when the call ended.</p>
+            )}
+          </div>
         }
       />
       <div className="flex flex-wrap gap-3">
