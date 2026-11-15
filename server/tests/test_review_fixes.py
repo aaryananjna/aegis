@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import time
+from dataclasses import replace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -44,7 +45,7 @@ def _drain(ws) -> list[dict]:
 
 def test_new_mic_call_ends_the_old_one(client, monkeypatch):
     monkeypatch.setattr(deepgram, "check_mic", lambda device: None)
-    monkeypatch.setattr(sessions_mod.settings.__class__, "deepgram_api_key", "test-key")
+    monkeypatch.setattr(sessions_route, "settings", replace(sessions_route.settings, deepgram_api_key="test-key"))
     started = []
 
     def fake_start_mic(self, device, labels=True):  # no real mic or Deepgram in tests
@@ -72,7 +73,7 @@ def test_calls_without_the_mic_are_left_alone(client):
 # ---- 2. a bad mic fails the start --------------------------------------------------------
 
 def test_bad_mic_fails_with_400_and_no_call_starts(client, monkeypatch):
-    monkeypatch.setattr(sessions_mod.settings.__class__, "deepgram_api_key", "test-key")
+    monkeypatch.setattr(sessions_route, "settings", replace(sessions_route.settings, deepgram_api_key="test-key"))
 
     def no_such_mic(device):
         raise deepgram.SttError(f"can't use mic {device!r}: no such device")
