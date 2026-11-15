@@ -58,7 +58,7 @@ export function EndCall({ onEnd, hangupShowing }: { onEnd: () => void; hangupSho
             <PhoneDownIcon />
           </span>
           <div className="flex flex-col gap-2">
-            <h2 id="end-title" className="font-display text-[length:clamp(36px,3.4vw,48px)] leading-tight font-bold text-balance">
+            <h2 id="end-title" className="text-[length:clamp(34px,3.2vw,46px)] leading-tight font-bold text-balance">
               Are you sure this call is over?
             </h2>
             {hangupShowing && (

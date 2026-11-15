@@ -152,7 +152,6 @@ export function LiveCall() {
 
 function Running({ call, onDone }: { call: Started; onDone: () => void }) {
   const elderPath = localPath(call.elderUrl)
-  const familyPath = localPath(call.familyUrl)
   // Listen as the family does, only to know when the call ends (the grandparent's button, or the server).
   const familyFeed = useMemo(() => {
     const q = new URL(call.familyUrl).searchParams
@@ -188,16 +187,16 @@ function Running({ call, onDone }: { call: Started; onDone: () => void }) {
                        width={1040} height={680} className="w-full rounded-2xl" />
         }
         family={
-          <div className="flex flex-col gap-5">
-            <ScaledFrame title="The family's phone, live call" src={`${familyPath}&embed=1`}
-                         width={390} height={844} fit className="mx-auto w-full max-w-[360px] rounded-[2rem]" />
-            {!ended && (
-              <div className="glass rounded-2xl p-5">
-                <p className="mb-3 text-[16px] text-paper-dim">Scan with the family’s phone to follow this call.</p>
-                <FamilyQr familyUrl={call.familyUrl} />
-              </div>
-            )}
-          </div>
+          // Just the QR code: it opens the family's view on their phone, so the site doesn't
+          // repeat that view here.
+          !ended ? (
+            <div className="glass rounded-2xl p-5">
+              <p className="mb-3 text-[16px] text-paper-dim">Scan with the family’s phone to follow this call.</p>
+              <FamilyQr familyUrl={call.familyUrl} />
+            </div>
+          ) : (
+            <p className="glass rounded-2xl p-5 text-[17px] text-paper-dim">The family link stopped working when the call ended.</p>
+          )
         }
       />
       <div className="flex flex-wrap gap-3">

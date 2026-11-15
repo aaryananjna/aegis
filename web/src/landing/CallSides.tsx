@@ -20,7 +20,7 @@ export function CallSides({ grandparent, family }: { grandparent: ReactNode; fam
           <h3 className="subtitle text-[1.4rem]">The family’s phone</h3>
           <p className="text-[16px] text-mist">
             <span className="font-semibold text-paper">The grandparent can’t see this.</span> It runs in the
-            background, and when Aegis spots a scam it sends an alert here.
+            background, and when Aegis spots a scam it sends an alert to their phone.
           </p>
         </div>
         {family}
