@@ -1,0 +1,12 @@
+# id: benign-real-bank-blocked-charge
+# label: benign
+# source: synthetic
+# set: dev
+# group: benign-real-bank-blocked-charge
+# note: Written by Claude for development. Not a real or recorded call. One sentence per caption, labels-off style.
+[0.0-3.0] elder: Hello?
+[4.0-7.0] caller: Hi, this is the fraud team at Riverstone Credit Union.
+[8.0-11.0] caller: Someone tried to use your debit card at a store in Ohio and we blocked it.
+[12.0-15.0] caller: You don't need to do anything, we'll mail you a new card.
+[16.0-19.0] caller: If you have questions, call the number on the back of your card.
+[20.0-23.0] elder: Thank you so much.

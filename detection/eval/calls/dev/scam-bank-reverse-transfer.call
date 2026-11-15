@@ -1,0 +1,13 @@
+# id: scam-bank-reverse-transfer
+# label: scam
+# source: synthetic
+# set: dev
+# group: scam-bank-reverse-transfer
+# onset_s: 4
+# note: Written by Claude for development. Not a real or recorded call. One sentence per caption, labels-off style.
+[0.0-3.0] elder: Hello?
+[4.0-7.0] caller: Good evening, this is the fraud desk at Riverstone Credit Union.
+[8.0-11.0] caller: A man in Ohio just attempted to withdraw twelve hundred dollars from your savings.
+[12.0-15.0] elder: Oh no, I didn't do that.
+[16.0-19.0] caller: To stop it you need to do a reverse transfer yourself from your banking app.
+[20.0-23.0] caller: Send the same amount to the holding account I give you.

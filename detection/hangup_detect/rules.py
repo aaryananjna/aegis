@@ -39,6 +39,8 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(this is|i'?m (with|from)|calling (from|on behalf of)|i work (for|at)) (the )?(microsoft|apple|amazon|windows|geek squad|norton|mcafee|paypal|chase|wells fargo|bank of america|citi(bank)?|capital one)\b",
         r"\b(technician|tech|agent|specialist|representative|rep) (with|from|at) (microsoft|apple|amazon|windows|geek squad|norton|mcafee|paypal|chase|wells fargo|bank of america|citi(bank)?|capital one)\b",
         r"\b(grand )?prize winner\b",
+        r"\b(fraud|security|card services) (desk|team|department|line|unit|center|centre|office) (at|of|from|with|for) "
+        r"(the |your )?(\w+ ){0,3}(bank|credit union|savings|federal)\b",
     ],
     T.URGENCY: [
         r"\b(right now|right away|immediately|as soon as possible|asap|before it'?s too late)\b",
@@ -87,12 +89,15 @@ PATTERNS: dict[T, list[str]] = {
         r"\b(post|pay) (a |the )?(compliance |cash |surety )?bond\b",
         r"\b(bail money|bail bond|(pay|post|make) (my |the |his |her )?bail|bail is set)\b",
         # Asking for card, bank or identity numbers (bank "we'll never ask" lists)
-        r"\b(give|read|tell|verify|confirm|need|provide|share|say|what'?s|what is)\b.{0,30}\b(your|the) (full |long |whole |16[- ]digit )?"
+        r"(?#exact)\b(give|read|tell|verify|confirm|need|provide|share|say|what'?s|what is)\b.{0,30}\b(your|the) (full |long |whole |16[- ]digit )?"
         r"(credit card|debit card|card|visa|mastercard|amex|bank account|checking account|savings account|account|routing|social security|medicare|atm) (number|numbers|digits)\b",
         r"\b(give|read|tell|verify|confirm|need|provide|share|say|what'?s|what is|do you have|have you got|grab)\b.{0,60}\b(social security number|ssn|pin( number)?|passcode|password|security code|cvv|expiration date)\b",
         r"\b(give|read|tell|verify|confirm|need|provide|share|what'?s|what is)\b.{0,30}\bnumbers? on (your|the) (visa|card|credit card|debit card|mastercard|amex)\b",
         r"\b(three|3|four|4) digits on the back\b",
         r"\b(money|pay|cash|paying) for (a|an|the|my) (lawyer|attorney)\b",
+        # Bank "reversal" scam: you have to undo the fraud yourself by sending money
+        r"\b(reverse|reversal|cancell?ation) (the )?(transfer|transaction|wire|payment)\b.{0,25}\byourself\b"
+        r"|\b(do|initiate|make|send|start) (a |the )?(reverse|reversal) (transfer|transaction|wire|payment)\b",
         r"\b(send|pay|wire|bring|transfer)\b.{0,40}\b(dollars|bucks|grand)\b.{0,15}\bor (you'?ll|you will|else|she'?ll|he'?ll|they'?ll)\b",
         r"\b(taxes|fees?) first\b|\bbefore (we|i) (can )?(deliver|release|send|ship|mail) (the |your )?(check|prize|money|winnings)\b",
     ],
@@ -118,6 +123,10 @@ PATTERNS: dict[T, list[str]] = {
         r"|\b(it'?s|you'?re|you are) infected\b",
         r"\b(we('ve)?|i('ve)?) (got|have) your (daughter|son|grandson|granddaughter|husband|wife|kid|child|grandkid)\b",
         r"\b(never see (her|him|them) again|if you want (her|him|them) back)\b",
+        # The fake fraud alert: "someone just tried to take $900 from your checking account"
+        r"\b(someone|somebody|a (man|woman|person)|a scammer|hackers?)\b.{0,30}\b(tried|attempted|is trying|was trying) to "
+        r"(send|take|withdraw|transfer|move|wire|charge|use|access|empty|steal)\b.{0,50}\b(your|the) "
+        r"(checking|savings|account|bank account|card|debit card|credit card|funds|money)\b",
     ],
     T.VERIFICATION_AVOIDANCE: [
         r"\bno time (for|to) (that|explain|questions)\b",
@@ -298,7 +307,7 @@ _COACHING = re.compile(r"\bif (anyone|anybody|someone|somebody|they|the (teller|
                        r"(\w+ ){0,2}(asks?|calls?)\b[^.!?]{0,10}\b(just )?(say|tell (them|him|her))\b", _I)
 _QUESTIONS_CALLER = re.compile(
     r"^\W*(are you (really |actually )?(from|with|calling from|the)|is this (really )?(the|my|a)\b"
-    r"|is there (a|an) [^?]{0,40}\bfor you\b|do you want (gift cards|money|my|me to)|did you (just )?say"
+    r"|is there (a|an) [^?]{0,40}\bfor you\b|do you (want|need) (gift cards|money|my|me to)|did you (just )?say"
     r"|you want me to)\b[^?]*\?\s*$", _I)
 _SENTENCE_END = re.compile(r"(?<!\bDr)(?<!\bMr)(?<!\bMrs)(?<!\bMs)(?<!\bSt)(?<!\bJr)(?<!\bSr)[.!?]")
 
@@ -399,7 +408,8 @@ def find_evidence(text: str, utterance_id: str, t_s: float,
         return []
     out: list[Evidence] = []
     for tactic, patterns in COMPILED.items():
-        own = {T.SECRECY: _happy_secret, T.PAYMENT: _calls_the_number, T.URGENCY: _own_promise}.get(tactic)
+        own = {T.SECRECY: _happy_secret, T.PAYMENT: _calls_the_number, T.URGENCY: _own_promise,
+               T.THREAT: _already_blocked, T.IMPERSONATION: _someone_elses}.get(tactic)
 
         def skip(text, m, own=own, tactic=tactic):
             return (_reported(text, m, ctx) or (own is not None and own(text, m))
@@ -427,6 +437,25 @@ def _calls_the_number(text: str, m: re.Match) -> bool:
 # Setting your own PIN, or bringing a card to the branch, isn't handing a number to the caller.
 _OWN_OR_IN_PERSON = re.compile(r"\b(set|reset|change|create|choose|pick|update) (up )?(a |your )?(new )?(pin|password|passcode)\b"
                                r"|\b(when|if) you come in\b|\bat the (branch|bank|office|front desk)\b|\bin person\b|\bbring your\b", _I)
+
+
+# A real fraud alert says the bank already stopped it: "someone tried to use your card and we blocked it".
+_BLOCKED = re.compile(r"\b(we|we'?ve|we have|the bank|it was|it'?s been|that was|was) (already )?"
+                      r"(blocked|stopped|declined|denied|caught|cancell?ed|frozen|flagged and blocked)\b"
+                      r"|\byou don'?t (need|have) to do anything\b", _I)
+
+
+# "My bank's fraud department called me" is someone talking about their own bank; a caller
+# pretending says "your bank" or "the bank".
+_OWNED_BY_SOMEONE = re.compile(r"\b(my|his|her|their)\s+$", _I)  # not "our": scammers say "our security team"
+
+
+def _someone_elses(text: str, m: re.Match) -> bool:
+    return bool(_OWNED_BY_SOMEONE.search(text[:m.start()]))
+
+
+def _already_blocked(text: str, m: re.Match) -> bool:
+    return bool(_BLOCKED.search(_sentence_of(text, m)))
 
 
 def _sentence_of(text: str, m: re.Match) -> str:
